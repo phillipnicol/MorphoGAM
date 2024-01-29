@@ -1,6 +1,12 @@
 load("../data/curve_object.rda")
 
 library(STexampleData)
+library(MASS)
+library(nnSVG)
+library(SPARK)
+library(mgcv)
+
+set.seed(1) 
 
 spe <- SlideSeqV2_mouseHPC()
 
@@ -11,9 +17,9 @@ xy <- spatialCoords(spe)[ixs,]
 
 df <- xy[-out$outlier,]
 
-kappa <- c(1, 2, 3)
+kappa <- c(0.5, 1, 2, 3, 4, 5)
 sigma <- seq(100, 1000, by=100)
-niter <- 10
+niter <- 100
 
 res <- array(0, dim=c(length(kappa), length(sigma), 3))
 
