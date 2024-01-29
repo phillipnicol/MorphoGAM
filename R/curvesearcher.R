@@ -5,7 +5,7 @@ CurveSearcher <- function(xy, knn) {
   xy.dist <- as.matrix(dist(xy))
 
 
-  nn1 <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+  nn1 <- apply(xy.dist, 1, function(x) sort(x)[10])
   outlier <- which(nn1 > 3*median(nn1))
 
   if(length(outlier) > 0) {
@@ -80,17 +80,16 @@ CurveSearcher <- function(xy, knn) {
   }
 
 
-  my.t <- seq(0, 1, by=0.0001)
+  my.t <- seq(0, 1, by=0.001)
   ft <- matrix(0, nrow=length(my.t), ncol=2)
   for(i in 1:nrow(ft)) {
     #print(i)
 
     my.dist <- abs(t - my.t[i])
-    kw <- exp(-100*my.dist)
+    kw <- exp(-150*my.dist)
     ft[i,1] <- weightedMedian(x=xy.new[,1], w=kw)
     ft[i,2] <- weightedMedian(x=xy.new[,2], w=kw)
   }
-
 
   df.new <- data.frame(x=xy.new[,1],
                        y=xy.new[,2])
@@ -98,9 +97,9 @@ CurveSearcher <- function(xy, knn) {
   p <- ggplot(data=df.new,aes(x=x,y=y)) + geom_point(col="grey",
                                                      alpha=0.5)
 
-  df.line <- data.frame(x=ft[,1], y=ft[,2])
-  p <- p + geom_path(data=df.line,aes(x=x,y=y,color=my.t),
-                     linewidth=2)
+  df.line <- data.frame(x=ft[,1], y=ft[,2], color=seq(0,1,by=0.001))
+  p <- p + geom_path(data=df.line,aes(x=x,y=y,color=color),
+                     linewidth=1)
   p <- p + scale_color_gradient(low="navyblue",
                                 high="firebrick1")
   p <- p + theme_bw()
