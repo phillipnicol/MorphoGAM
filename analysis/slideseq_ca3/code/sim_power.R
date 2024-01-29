@@ -17,7 +17,7 @@ xy <- spatialCoords(spe)[ixs,]
 
 df <- xy[-out$outlier,]
 
-kappa <- c(0.5, 1, 2, 3, 4, 5)
+kappa <- c(0.5, 1, 1.5, 2, 2.5, 3)
 sigma <- seq(100, 1000, by=100)
 niter <- 100
 
