@@ -1,12 +1,11 @@
 
 
-CurveSearcher <- function(xy, knn) {
+CurveSearcher <- function(xy, knn, tau=100) {
 
   xy.dist <- as.matrix(dist(xy))
 
-
-  nn1 <- apply(xy.dist, 1, function(x) sort(x)[10])
-  outlier <- which(nn1 > 3*median(nn1))
+  nn1 <- apply(xy.dist, 1, function(x) sort(x)[6])
+  outlier <- which(nn1 > 2*median(nn1))
 
   if(length(outlier) > 0) {
     xy.new <- xy[-outlier,]
@@ -14,11 +13,10 @@ CurveSearcher <- function(xy, knn) {
     xy.new <- xy
   }
 
-  #knng <- dimRed:::makeKNNgraph(x = xy.new,
-  #                              k = knn,
-  #                              eps = 0)
+  knng <- dimRed:::makeKNNgraph(x = xy.new,
+                                k = knn,
+                                eps = 0)
 
-  knng <- makeSNNGraph(xy.new,k=knn)
 
 
   comp <- components(knng)
@@ -86,9 +84,9 @@ CurveSearcher <- function(xy, knn) {
     #print(i)
 
     my.dist <- abs(t - my.t[i])
-    kw <- exp(-150*my.dist)
-    ft[i,1] <- weightedMedian(x=xy.new[,1], w=kw)
-    ft[i,2] <- weightedMedian(x=xy.new[,2], w=kw)
+    kw <- exp(-tau*my.dist)
+    ft[i,1] <- weighted.mean(x=xy.new[,1], w=kw)
+    ft[i,2] <- weighted.mean(x=xy.new[,2], w=kw)
   }
 
   df.new <- data.frame(x=xy.new[,1],

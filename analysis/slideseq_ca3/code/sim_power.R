@@ -6,7 +6,7 @@ library(nnSVG)
 library(SPARK)
 library(mgcv)
 
-set.seed(1) 
+set.seed(1)
 
 spe <- SlideSeqV2_mouseHPC()
 
@@ -56,17 +56,25 @@ for(i in 1:length(kappa)) {
 
 saveRDS(res, "../data/results.RDS")
 
+res <- readRDS("../data/results.RDS")
+
 library(reshape2)
 library(tidyverse)
 
 df <- melt(res); colnames(df) <- c("kappa", "sigma", "method", "power")
+
+df$kappa <- paste("k = ", kappa[df$kappa])
+df$sigma <- sigma[df$sigma]
 
 df$method <- c("SPARK-X", "Projection", "nnSVG")[df$method]
 
 p <- ggplot(data=df,aes(x=sigma, y=power, color=method)) +
   geom_point() +
   geom_line() +
-  facet_wrap(~kappa)
+  facet_wrap(~kappa)+
+  labs(color="Method")+
+  xlab(expression(sigma)) + ylab("Power")+
+  theme_bw()
 p
 
 ggsave("../plots/sim_power.png")
