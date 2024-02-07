@@ -29,7 +29,8 @@ for(i in 1:length(kappa)) {
   for(j in 1:length(sigma)) {
     pow1 <- 0; pow2 <- 0; pow3 <- 0
     for(k in 1:niter) {
-      y <- rnegbin(n = nrow(df), mu=mu+kappa[i]*exp(-sigma[j]*(out$t - 0.5)^2), theta=theta)
+      #y <- rnegbin(n = nrow(df), mu=mu+kappa[i]*exp(-sigma[j]*(out$t - 0.5)^2), theta=theta)
+      y <- rnegbin(n = nrow(df), mu=2*sin(40*out$t)+2, theta=theta)
       y <- matrix(y,nrow=1)
       y <- rbind(y,y)
       spark <- sparkx(y, locus_in=df)

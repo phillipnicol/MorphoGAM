@@ -9,7 +9,7 @@ ixs <- which(spe$celltype == "CA3") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
 
-out <- CurveSearcher(xy,knn=5)
+out <- CurveSearcher(xy,knn=5,tau=100)
 
 
 p <- out$plot+ggtitle("CA3 cells, Mouse HPC") + guides(color="none")

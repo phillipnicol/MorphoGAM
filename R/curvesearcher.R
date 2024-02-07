@@ -4,7 +4,7 @@ CurveSearcher <- function(xy, knn, tau=100) {
 
   xy.dist <- as.matrix(dist(xy))
 
-  nn1 <- apply(xy.dist, 1, function(x) sort(x)[6])
+  nn1 <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
   outlier <- which(nn1 > 2*median(nn1))
 
   if(length(outlier) > 0) {
@@ -106,7 +106,106 @@ CurveSearcher <- function(xy, knn, tau=100) {
   out$plot <- p
   out$t <- t
   out$outlier <- outlier
+  out$ft <- ft
   return(out)
+}
+
+CurveSearcher.cv <- function(xy) {
+  hold.out <- sample(1:nrow(xy), size=1000,replace=FALSE)
+  xy.ho <- xy[hold.out,]
+  xy.sub <- xy[-hold.out,]
+
+  tau.start <- 100
+
+
+  tau_lb <- 0; tau_ub <- 10^3
+
+  tau.try <- seq(10, 1000, by=50)
+  rmse <- rep(0, length(tau.try))
+  for(i in 1:length(tau.try)) {
+    out <- CurveSearcher(xy.sub,knn=2, tau=tau.try[i])
+
+    error <- rep(0, nrow(xy.ho))
+    for(j in 1:nrow(xy.ho)) {
+      my.dist <- apply(out$ft, 1, function(x) sum((xy.ho[j,] - x)^2))
+      predicted.xy <- out$ft[which.min(my.dist),]
+      error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
+    }
+
+    rmse[i] <- sqrt(median(error))
+    cat(tau.try[i], " ", rmse[i], "\n")
+  }
+
+  error <- rep(0, nrow(xy.ho))
+  for(j in 1:nrow(xy.ho)) {
+    my.dist <- apply(out$ft, 1, function(x) sum((xy.ho[j,] - x)^2))
+    predicted.xy <- out$ft[which.min(my.dist),]
+    error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
+  }
+
+  lb_rmse <- sqrt(mean(error))
+
+  out <- CurveSearcher(xy.sub,knn=knn, tau=10^3)
+
+  error <- rep(0, nrow(xy.ho))
+  for(j in 1:nrow(xy.ho)) {
+    my.dist <- apply(out$ft, 1, function(x) sum(xy.ho[1,] - x)^2)
+    predicted.xy <- out$ft[which.min(my.dist),]
+    error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
+  }
+
+  ub_rmse <- sqrt(mean(error))
+
+  for(knn in 5:15) {
+    while(TRUE) {
+      out <- CurveSearcher(xy.sub,knn=knn, tau=tau)
+      error <- rep(0, nrow(xy.ho))
+      for(j in 1:nrow(xy.ho)) {
+        my.dist <- apply(out$ft, 1, function(x) sum(xy.ho[1,] - x)^2)
+        predicted.xy <- out$ft[which.min(my.dist),]
+        error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
+      }
+
+      rmse <- sqrt(mean(error))
+      cat(tau, " ", rmse, "\n")
+      if(rmse > tau.rmse.prev & (tau-tau.start)/tau < 0.1) {
+        break
+      } else if(rmse > tau.rmse.prev) {
+        old.tau <- tau
+        tau <- (tau+tau.start)/2
+        tau.start <- old.tau
+      } else {
+        tau <- 2*tau
+        tau.start <- 1/2*tau
+      }
+
+      tau.rmse.prev <- rmse
+    }
+    out <- CurveSearcher(xy.sub,knn=knn, tau=tau.start)
+
+    error <- rep(0, nrow(xy.ho))
+    for(j in 1:nrow(xy.ho)) {
+      my.dist <- apply(out$ft, 1, function(x) sum(xy.ho[1,] - x)^2)
+      predicted.xy <- out$ft[which.min(my.dist),]
+      error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
+    }
+
+
+  }
+}
+
+kernelSmoother <- function(xy, t, tau) {
+  my.t <- seq(0, 1, by=0.001)
+  ft <- matrix(0, nrow=length(my.t), ncol=2)
+  for(i in 1:nrow(ft)) {
+    #print(i)
+
+    my.dist <- abs(t - my.t[i])
+    kw <- exp(-tau*my.dist)
+    ft[i,1] <- weighted.mean(x=xy.sub[,1], w=kw)
+    ft[i,2] <- weighted.mean(x=xy.sub[,2], w=kw)
+  }
+  return(ft)
 }
 
 detectSVG <- function(Y, cso) {
