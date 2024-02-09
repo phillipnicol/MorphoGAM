@@ -77,7 +77,6 @@ CurveSearcher <- function(xy, knn, tau=100) {
     start_point <- which.min(my.dist[start_point,])
   }
 
-
   my.t <- seq(0, 1, by=0.001)
   ft <- matrix(0, nrow=length(my.t), ncol=2)
   for(i in 1:nrow(ft)) {
@@ -111,11 +110,19 @@ CurveSearcher <- function(xy, knn, tau=100) {
 }
 
 CurveSearcher.cv <- function(xy) {
-  hold.out <- sample(1:nrow(xy), size=1000,replace=FALSE)
-  xy.ho <- xy[hold.out,]
-  xy.sub <- xy[-hold.out,]
+  xy.sub <- xy[-out$outlier,]
+  hold.out <- sample(1:nrow(xy.sub), size=300,replace=FALSE)
+  xy.ho <- xy.sub[hold.out,]
+  xy.sub <- xy.sub[-hold.out,]
 
-  tau.start <- 100
+  out <- CurveSearcher(xy.sub,knn=2, tau=10^5)
+  error <- rep(0, nrow(xy.ho))
+  for(j in 1:nrow(xy.ho)) {
+    my.dist <- apply(out$ft, 1, function(x) sum((xy.ho[j,] - x)^2))
+    predicted.xy <- out$ft[which.min(my.dist),]
+    error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
+  }
+  sqrt(mean(error))
 
 
   tau_lb <- 0; tau_ub <- 10^3
