@@ -5,6 +5,7 @@ library(MASS)
 library(nnSVG)
 library(SPARK)
 library(mgcv)
+library(splines)
 
 set.seed(1)
 
