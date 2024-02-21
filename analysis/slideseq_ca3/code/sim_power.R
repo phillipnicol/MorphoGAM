@@ -61,6 +61,7 @@ for(i in 1:length(kappa)) {
     res[i,j,1] <- pow1/niter
     res[i,j,2] <- pow2/niter
     res[i,j,3] <- pow3/niter
+    res[i,j,4] <- pow4/niter
   }
 }
 
