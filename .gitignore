@@ -5,3 +5,5 @@
 .DS_Store
 *.log
 *.rda
+analysis/data/*
+!analysis/data/.gitkeep
