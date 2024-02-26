@@ -15,9 +15,11 @@ ixs <- which(spe$celltype == "CA3") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
 
-out <- CurveSearcher(xy,knn=5)
+#out <- CurveSearcher(xy,knn=5) Use this to fit the curve
 
 Y.sub <- counts(spe)[,ixs]
+
+load("../data/curve_object.rda")
 
 
 set.seed(1)
