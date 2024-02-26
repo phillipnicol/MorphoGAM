@@ -246,3 +246,40 @@ detectSVG <- function(Y, cso) {
   out$f <- f
   return(out)
 }
+
+
+detectSVGns <- function(Y, cso) {
+  t <- cso$t; outlier <- cso$outlier
+  l.o <- log(colSums(Y[,-outlier]))
+
+  res <- data.frame(peak = rep(0,nrow(Y)),
+                    range = rep(0,nrow(Y)),
+                    p.val = rep(1, nrow(Y)))
+
+  f <- matrix(0, nrow=nrow(Y), ncol=ncol(Y)-length(outlier))
+  for(k in 1:nrow(res)) {
+    gene <- Y[k,-outlier]
+
+    if(sum(gene != 0) < 20) {
+      next
+    }
+    fit <- glm(gene ~ ns(out$t, df=10)+offset(l.o), family=quasipoisson())
+    fit.null <- glm(gene ~ 1, family=quasipoisson())
+    val <- anova(fit, fit.null, test="LRT")
+    p.val <- val$`Pr(>Chi)`[2]
+
+    fx <- fit$linear.predictors - l.o - fit$coefficients[1]
+    f[k,] <- fx
+
+    res$peak[k] <- max(abs(fx))
+    res$range[k] <- max(exp(fx+fit$coefficients[1])) - min(exp(fx+fit$coefficients[1]))
+    res$p.val[k] <- p.val
+
+    cat(k, " ", res$peak[k], " ", res$p.val[k], " ", res$range[k], "\n")
+  }
+  out <- list()
+  out$res <- res
+  out$f <- f
+  return(out)
+}
+
