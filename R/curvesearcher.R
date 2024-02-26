@@ -109,6 +109,68 @@ CurveSearcher <- function(xy, knn, tau=100) {
   return(out)
 }
 
+
+
+CurveSearcherLoop <- function(xy, knn, tau=100) {
+
+  xy.dist <- as.matrix(dist(xy))
+
+  nn1 <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+  outlier <- which(nn1 > 2*median(nn1))
+
+  if(length(outlier) > 0) {
+    xy.new <- xy[-outlier,]
+  } else {
+    xy.new <- xy
+  }
+
+  knng <- dimRed:::makeKNNgraph(x = xy.new,
+                                k = knn,
+                                eps = 0)
+
+  geodist <- igraph::distances(knng, algorithm = "dijkstra")
+
+  k <- geodist ^ 2
+  k <- .Call(stats:::C_DoubleCentre, k)
+  k <- - k / 2
+
+  e <- RSpectra::eigs_sym(k, 2, which = "LA",
+                          opts = list(retvec = TRUE))
+
+  t <- atan2(e$vectors[,1], e$vector[,2])/(2*pi)
+
+  my.t <- seq(0, 1, by=0.001)
+  ft <- matrix(0, nrow=length(my.t), ncol=2)
+  for(i in 1:nrow(ft)) {
+    #print(i)
+
+    my.dist <- abs(t - my.t[i])
+    kw <- exp(-tau*my.dist)
+    ft[i,1] <- weighted.mean(x=xy.new[,1], w=kw)
+    ft[i,2] <- weighted.mean(x=xy.new[,2], w=kw)
+  }
+
+  df.new <- data.frame(x=xy.new[,1],
+                       y=xy.new[,2])
+
+  p <- ggplot(data=df.new,aes(x=x,y=y)) + geom_point(col="grey",
+                                                     alpha=0.5)
+
+  df.line <- data.frame(x=ft[,1], y=ft[,2], color=seq(0,1,by=0.001))
+  p <- p + geom_path(data=df.line,aes(x=x,y=y,color=color),
+                     linewidth=1)
+  p <- p + scale_color_gradient(low="navyblue",
+                                high="firebrick1")
+  p <- p + theme_bw()
+
+  out <- list()
+  out$plot <- p
+  out$t <- t
+  out$outlier <- outlier
+  out$ft <- ft
+  return(out)
+}
+
 CurveSearcher.cv <- function(xy) {
   xy.sub <- xy[-out$outlier,]
   hold.out <- sample(1:nrow(xy.sub), size=300,replace=FALSE)

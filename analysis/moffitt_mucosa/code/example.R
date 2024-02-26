@@ -23,8 +23,8 @@ meta.sub <- meta |> filter(slice_full_name == "20220518_WT_dcol_slice_3") |>
 
 Y.sub <- Y[,meta.sub$X]
 
-gene.1 <- which(rownames(Y.sub) == "Dhx58")
-gene.2 <- which(rownames(Y.sub) == "Ephb4")
+gene.1 <- which(rownames(Y.sub) == "Kitl")
+gene.2 <- which(rownames(Y.sub) == "Tnfsf10")
 
 #Plot these two
 expr <- t(Y.sub[c(gene.1,gene.2),]) |>
@@ -47,3 +47,6 @@ res <- SPARK::sparkx(count_in = Y.sub,
 
 p.vals <- res$res_mtest |> as.data.frame() |>
   arrange(adjustedPval)
+
+
+
