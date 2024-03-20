@@ -5,7 +5,7 @@ library(STexampleData)
 spe <- SlideSeqV2_mouseHPC()
 
 
-ixs <- which(spe$celltype == "CA3") #subset to CA3
+ixs <- which(spe$celltype == "Astrocyte") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
 

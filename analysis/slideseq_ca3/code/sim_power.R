@@ -30,7 +30,8 @@ for(i in 1:length(kappa)) {
   for(j in 1:length(sigma)) {
     pow1 <- 0; pow2 <- 0; pow3 <- 0; pow4 <- 0
     for(k in 1:niter) {
-      y <- rnegbin(n = nrow(df), mu=mu+kappa[i]*exp(-sigma[j]*(out$t - 0.5)^2), theta=theta)
+      y <- rnegbin(n = nrow(df), mu=(exp(-sigma[j]*(out$t - 0.5)^2))*kappa[i] + 1,
+                   theta=theta)
       #y <- rnegbin(n = nrow(df), mu=2*sin(40*out$t)+2, theta=theta)
       y <- matrix(y,nrow=1)
       y <- rbind(y,y)
@@ -39,7 +40,13 @@ for(i in 1:length(kappa)) {
         pow1 <- pow1 + 1
       }
 
-      fit <- gam(y[1,]~s(out$t),family=nb()) ## TO DO ADD CYCLE
+      X.model <- gam(y[1,]~s(out$t,k=10,bs="cr"),
+                     family=nb(),
+                     fit=FALSE)$X[,-1]
+      lambda <- createPenalty(X.model)
+      H.pen <- lambda*diag(10); H.pen[1,1] <- 0
+      fit <- gam(y[1,]~s(out$t,k=10,bs="cr"),family=nb(),
+                 H=H.pen)
       if(summary(fit)$s.pv < 0.05/20000) {
         pow2 <- pow2 + 1
       }
@@ -50,10 +57,18 @@ for(i in 1:length(kappa)) {
         pow3 <- pow3 + 1
       }
 
-      fit4 <- glm(y[1,] ~ ns(out$t, df=10), family=quasipoisson())
-      fit.null <- glm(y[1,] ~ 1, family=quasipoisson())
-      val <- anova(fit4, fit.null, test="LRT")
-      p.val <- val$`Pr(>Chi)`[2]
+      fit4 <- glm(y[1,] ~ ns(out$t,df=10), family=quasipoisson())
+      fx <- fit4$linear.predictors - fit4$coefficients[1]
+      fx <- fx - mean(fx)
+      Sigma <- vcov(fit4)[-1,-1]
+      Z <- t(rmvnorm(n=10^4,sigma=Sigma))
+      X <- model.matrix(fit4)
+      fx.null <- X[,-1] %*% Z
+      fx.null <- sweep(fx.null, MARGIN=2,
+                       STATS=colMeans(fx.null), FUN = "-")
+      peaks <- apply(fx.null, 2, max)
+      p.val <- (sum(peaks > max(fx)) + 1)/(10^4 + 1)
+
       if(p.val < 0.05/20000) {
         pow4 <- pow4+1
       }

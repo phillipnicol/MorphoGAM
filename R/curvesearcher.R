@@ -4,7 +4,7 @@ CurveSearcher <- function(xy, knn, tau=100) {
 
   xy.dist <- as.matrix(dist(xy))
 
-  nn1 <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+  nn1 <- apply(xy.dist, 1, function(x) sort(x)[8])
   outlier <- which(nn1 > 2*median(nn1))
 
   if(length(outlier) > 0) {
@@ -16,7 +16,6 @@ CurveSearcher <- function(xy, knn, tau=100) {
   knng <- dimRed:::makeKNNgraph(x = xy.new,
                                 k = knn,
                                 eps = 0)
-
 
 
   comp <- components(knng)
@@ -101,11 +100,15 @@ CurveSearcher <- function(xy, knn, tau=100) {
                                 high="firebrick1")
   p <- p + theme_bw()
 
+  xy.dist <- as.matrix(dist(xy.new))
+  t.dist <- as.matrix(dist(t))
+
   out <- list()
   out$plot <- p
   out$t <- t
   out$outlier <- outlier
   out$ft <- ft
+  out$my.cor <- cor(as.vector(xy.dist), as.vector(t.dist))
   return(out)
 }
 
@@ -137,7 +140,8 @@ CurveSearcherLoop <- function(xy, knn, tau=100) {
   e <- RSpectra::eigs_sym(k, 2, which = "LA",
                           opts = list(retvec = TRUE))
 
-  t <- atan2(e$vectors[,1], e$vector[,2])/(2*pi)
+  t <- (pi+atan2(e$vectors[,1], e$vector[,2]))/(2*pi)
+  r <- sqrt(e$vectors[,1]^2 + e$vectors[,2]^2)
 
   my.t <- seq(0, 1, by=0.001)
   ft <- matrix(0, nrow=length(my.t), ncol=2)
@@ -168,6 +172,7 @@ CurveSearcherLoop <- function(xy, knn, tau=100) {
   out$t <- t
   out$outlier <- outlier
   out$ft <- ft
+  out$r <- r
   return(out)
 }
 
@@ -293,6 +298,9 @@ detectSVG <- function(Y, cso) {
       next
     }
 
+    fit <- glm.nb(gene~ns(t,df=10)+offset(l.o))
+    fit <- update(fit, method = "brglmFit", type = "correction")
+
     fit <- gam(gene~s(t)+offset(l.o),family=nb()) ## TO DO ADD CYCLE
     fx <- fit$linear.predictors - l.o - fit$coefficients[1]
     f[k,] <- fx
@@ -309,6 +317,54 @@ detectSVG <- function(Y, cso) {
   return(out)
 }
 
+createPenalty <- function(X.model, cutoff=log(2)) {
+  nsim <- 10^4
+  p <- ncol(X.model)
+  Z <- matrix(rnorm(nsim*p),nrow=p, ncol=nsim)
+  fx.null <- X.model %*% Z
+  peaks <- apply(fx.null, 2, max)
+  q97.5 <- quantile(peaks,0.975)
+  sigma <- log(2)/q97.5
+  return(1/(2*sigma^2))
+}
+
+detectSVGLoop <- function(Y, cso) {
+  t <- cso$t; outlier <- cso$outlier
+  l.o <- log(colSums(Y[,-outlier]))
+
+  res <- data.frame(peak = rep(0,nrow(Y)),
+                    range = rep(0,nrow(Y)),
+                    p.val = rep(1, nrow(Y)))
+
+  gene <- rep(0, length(t))
+  G <- gam(gene~s(t,k=10,bs="cc"), family=nb(), fit=FALSE)
+  lambda <- createPenalty(G$X[,-1])
+  f <- matrix(0, nrow=nrow(Y), ncol=ncol(Y)-length(outlier))
+  for(k in 1:nrow(res)) {
+    gene <- Y[k,-outlier]
+
+    H.pen <- lambda*diag(9); H.pen[1,1] <- 0
+    fit <- gam(gene~s(t,k=10, bs="cc")+offset(l.o),family=nb(),
+               H=H.pen)
+
+    #fit <- glm(gene~ns(t,df=10)+offset(l.o),family=quasipoisson())
+
+    fx <- fit$linear.predictors - l.o - fit$coefficients[1]
+    f[k,] <- fx
+
+    res$peak[k] <- max(fx)
+    res$range[k] <- max(exp(fx+fit$coefficients[1])) - min(exp(fx+fit$coefficients[1]))
+    res$p.val[k] <- summary(fit)$s.pv
+
+    cat(k, " ", res$peak[k], " ", res$p.val[k], "\n")
+  }
+  out <- list()
+  out$res <- res
+  out$f <- f
+  return(out)
+}
+
+
 
 detectSVGns <- function(Y, cso) {
   t <- cso$t; outlier <- cso$outlier
@@ -322,22 +378,28 @@ detectSVGns <- function(Y, cso) {
   for(k in 1:nrow(res)) {
     gene <- Y[k,-outlier]
 
-    if(sum(gene != 0) < 20) {
+    if(sum(gene != 0) < 50) {
       next
     }
-    fit <- glm(gene ~ ns(out$t, df=10)+offset(l.o), family=quasipoisson())
+    fit <- glm(gene ~ ns(cso$t, df=30)+offset(l.o), family=quasipoisson())
     fit.null <- glm(gene ~ 1, family=quasipoisson())
     val <- anova(fit, fit.null, test="LRT")
     p.val <- val$`Pr(>Chi)`[2]
 
     fx <- fit$linear.predictors - l.o - fit$coefficients[1]
-    f[k,] <- fx
+    fx <- fx - mean(fx)
+    Sigma <- vcov(fit)[-1,-1]
+    Z <- t(rmvnorm(n=10^4,sigma=Sigma))
+    fx.null <- X[,-1] %*% Z
+    fx.null <- sweep(fx.null, MARGIN=2,
+                     STATS=colMeans(fx.null), FUN = "-")
 
-    res$peak[k] <- max(abs(fx))
-    res$range[k] <- max(exp(fx+fit$coefficients[1])) - min(exp(fx+fit$coefficients[1]))
-    res$p.val[k] <- p.val
+    peaks <- apply(fx.null, 2, max)
+    res$p.val[k] <- (sum(peaks > max(fx)) + 1)/(10^4 + 1)
 
-    cat(k, " ", res$peak[k], " ", res$p.val[k], " ", res$range[k], "\n")
+    res$peak[k] <- max(fx)
+
+    cat(k, " ", res$peak[k], " ", res$p.val[k],  "\n")
   }
   out <- list()
   out$res <- res
