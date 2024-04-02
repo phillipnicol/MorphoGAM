@@ -9,8 +9,8 @@ ixs <- which(spe$celltype == "Astrocyte") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
 
-out <- CurveSearcher(xy,knn=5,tau=100)
-
+out <- CurveSearcher(xy,knn=25,tau=25,cutoff=10)
+out <- CurveSearcherLoop(xy,knn=10,tau=100,cutoff=10)
 
 p <- out$plot+ggtitle("CA3 cells, Mouse HPC") + guides(color="none")
 p <- p + theme_void()

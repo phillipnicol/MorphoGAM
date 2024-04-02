@@ -1,11 +1,17 @@
 
 
-CurveSearcher <- function(xy, knn, tau=100) {
+PathFinder <- function(xy) {
+  0
+}
+
+
+CurveSearcher <- function(xy, knn, tau=100,
+                          cutoff=2) {
 
   xy.dist <- as.matrix(dist(xy))
 
-  nn1 <- apply(xy.dist, 1, function(x) sort(x)[8])
-  outlier <- which(nn1 > 2*median(nn1))
+  nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+  outlier <- which(nnk > cutoff*median(nnk))
 
   if(length(outlier) > 0) {
     xy.new <- xy[-outlier,]
@@ -55,7 +61,7 @@ CurveSearcher <- function(xy, knn, tau=100) {
   my.dist <- as.matrix(dist(endpoints))
   start_point <- which.max(-endpoints[,1] + endpoints[,2])
   t.shift <- 0
-  t <- rep(0, nrow(xy.new))
+  t <- rep(0, nrow(xy.new)); names(t) <- rownames(xy.new)
   for(c in 1:comp$no) {
     current.comp <- ceiling(start_point/2)
 
@@ -76,50 +82,76 @@ CurveSearcher <- function(xy, knn, tau=100) {
     start_point <- which.min(my.dist[start_point,])
   }
 
-  my.t <- seq(0, 1, by=0.001)
-  ft <- matrix(0, nrow=length(my.t), ncol=2)
-  for(i in 1:nrow(ft)) {
-    #print(i)
-
-    my.dist <- abs(t - my.t[i])
-    kw <- exp(-tau*my.dist)
-    ft[i,1] <- weighted.mean(x=xy.new[,1], w=kw)
-    ft[i,2] <- weighted.mean(x=xy.new[,2], w=kw)
+  ## Project the outliers back
+  t.new <- rep(0, nrow(xy))
+  for(i in 1:nrow(xy)) {
+    if(rownames(xy)[i] %in% names(t)) {
+      ix <- which(rownames(xy)[i] == names(t))
+      t.new[i] <- t[ix]
+    } else {
+      knnt <- order(xy.dist[i,-outlier], decreasing=FALSE)[1:knn]
+      t.new[i] <- mean(t[knnt])
+      print(t.new[i])
+    }
   }
 
-  df.new <- data.frame(x=xy.new[,1],
-                       y=xy.new[,2])
+  fitx <- gam(xy[,1]~s(t.new,bs="cr",k=100))
+  fity <- gam(xy[,2]~s(t.new,bs="cr",k=100))
+
+  my.t <- seq(0,1,by=10^{-4})
+  predx <- predict(fitx,newdata=list(t.new=my.t))
+  predy <- predict(fity,newdata=list(t.new=my.t))
+
+  ft <- data.frame(x=predx,y=predy)
+
+
+  SStot <- sum((xy[,1]-mean(xy[,1]))^2+(xy[,2]-mean(xy[,2]))^2)
+  SSresid <- sum(fitx$residuals^2 + fity$residuals^2)
+  #ft <- matrix(0, nrow=length(my.t), ncol=2)
+  #my.var <- my.t
+  #for(i in 1:nrow(ft)) {
+    #print(i)
+
+  #  my.dist <- abs(t - my.t[i])
+  #  kw <- exp(-tau*my.dist)
+  #  ft[i,1] <- weighted.mean(x=xy.new[,1], w=kw)
+  #  ft[i,2] <- weighted.mean(x=xy.new[,2], w=kw)
+
+  #  my.var[i] <- sum(kw^2)/(sum(kw)^2)
+  #}
+
+
+  df.new <- data.frame(x=xy[,1],
+                       y=xy[,2])
 
   p <- ggplot(data=df.new,aes(x=x,y=y)) + geom_point(col="grey",
                                                      alpha=0.5)
 
-  df.line <- data.frame(x=ft[,1], y=ft[,2], color=seq(0,1,by=0.001))
+  df.line <- data.frame(x=ft[,1], y=ft[,2], color=my.t)
   p <- p + geom_path(data=df.line,aes(x=x,y=y,color=color),
                      linewidth=1)
   p <- p + scale_color_gradient(low="navyblue",
                                 high="firebrick1")
   p <- p + theme_bw()
 
-  xy.dist <- as.matrix(dist(xy.new))
-  t.dist <- as.matrix(dist(t))
-
   out <- list()
   out$plot <- p
-  out$t <- t
+  out$t <- t.new
   out$outlier <- outlier
   out$ft <- ft
-  out$my.cor <- cor(as.vector(xy.dist), as.vector(t.dist))
+  out$Rhat <- 1-(SSresid/SStot)*(2*nrow(xy)/(fitx$df.residual+fity$df.residual))
   return(out)
 }
 
 
 
-CurveSearcherLoop <- function(xy, knn, tau=100) {
+CurveSearcherLoop <- function(xy, knn, tau=100,
+                              cutoff=2) {
 
   xy.dist <- as.matrix(dist(xy))
 
   nn1 <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
-  outlier <- which(nn1 > 2*median(nn1))
+  outlier <- which(nn1 > cutoff*median(nn1))
 
   if(length(outlier) > 0) {
     xy.new <- xy[-outlier,]
@@ -130,6 +162,13 @@ CurveSearcherLoop <- function(xy, knn, tau=100) {
   knng <- dimRed:::makeKNNgraph(x = xy.new,
                                 k = knn,
                                 eps = 0)
+
+  comp <- components(knng)
+  if(comp$no > 1) {
+    out <- list()
+    out$mse <- Inf
+    return(out)
+  }
 
   geodist <- igraph::distances(knng, algorithm = "dijkstra")
 
@@ -142,9 +181,11 @@ CurveSearcherLoop <- function(xy, knn, tau=100) {
 
   t <- (pi+atan2(e$vectors[,1], e$vector[,2]))/(2*pi)
   r <- sqrt(e$vectors[,1]^2 + e$vectors[,2]^2)
+  names(t) <- rownames(xy.new)
 
-  my.t <- seq(0, 1, by=0.001)
+  my.t <- t
   ft <- matrix(0, nrow=length(my.t), ncol=2)
+  my.var <- my.t
   for(i in 1:nrow(ft)) {
     #print(i)
 
@@ -152,37 +193,68 @@ CurveSearcherLoop <- function(xy, knn, tau=100) {
     kw <- exp(-tau*my.dist)
     ft[i,1] <- weighted.mean(x=xy.new[,1], w=kw)
     ft[i,2] <- weighted.mean(x=xy.new[,2], w=kw)
+
+    my.var[i] <- sum(kw^2)/(sum(kw)^2)
   }
 
-  df.new <- data.frame(x=xy.new[,1],
-                       y=xy.new[,2])
+  ## Project the outliers back
+  t.new <- rep(0, nrow(xy))
+  for(i in 1:nrow(xy)) {
+    if(rownames(xy)[i] %in% names(t)) {
+      ix <- which(rownames(xy)[i] == names(t))
+      t.new[i] <- t[ix]
+    } else {
+      knnt <- order(xy.dist[i,-outlier])[1:knn]
+      t.new[i] <- mean(t[knnt])
+    }
+  }
+
+  fitx <- gam(xy[,1]~s(t.new,bs="cc",k=100))
+  fity <- gam(xy[,2]~s(t.new,bs="cc",k=100))
+
+  my.t <- seq(0,1,by=10^{-4})
+  predx <- predict(fitx,newdata=list(t.new=my.t))
+  predy <- predict(fity,newdata=list(t.new=my.t))
+
+
+  SStot <- sum((xy[,1]-mean(xy[,1]))^2+(xy[,2]-mean(xy[,2]))^2)
+  SSresid <- sum(fitx$residuals^2 + fity$residuals^2)
+
+  ft <- data.frame(x=predx,y=predy)
+
+  df.new <- data.frame(x=xy[,1],
+                       y=xy[,2])
 
   p <- ggplot(data=df.new,aes(x=x,y=y)) + geom_point(col="grey",
                                                      alpha=0.5)
 
-  df.line <- data.frame(x=ft[,1], y=ft[,2], color=seq(0,1,by=0.001))
+  df.line <- data.frame(x=ft[,1], y=ft[,2], color=my.t)
   p <- p + geom_path(data=df.line,aes(x=x,y=y,color=color),
                      linewidth=1)
   p <- p + scale_color_gradient(low="navyblue",
                                 high="firebrick1")
   p <- p + theme_bw()
 
+  xy.dist <- as.matrix(dist(xy))
+  t.dist <- as.matrix(dist(t))
   out <- list()
   out$plot <- p
   out$t <- t
   out$outlier <- outlier
   out$ft <- ft
   out$r <- r
+  out$Rhat <- 1-(SSresid/SStot)*(2*nrow(xy)/(fitx$df.residual+fity$df.residual))
   return(out)
 }
 
 CurveSearcher.cv <- function(xy) {
-  xy.sub <- xy[-out$outlier,]
+  xy.sub <- xy
   hold.out <- sample(1:nrow(xy.sub), size=300,replace=FALSE)
   xy.ho <- xy.sub[hold.out,]
   xy.sub <- xy.sub[-hold.out,]
 
-  out <- CurveSearcher(xy.sub,knn=2, tau=10^5)
+  out <- CurveSearcherLoop(xy.sub, knn=50, tau=2000)
+  out <- CurveSearcher(xy.sub,knn=50,tau=150)
   error <- rep(0, nrow(xy.ho))
   for(j in 1:nrow(xy.ho)) {
     my.dist <- apply(out$ft, 1, function(x) sum((xy.ho[j,] - x)^2))
@@ -190,7 +262,7 @@ CurveSearcher.cv <- function(xy) {
     error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
   }
   sqrt(mean(error))
-
+  quantile(sqrt(error),0.75)
 
   tau_lb <- 0; tau_ub <- 10^3
 
