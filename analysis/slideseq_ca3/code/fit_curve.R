@@ -5,11 +5,11 @@ library(STexampleData)
 spe <- SlideSeqV2_mouseHPC()
 
 
-ixs <- which(spe$celltype == "Astrocyte") #subset to CA3
+ixs <- which(spe$celltype == "Microglia_Macrophages") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
 
-out <- CurveSearcher(xy,knn=25,tau=25,cutoff=10)
+out <- CurveSearcher(xy,knn=25,cutoff=2)
 out <- CurveSearcherLoop(xy,knn=10,tau=100,cutoff=10)
 
 p <- out$plot+ggtitle("CA3 cells, Mouse HPC") + guides(color="none")

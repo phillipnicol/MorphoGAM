@@ -1,7 +1,29 @@
 
 
 PathFinder <- function(xy) {
-  0
+  #Try
+  knn <- c(3,5,10,15,20)
+  cutoff <- c(2,5,10)
+  model <- c(1,2)
+
+  params <- expand.grid(knn,cutoff,model)
+  params <- as.matrix(params)
+  colnames(params) <- c("knn","cutoff", "model")
+  mse <- apply(params, 1, function(param) {
+    if(param["model"] == 1) {
+      print(param)
+      fit <- CurveSearcher(xy,
+                           knn=param["knn"],
+                           cutoff=param["cutoff"])
+      fit$Rhat/fit$al
+    } else {
+      print(param)
+      fit <- CurveSearcherLoop(xy,
+                               knn=param["knn"],
+                               cutoff=param["cutoff"])
+      fit$Rhat/fit$al
+    }
+  })
 }
 
 
@@ -18,6 +40,14 @@ CurveSearcher <- function(xy, knn, tau=100,
   } else {
     xy.new <- xy
   }
+
+  knng <- dimRed:::makeKNNgraph(x = xy,
+                                k = knn,
+                                eps = 0)
+
+
+  comp <- components(knng)
+
 
   knng <- dimRed:::makeKNNgraph(x = xy.new,
                                 k = knn,
@@ -95,12 +125,17 @@ CurveSearcher <- function(xy, knn, tau=100,
     }
   }
 
-  fitx <- gam(xy[,1]~s(t.new,bs="cr",k=100))
-  fity <- gam(xy[,2]~s(t.new,bs="cr",k=100))
+  knots <- min(100, 0.1*nrow(xy.new))
+  fitx <- gam(xy[,1]~s(t.new,bs="cr",k=20))
+  fity <- gam(xy[,2]~s(t.new,bs="cr",k=20))
 
   my.t <- seq(0,1,by=10^{-4})
   predx <- predict(fitx,newdata=list(t.new=my.t))
   predy <- predict(fity,newdata=list(t.new=my.t))
+
+  fp <- diff(predx)
+  fp2 <- diff(predy)
+  al <- sqrt(fp^2 + fp2^2)
 
   ft <- data.frame(x=predx,y=predy)
 
@@ -139,7 +174,8 @@ CurveSearcher <- function(xy, knn, tau=100,
   out$t <- t.new
   out$outlier <- outlier
   out$ft <- ft
-  out$Rhat <- 1-(SSresid/SStot)*(2*nrow(xy)/(fitx$df.residual+fity$df.residual))
+  out$al <- sum(al)
+  out$Rhat <- 1-(SSresid/SStot)
   return(out)
 }
 
@@ -167,6 +203,8 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
   if(comp$no > 1) {
     out <- list()
     out$mse <- Inf
+    out$Rhat <- 0
+    out$al <- 1
     return(out)
   }
 
@@ -176,11 +214,11 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
   k <- .Call(stats:::C_DoubleCentre, k)
   k <- - k / 2
 
-  e <- RSpectra::eigs_sym(k, 2, which = "LA",
+  e <- RSpectra::eigs_sym(k, 4, which = "LA",
                           opts = list(retvec = TRUE))
 
-  t <- (pi+atan2(e$vectors[,1], e$vector[,2]))/(2*pi)
-  r <- sqrt(e$vectors[,1]^2 + e$vectors[,2]^2)
+  t <- (pi+atan2(e$vectors[,1], e$vectors[,2]))/(2*pi)
+  r <- mean(sqrt(e$values[1]*e$vectors[,1]^2 + e$values[2]*e$vectors[,2]^2))
   names(t) <- rownames(xy.new)
 
   my.t <- t
@@ -217,6 +255,10 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
   predy <- predict(fity,newdata=list(t.new=my.t))
 
 
+  fp <- diff(predx)
+  fp2 <- diff(predy)
+  al <- sqrt(fp^2 + fp2^2)
+
   SStot <- sum((xy[,1]-mean(xy[,1]))^2+(xy[,2]-mean(xy[,2]))^2)
   SSresid <- sum(fitx$residuals^2 + fity$residuals^2)
 
@@ -243,7 +285,8 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
   out$outlier <- outlier
   out$ft <- ft
   out$r <- r
-  out$Rhat <- 1-(SSresid/SStot)*(2*nrow(xy)/(fitx$df.residual+fity$df.residual))
+  out$al <- sum(al)
+  out$Rhat <- 1-(SSresid/SStot)
   return(out)
 }
 

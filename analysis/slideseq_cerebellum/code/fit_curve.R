@@ -13,7 +13,7 @@ xy <- xy[xy$first_type == "Granule", ]
 xy <- xy[,c("x","y")]
 xy <- as.matrix(xy)
 
-out <- CurveSearcher(xy,knn=5,tau=100)
+out <- CurveSearcher(xy,knn=5, cutoff=0.2)
 
 p <- out$plot+ggtitle("CA3 cells, Mouse HPC") + guides(color="none")
 p <- p + theme_void()
