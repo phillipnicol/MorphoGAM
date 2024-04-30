@@ -29,6 +29,36 @@ locus <- as.matrix(meta.sub[,c("x","y")])
 res <- SPARK::sparkx(count_in = Y.sub,
                      locus_in = locus)
 
+colors <- c("red", "orange", "yellow", "green", "blue", "purple", "violet")
+values <- seq(0,1,length.out=7)
+# Plot with custom color scale
+ggplot(df, aes(x, y, color = fit$t)) +
+  geom_point() +
+  scale_color_gradientn(colors = colors,
+                        values = values,
+                        guide = guide_colorbar(title = "Value",
+                                               barheight = 10,
+                                               barwidth = 0.5))
+
+
+df <- data.frame(x=locus[,1],y=locus[,2], color=pst)
+ggplot(df, aes(x, y, color = Lineage1)) +
+  geom_point() +
+  scale_color_gradientn(colors = colors,
+                        values = values,
+                        guide = guide_colorbar(title = "Value",
+                                               barheight = 10,
+                                               barwidth = 0.5))
+
+df <- data.frame(x=locus[,1],y=locus[,2], color=fit$t)
+ggplot(df, aes(x, y, color = color)) +
+  geom_point() +
+  scale_color_gradientn(colors = colors,
+                        values = values,
+                        guide = guide_colorbar(title = "Value",
+                                               barheight = 10,
+                                               barwidth = 0.5))
+
 p.vals <- res$res_mtest |> as.data.frame() |>
   arrange(adjustedPval)
 
@@ -36,8 +66,8 @@ fit <- CurveSearcherLoop(locus,knn=10)
 cso <- fit
 my.svg <- detectSVGLoop(Y.sub, cso)
 
-gene.1 <- which(rownames(Y.sub) == "Nlrc5")
-gene.2 <- which(rownames(Y.sub) == "Ifih1")
+gene.1 <- which(rownames(Y.sub) == "Dhx58")
+gene.2 <- which(rownames(Y.sub) == "Erbb3")
 
 #Plot these two
 expr <- t(Y.sub[c(gene.1,gene.2),]) |>

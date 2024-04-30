@@ -15,13 +15,13 @@ PathFinder <- function(xy) {
       fit <- CurveSearcher(xy,
                            knn=param["knn"],
                            cutoff=param["cutoff"])
-      fit$Rhat/fit$al
+      fit$mse
     } else {
       print(param)
       fit <- CurveSearcherLoop(xy,
                                knn=param["knn"],
                                cutoff=param["cutoff"])
-      fit$Rhat/fit$al
+      fit$mse
     }
   })
 }
@@ -88,6 +88,21 @@ CurveSearcher <- function(xy, knn, tau=100,
   }
 
 
+  best.path <- which.min(paths$cost)
+  t.shift <- 0
+  t <- rep(0, nrow(xy))
+  for(c in 1:comp$no) {
+    current.comp <- paths[best.path,c]
+
+    if(current.comp > 0) {
+      t[comp$membership == current.comp] <- t.list[[current.comp]] + t.shift
+    } else{
+      t.max <- max(t.list[[-current.comp]])
+      t[comp$membership == -current.comp] <- t.max - t.list[[-current.comp]] + t.shift
+    }
+    t.shift <- max(t)
+  }
+
   my.dist <- as.matrix(dist(endpoints))
   start_point <- which.max(-endpoints[,1] + endpoints[,2])
   t.shift <- 0
@@ -112,6 +127,11 @@ CurveSearcher <- function(xy, knn, tau=100,
     start_point <- which.min(my.dist[start_point,])
   }
 
+
+  knots <- min(100, 0.1*nrow(xy.new))
+  fitx <- gam(xy.new[,1]~s(t,bs="cr",k=knots))
+  fity <- gam(xy.new[,2]~s(t,bs="cr",k=knots))
+
   ## Project the outliers back
   t.new <- rep(0, nrow(xy))
   for(i in 1:nrow(xy)) {
@@ -121,17 +141,12 @@ CurveSearcher <- function(xy, knn, tau=100,
     } else {
       knnt <- order(xy.dist[i,-outlier], decreasing=FALSE)[1:knn]
       t.new[i] <- mean(t[knnt])
-      print(t.new[i])
     }
   }
 
-  knots <- min(100, 0.1*nrow(xy.new))
-  fitx <- gam(xy[,1]~s(t.new,bs="cr",k=20))
-  fity <- gam(xy[,2]~s(t.new,bs="cr",k=20))
-
   my.t <- seq(0,1,by=10^{-4})
-  predx <- predict(fitx,newdata=list(t.new=my.t))
-  predy <- predict(fity,newdata=list(t.new=my.t))
+  predx <- predict(fitx,newdata=list(t=my.t))
+  predy <- predict(fity,newdata=list(t=my.t))
 
   fp <- diff(predx)
   fp2 <- diff(predy)
@@ -142,6 +157,33 @@ CurveSearcher <- function(xy, knn, tau=100,
 
   SStot <- sum((xy[,1]-mean(xy[,1]))^2+(xy[,2]-mean(xy[,2]))^2)
   SSresid <- sum(fitx$residuals^2 + fity$residuals^2)
+
+  ft.fitted <- cbind(predict(fitx,newdata=list(t=t.new)),
+                 predict(fity,newdata=list(t=t.new)))
+  resid <- (xy[,1] - ft.fitted[,1])^2 + (xy[,2] - ft.fitted[,2])^2
+  bias <- median(resid)
+
+  # Now compute variance
+
+#  ft.fitted <- cbind(predict(fitx, newdata=list(t=t.new)),
+#                     predict(fity, newdata=list(t=t.new)))
+#  my.var <- rep(0, nrow(xy))
+#  for(i in 1:nrow(xy)) {
+#    ft.i <- ft.fitted[i,]
+#    knn.i <- order(xy.dist[i,], decreasing=FALSE)[1:knn]
+#    varx <- var(ft.fitted[knn.i,1])
+#    vary <- var(ft.fitted[knn.i,2])
+#    my.var[i] <- varx + vary
+#  }
+
+  my.var <- rep(0, length(my.t))
+  for(i in 1:length(my.t)) {
+    range <- which(abs(my.t-my.t[i]) < 0.01)
+    my.var[i] <- var(ft[range,1]) + var(ft[range,2])
+  }
+
+
+
   #ft <- matrix(0, nrow=length(my.t), ncol=2)
   #my.var <- my.t
   #for(i in 1:nrow(ft)) {
@@ -175,7 +217,11 @@ CurveSearcher <- function(xy, knn, tau=100,
   out$outlier <- outlier
   out$ft <- ft
   out$al <- sum(al)
-  out$Rhat <- 1-(SSresid/SStot)
+  out$Rhat <- 1-SSresid/SStot
+  out$fitx <- fitx; out$fity <- fity
+  out$mse <- bias + mean(my.var)
+  out$bias <- bias
+  out$my.var <- my.var
   return(out)
 }
 
@@ -235,6 +281,10 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
     my.var[i] <- sum(kw^2)/(sum(kw)^2)
   }
 
+  knots <- min(100, 0.1*nrow(xy.new))
+  fitx <- gam(xy.new[,1]~s(t,bs="cc",k=knots))
+  fity <- gam(xy.new[,2]~s(t,bs="cc",k=knots))
+
   ## Project the outliers back
   t.new <- rep(0, nrow(xy))
   for(i in 1:nrow(xy)) {
@@ -247,12 +297,9 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
     }
   }
 
-  fitx <- gam(xy[,1]~s(t.new,bs="cc",k=100))
-  fity <- gam(xy[,2]~s(t.new,bs="cc",k=100))
-
   my.t <- seq(0,1,by=10^{-4})
-  predx <- predict(fitx,newdata=list(t.new=my.t))
-  predy <- predict(fity,newdata=list(t.new=my.t))
+  predx <- predict(fitx,newdata=list(t=my.t))
+  predy <- predict(fity,newdata=list(t=my.t))
 
 
   fp <- diff(predx)
@@ -262,7 +309,20 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
   SStot <- sum((xy[,1]-mean(xy[,1]))^2+(xy[,2]-mean(xy[,2]))^2)
   SSresid <- sum(fitx$residuals^2 + fity$residuals^2)
 
+  ft.fitted <- cbind(predict(fitx,newdata=list(t=t.new)),
+                 predict(fity,newdata=list(t=t.new)))
+  resid <- (xy[,1] - ft.fitted[,1])^2 + (xy[,2] - ft.fitted[,2])^2
+
+  bias <- mean(resid)
+
   ft <- data.frame(x=predx,y=predy)
+
+
+  my.var <- rep(0, length(my.t))
+  for(i in 1:length(my.t)) {
+    range <- which(abs(my.t-my.t[i]) < 0.01)
+    my.var[i] <- var(ft[range,1]) + var(ft[range,2])
+  }
 
   df.new <- data.frame(x=xy[,1],
                        y=xy[,2])
@@ -281,27 +341,103 @@ CurveSearcherLoop <- function(xy, knn, tau=100,
   t.dist <- as.matrix(dist(t))
   out <- list()
   out$plot <- p
-  out$t <- t
+  out$t <- t.new
   out$outlier <- outlier
   out$ft <- ft
   out$r <- r
   out$al <- sum(al)
-  out$Rhat <- 1-(SSresid/SStot)
+  out$Rhat <- 1-SSresid/SStot
+  out$fitx <- fitx; out$fity <- fity
+  out$bias <- bias
+  out$var <- my.var
+  out$mse <- bias+mean(my.var)
   return(out)
 }
 
-CurveSearcher.cv <- function(xy) {
+CurveSearcher.cv <- function(xy, nfolds=5) {
+  my.folds <- createFolds(1:nrow(xy), k = nfolds)
+
+  knn <- c(3,5,10,15,20)
+  cutoff <- c(2,5,10)
+  model <- c(1,2)
+
+  params <- expand.grid(knn,cutoff,model)
+  params <- as.matrix(params)
+  colnames(params) <- c("knn","cutoff", "model")
+
+  mse <- matrix(0, nrow=nfolds, ncol=nrow(params))
+
+  for(k in 1:nfolds) {
+    xy.sub <- xy[-my.folds[[k]],]
+    xy.ho <- xy[my.folds[[k]],]
+
+    mse.k <- apply(params, 1, function(param) {
+      if(param["model"] == 1) {
+        print(param)
+        fit <- CurveSearcher(xy.sub,
+                             knn=param["knn"],
+                             cutoff=param["cutoff"])
+      } else {
+        print(param)
+        fit <- CurveSearcherLoop(xy.sub,
+                                 knn=param["knn"],
+                                 cutoff=param["cutoff"])
+      }
+
+      print(fit$Rhat)
+      if(fit$Rhat < 10^{-10}) {
+        return(Inf)
+      }
+      error <- rep(0, nrow(xy.ho))
+      for(j in 1:nrow(xy.ho)) {
+        my.dist <- apply(xy.sub, 1, function(x) sum((xy.ho[j,] - x)^2))
+        predicted.t <- mean(fit$t[order(my.dist)[1:param["knn"]]])
+        pred.x <- predict(fit$fitx, newdata=list(t=predicted.t))
+        pred.y <- predict(fit$fity, newdata=list(t=predicted.t))
+        predicted.xy <-  c(pred.x, pred.y)
+        error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
+      }
+      return(sqrt(mean(error)))
+    })
+
+    mse[k,] <- mse.k
+  }
+
+  mse.avg <- colMeans(mse)
+  best.param <- params[which.min(mse.avg),]
+
+  if(best.param["model"] == 1) {
+    fit <- CurveSearcher(xy,
+                         knn=best.param["knn"],
+                         cutoff=best.param["cutoff"])
+  } else{
+    fit <- CurveSearcherLoop(xy,
+                             knn=best.param["knn"],
+                             cutoff=best.param["cutoff"])
+  }
+  return(fit)
+}
+
+
+CurveSearcher.cv2 <- function(xy) {
   xy.sub <- xy
   hold.out <- sample(1:nrow(xy.sub), size=300,replace=FALSE)
   xy.ho <- xy.sub[hold.out,]
   xy.sub <- xy.sub[-hold.out,]
 
-  out <- CurveSearcherLoop(xy.sub, knn=50, tau=2000)
-  out <- CurveSearcher(xy.sub,knn=50,tau=150)
+  knn <-10
+  out <- CurveSearcher(xy.sub, knn=knn,cutoff=2)
+
+
+  knn <- 20
+  out <- CurveSearcherLoop(xy.sub,knn=knn,cutoff=10)
   error <- rep(0, nrow(xy.ho))
   for(j in 1:nrow(xy.ho)) {
-    my.dist <- apply(out$ft, 1, function(x) sum((xy.ho[j,] - x)^2))
-    predicted.xy <- out$ft[which.min(my.dist),]
+    my.dist <- apply(xy.sub, 1, function(x) sum((xy.ho[j,] - x)^2))
+    predicted.t <- mean(out$t[order(my.dist)[1:knn]])
+    pred.x <- predict(out$fitx, newdata=list(t.new=predicted.t))
+    pred.y <- predict(out$fity, newdata=list(t.new=predicted.t))
+    predicted.xy <-  c(pred.x, pred.y)
     error[j] <- sum((xy.ho[j,] - predicted.xy)^2)
   }
   sqrt(mean(error))
@@ -452,14 +588,14 @@ detectSVGLoop <- function(Y, cso) {
                     p.val = rep(1, nrow(Y)))
 
   gene <- rep(0, length(t))
-  G <- gam(gene~s(t,k=10,bs="cc"), family=nb(), fit=FALSE)
+  G <- gam(gene~s(t,k=10,bs="cr"), family=nb(), fit=FALSE)
   lambda <- createPenalty(G$X[,-1])
-  f <- matrix(0, nrow=nrow(Y), ncol=ncol(Y)-length(outlier))
+  f <- matrix(0, nrow=nrow(Y), ncol=ncol(Y))
   for(k in 1:nrow(res)) {
-    gene <- Y[k,-outlier]
+    gene <- Y[k,]
 
-    H.pen <- lambda*diag(9); H.pen[1,1] <- 0
-    fit <- gam(gene~s(t,k=10, bs="cc")+offset(l.o),family=nb(),
+    H.pen <- lambda*diag(10); H.pen[1,1] <- 0
+    fit <- gam(gene~s(t,k=10, bs="cr")+offset(l.o),family=nb(),
                H=H.pen)
 
     #fit <- glm(gene~ns(t,df=10)+offset(l.o),family=quasipoisson())
@@ -520,5 +656,46 @@ detectSVGns <- function(Y, cso) {
   out$res <- res
   out$f <- f
   return(out)
+}
+
+
+segment_TSP <- function(endpoints) {
+  ncomp <- nrow(endpoints)/2
+
+  orientation <- expand.grid(replicate(ncomp, c(-1,1), simplify = FALSE))
+
+  paths <- matrix(0, nrow=0,ncol=ncomp)
+  for(i in 1:nrow(orientation)) {
+    vec <- 1:ncomp
+    vec[orientation[i,] == -1] <- -1*vec[orientation[i,] == -1]
+    paths <- rbind(paths, gtools::permutations(n=ncomp, r=ncomp, v=vec))
+  }
+
+  my.dist <- as.matrix(dist(endpoints))
+  costs <- apply(paths, 1, function(x) {
+    cost <- 0
+    for(j in 1:(ncomp - 1)) {
+      if(x[j] < 0) {
+        if(x[j+1] < 0) {
+          cost <- cost + my.dist[-2*x[j], -2*x[j+1]]
+        } else{
+          cost <- cost + my.dist[-2*x[j], 2*x[j+1]-1]
+        }
+      } else{
+        if(x[j+1] < 0) {
+          cost <- cost + my.dist[2*x[j]-1, -2*x[j+1]]
+        } else{
+          cost <- cost + my.dist[2*x[j]-1, 2*x[j+1]-1]
+        }
+      }
+    }
+    cost
+  })
+
+  colnames(paths) <- 1:ncomp
+  paths <- as.data.frame(paths)
+  paths$cost <- as.vector(costs)
+
+  return(paths)
 }
 
