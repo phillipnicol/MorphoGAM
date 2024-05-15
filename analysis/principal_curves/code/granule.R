@@ -1,56 +1,4 @@
 
-
-
-library(ggplot2)
-set.seed(1)
-n <- 10^4
-
-t <- runif(n=n, min=0, max=1)
-
-r <- 0.5 + 0.5*t
-xy <- data.frame(x=r*cos(10*t)+rnorm(n=n,sd=0.03),
-                 y=r*sin(10*t) + rnorm(n=n,sd=0.03))
-
-
-library(princurve)
-
-fit.ps <- principal_curve(as.matrix(xy))
-fit.ps$lambda <- fit.ps$lambda/max(fit.ps$lambda)
-
-fit.ps$s <- fit.ps$s[order(fit.ps$lambda),]
-df.line <- data.frame(x=fit.ps$s[,1], y=fit.ps$s[,2],
-                      color=sort(fit.ps$lambda))
-p1 <- data.frame(x=xy[,1], y=xy[,2]) |>
-  ggplot(aes(x=x,y=y)) + geom_point(col="grey", alpha=0.5) +
-  geom_path(data=df.line,aes(x=x,y=y,color=color),
-            linewidth=1) + scale_color_gradient(low="navyblue",
-                                                high="firebrick1") +
-  theme_bw() +
-  ggtitle("Principal Curve (Default)") +
-  guides(color="none")
-
-
-
-fit.ps <- principal_curve(as.matrix(xy),df=50)
-fit.ps$lambda <- fit.ps$lambda/max(fit.ps$lambda)
-
-fit.ps$s <- fit.ps$s[order(fit.ps$lambda),]
-df.line <- data.frame(x=fit.ps$s[,1], y=fit.ps$s[,2],
-                      color=sort(fit.ps$lambda))
-p2 <- data.frame(x=xy[,1], y=xy[,2]) |>
-  ggplot(aes(x=x,y=y)) + geom_point(col="grey", alpha=0.5) +
-  geom_path(data=df.line,aes(x=x,y=y,color=color),
-            linewidth=1) + scale_color_gradient(low="navyblue",
-                                                high="firebrick1") +
-  theme_bw() +
-  ggtitle("Principal Curve (df=50)") + guides(color="none")
-
-
-fit <- CurveFinder(as.matrix(xy),knn=6)
-
-p3 <- fit$curve.plot + ggtitle("CurveFinder (knn=6)") + guides(color="none")
-
-
 ## Granule
 
 xy <- readRDS("../../data/granule_slideseq.RDS")
@@ -169,8 +117,8 @@ p.3.2 <- data.frame(x=res2[,1], y=res2[,2]) |>
   ylab("r^2 (spearman) with coordinate")
 
 p.big <- ggarrange(ggarrange(p,p1,p2,nrow=1,ncol=3),
-  ggarrange(p.ps.1,p.ps.2,p.ps.3, nrow=1,ncol=3),
-  ggarrange(p.3.1,p.3.2,nrow=1,ncol=2),
-  nrow=3,ncol=1,heights=c(2,2,1.5))
+                   ggarrange(p.ps.1,p.ps.2,p.ps.3, nrow=1,ncol=3),
+                   ggarrange(p.3.1,p.3.2,nrow=1,ncol=2),
+                   nrow=3,ncol=1,heights=c(2,2,1.5))
 
-ggsave(p.big, file="plot.png", width=8, height=8, units="in")
+ggsave(p.big, file="../plots/granule.png", width=8, height=8, units="in")

@@ -60,7 +60,9 @@ gene <- rep(0, ncol(Y))
 G <- gam(gene~s(fit$t,k=10,bs="cr"), family=nb(), fit=FALSE)
 X <- G$X
 
-t <- fit$t
+Y <- spe@assays@data$counts[,which(spe$celltype == "CA3")]
+Y <- Y[,-outlier]
+t <- t2
 l.o <- log(colSums(Y))
 coef <- rep(0, nrow(Y))
 p.val <- rep(1,nrow(Y))

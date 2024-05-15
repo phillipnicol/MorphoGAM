@@ -2,7 +2,8 @@
 
 CurveFinder <- function(xy,
                        knn=5,
-                       prune.outlier=NULL) {
+                       prune.outlier=NULL,
+                       loop=FALSE) {
   xy.dist <- as.matrix(dist(xy))
 
   if(!is.null(prune.outlier)) {
@@ -21,8 +22,10 @@ CurveFinder <- function(xy,
   comp <- components(knng)
 
   if(comp$no > 5) {
-    stop("Graph has too many disconnected components. \n
-         Increase knn")
+    stop("Graph has too many disconnected components. Increase knn")
+  }
+  if(loop & comp$no > 1) {
+    stop("Graph has too many disconnected components. Increase knn.")
   }
 
   endpoints <- matrix(0, nrow=2*comp$no, ncol=2)
@@ -38,16 +41,22 @@ CurveFinder <- function(xy,
     k <- .Call(stats:::C_DoubleCentre, k)
     k <- - k / 2
 
-    e <- RSpectra::eigs_sym(k, 1, which = "LA",
-                            opts = list(retvec = TRUE))
+    if(loop) {
+      e <- RSpectra::eigs_sym(k, 2, which = "LA",
+                              opts = list(retvec = TRUE))
+      t <- (pi+atan2(e$vectors[,1], e$vectors[,2]))/(2*pi)
+    } else{
+      e <- RSpectra::eigs_sym(k, 1, which = "LA",
+                              opts = list(retvec = TRUE))
 
-    t.list[[c]] <- as.vector(e$vectors)
+      t.list[[c]] <- as.vector(e$vectors)
 
-    t.list[[c]] <- (t.list[[c]] - min(t.list[[c]]))/(max(t.list[[c]]) - min(t.list[[c]]))
-    t.list[[c]] <- t.list[[c]]*(sum(comp$membership == c)/length(comp$membership))
+      t.list[[c]] <- (t.list[[c]] - min(t.list[[c]]))/(max(t.list[[c]]) - min(t.list[[c]]))
+      t.list[[c]] <- t.list[[c]]*(sum(comp$membership == c)/length(comp$membership))
 
-    endpoints[2*c-1,] <- xy.sub[which.min(t.list[[c]]),]
-    endpoints[2*c,] <- xy.sub[which.max(t.list[[c]]),]
+      endpoints[2*c-1,] <- xy.sub[which.min(t.list[[c]]),]
+      endpoints[2*c,] <- xy.sub[which.max(t.list[[c]]),]
+    }
   }
 
   if(comp$no > 1) {
@@ -66,15 +75,20 @@ CurveFinder <- function(xy,
       }
       t.shift <- max(t)
     }
-  } else{
+  } else if(!loop){
     t <- as.vector(t.list[[1]])
   }
 
   knots <- round(min(100, 0.1*nrow(xy)))
-  fitx <- gam(xy[,1]~s(t,bs="cr",k=knots))
-  fity <- gam(xy[,2]~s(t,bs="cr",k=knots))
+  if(loop) {
+    fitx <- mgcv::gam(xy[,1]~s(t,bs="cc",k=knots))
+    fity <- mgcv::gam(xy[,2]~s(t,bs="cc",k=knots))
+  } else{
+    fitx <- mgcv::gam(xy[,1]~s(t,bs="cr",k=knots))
+    fity <- mgcv::gam(xy[,2]~s(t,bs="cr",k=knots))
+  }
 
-  t2 <- orthogonal_path(fitx,fity,t)
+  r <- orthogonal_path(fitx,fity,t)
 
   my.t <- seq(0,1,by=10^{-4})
   predx <- predict(fitx,newdata=list(t=my.t))
@@ -94,51 +108,46 @@ CurveFinder <- function(xy,
                                 high="firebrick1")
   p <- p + theme_bw()
 
-  xyt <- data.frame(x=xy[,1],y=xy[,2],t=t)
+  xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
+                    f1 = fitted(fitx),
+                    f2=fitted(fity))
 
-  p2 <- data.frame(x=xy[,1],y=xy[,2],color=t2) |>
+
+  p2 <- data.frame(x=xy[,1],y=xy[,2],color=t) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
-    scale_color_gradient2(low="blue", mid="grey", high="red")
+    scale_color_gradientn(values=c(0,0.5,1),
+                          colors=c("blue","grey90", "red"))+
+    theme_bw() +
+    ggtitle("Coordinate")
+
+  p3 <- data.frame(x=xy[,1],y=xy[,2],color=r) |>
+    ggplot(aes(x=x,y=y,color=color)) + geom_point() +
+    scale_color_gradientn(values=c(0,0.5,1),
+                          colors=c("blue","grey90", "red"))+
+    theme_bw() +
+    ggtitle("Curve residuals")
 
   out <- list()
   out$xyt <- xyt
   out$curve.plot <- p
-  out$t2 <- t2
-  out$p2 <- p2
+  out$coordinate.plot <- p2
+  out$residuals.plot <- p3
   return(out)
 }
 
 orthogonal_path <- function(fitx,fity, t) {
-  f2x <- gratia::derivatives(fitx,order=2,data=data.frame(t=t))
-  f2y <- gratia::derivatives(fity,order=2,data=data.frame(t=t))
-
+  f2x <- gratia::derivatives(fitx,order=1,data=data.frame(t=t))
+  f2y <- gratia::derivatives(fity,order=1,data=data.frame(t=t))
   t2 <- t
-  first.t <- order(t)[1]
-  e <- c(fitx$residuals[first.t], fity$residuals[first.t])
-  f2 <- c(f2x$.derivative[first.t], f2y$.derivative[first.t])
-  sign <- ifelse(sum(e*f2) > 0, 1, -1)
-  t2[first.t] <- sign*sqrt(sum(e^2))
-  f2.prev <- f2
-  for(i in order(t)[-1]) {
-    e <- c(fitx$residuals[i], fity$residuals[i])
-    f2 <- c(f2x$.derivative[i], f2y$.derivative[i])
 
-    #if(cosine(f2,f2.prev) > 0.5) {
-    # my.sign <- sign(sum(f2*e))
-    #} else if(cosine(f2,f2.prev) < -0.5) {
-    #  my.sign <- -sign(sum(f2*e))
-    #} else{
-    #  my.sign <- 0
-    #}
-    f2 <- sign(sum(f2*f2.prev))*f2
-    if(cosine(f2,f2.prev) < 0.3) {
-      print("HI")
-    }
-    my.sign <- sign(sum(f2*e))
-    t2[i] <- my.sign*sqrt(sum(e^2))
-    f2.prev <- f2
+  for(i in 1:length(t)) {
+    e <- c(fitx$residuals[i], fity$residuals[i])
+    Rf1 <- c(-f2y$.derivative[i], f2x$.derivative[i])
+    sign <- ifelse(sum(e*Rf1) > 0, 1, -1)
+    t2[i] <- sign*sqrt(sum(e^2))
   }
 
+  t2 <- (t2 - min(t2))/(max(t2) - min(t2))
   return(t2)
 }
 

@@ -18,7 +18,7 @@ xy <- spatialCoords(spe)[ixs,]
 
 df <- xy[-out$outlier,]
 
-kappa <- c(0.5, 1, 1.5, 2, 2.5, 3)
+kappa <- c(0.5, 0.75, 1, 1.25, 1.5, 1.75, 2)
 sigma <- seq(100, 1000, by=100)
 niter <- 100
 
@@ -83,27 +83,56 @@ for(i in 1:length(kappa)) {
 saveRDS(res, "../data/results.RDS")
 
 res <- readRDS("../data/results.RDS")
-
+res <- res[,,-4]
 library(reshape2)
 library(tidyverse)
-
+kappa <- c(0.5, 0.75, 1, 1.25, 1.5, 1.75, 2)
+sigma <- seq(100, 1000, by=100)
 df <- melt(res); colnames(df) <- c("kappa", "sigma", "method", "power")
-
 df$kappa <- paste("k = ", kappa[df$kappa])
 df$sigma <- sigma[df$sigma]
 
-df$method <- c("SPARK-X", "Projection", "nnSVG", "Project (ns)")[df$method]
+df$method <- c("SPARK-X", "Projection", "nnSVG")[df$method]
 
-p <- ggplot(data=df,aes(x=sigma, y=power, color=method)) +
+p.power <- ggplot(data=df,aes(x=sigma, y=power, color=method)) +
   geom_point() +
   geom_line() +
   facet_wrap(~kappa)+
   labs(color="Method")+
   xlab(expression(sigma)) + ylab("Power")+
-  theme_bw()
-p
+  theme_bw() + theme(legend.position = "top")
 
-ggsave("../plots/sim_power.png")
+
+## Prune outlier
+
+
+library(STexampleData)
+spe <- SlideSeqV2_mouseHPC()
+ixs <- which(spe$celltype == "CA3") #subset to CA3
+xy <- spatialCoords(spe)[ixs,]
+
+xy.dist <- as.matrix(dist(xy))
+nnk <- apply(xy.dist, 1, function(x) sort(x)[10])
+outlier <- which(nnk > 2*median(nnk))
+xy <- xy[-outlier,]
+
+fit <- CurveFinder(xy)
+
+p.curve <- fit$curve.plot + guides(color="none")+
+  xlab("") + ylab("") + ggtitle("Fitted curve")
+
+p.coord <- fit$coordinate.plot + guides(color="none") +
+  xlab("") + ylab("")
+
+p.resid <- fit$residuals.plot + guides(color="none") +
+  xlab("") + ylab("")
+
+p <- ggarrange(ggarrange(p.curve,p.coord,p.resid,nrow=1),
+          p.power, nrow=2,ncol=1,
+          heights=c(1,1.5))
+
+ggsave(p,filename="../plots/sim_power.png",
+       width=7,height=10)
 
 
 
