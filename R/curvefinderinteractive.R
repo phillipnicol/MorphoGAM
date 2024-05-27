@@ -1,24 +1,35 @@
 
+get.clicks <- function(xy) {
+  interactiveCurve(xy)
+}
 
+CurveFinderInteractive <- function(clicks, loop=FALSE) {
+  #my.clicks <- interactiveCurve(xy)
 
-CurveFinderInteractive <- function(xy) {
-  my.clicks <- interactiveCurve(xy)
-
-  t <- seq(0, 1, length.out=nrow(my.clicks))
-  fitx <- mgcv::gam(my.clicks[,1]~s(t,bs="cr"))
-  fity <- mgcv::gam(my.clicks[,2]~s(t,bs="cr"))
-
+  basis <- ifelse(loop, "cc", "cr")
+  print("BACK")
+  t <- seq(0, 1, length.out=nrow(clicks))
+  print("BACK")
+  fitx <- mgcv::gam(clicks[,1]~s(t,bs=basis,k=nrow(clicks)))
+  fity <- mgcv::gam(clicks[,2]~s(t,bs=basis,k=nrow(clicks)))
+  print("BACK")
   my.t <- seq(0,1,by=10^{-4})
+  print("BACK")
   predx <- predict(fitx,newdata=list(t=my.t))
   predy <- predict(fity,newdata=list(t=my.t))
+  print("BACK")
   ft <- data.frame(x=predx,y=predy)
 
-  proj <- project_to_curve(xy,s=ft)
-  t <- proj$lambda/max(proj$lambda)
+  print("BACK")
+  proj <- project_to_curve(xy,s=as.matrix(ft))
+  t <- as.numeric(proj$lambda/max(proj$lambda))
+  print(t)
+  print(xy)
 
-  fitx <- mgcv::gam(xy[,1]~s(t,bs="cr"))
-  fity <- mgcv::gam(xy[,2]~s(t,bs="cr"))
+  fitx <- mgcv::gam(xy[,1]~s(t,bs=basis,k=nrow(clicks)))
+  fity <- mgcv::gam(xy[,2]~s(t,bs=basis,k=nrow(clicks)))
 
+  print("BACK")
   r <- orthogonal_path(fitx,fity,t)
 
   df.new <- data.frame(x=xy[,1],
@@ -34,6 +45,7 @@ CurveFinderInteractive <- function(xy) {
                                 high="firebrick1")
   p <- p + theme_bw()
 
+  print("BACK")
   xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
                     f1 = fitted(fitx),
                     f2=fitted(fity))
