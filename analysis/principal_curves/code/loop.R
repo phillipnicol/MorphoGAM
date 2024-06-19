@@ -1,4 +1,8 @@
 meta <- read.csv("../../data/GL2_distal_colon_cell_type_and_locations_2023.08.11.csv")
+meta <- as.data.frame(meta)
+meta.sub <- meta |> filter(slice_full_name == "20220518_WT_dcol_slice_3") |>
+  filter(spatial_neighborhood_v1 == "Mucosa") |>
+  filter(leiden_combined_v2 == "Enterocyte")
 
 xy <- as.matrix(meta.sub[,c("x","y")])
 
@@ -78,4 +82,4 @@ p.big <- ggarrange(ggarrange(p,p1,p2,nrow=1,ncol=3),
                    ggarrange(p.ps.1,p.ps.2,p.ps.3, nrow=1,ncol=3),
                    nrow=3)
 
-ggsave(p.big, "../plots/loop.png")
+ggsave(p.big, filename="../plots/loop.png",width=8, height=8, units="in")

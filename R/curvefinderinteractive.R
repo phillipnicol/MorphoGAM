@@ -10,8 +10,8 @@ CurveFinderInteractive <- function(clicks, loop=FALSE) {
   print("BACK")
   t <- seq(0, 1, length.out=nrow(clicks))
   print("BACK")
-  fitx <- mgcv::gam(clicks[,1]~s(t,bs=basis,k=nrow(clicks)))
-  fity <- mgcv::gam(clicks[,2]~s(t,bs=basis,k=nrow(clicks)))
+  fitx <- mgcv::gam(clicks[,1]~s(t,bs=basis, k=nrow(clicks)))
+  fity <- mgcv::gam(clicks[,2]~s(t,bs=basis, k=nrow(clicks)))
   print("BACK")
   my.t <- seq(0,1,by=10^{-4})
   print("BACK")
@@ -26,8 +26,8 @@ CurveFinderInteractive <- function(clicks, loop=FALSE) {
   print(t)
   print(xy)
 
-  fitx <- mgcv::gam(xy[,1]~s(t,bs=basis,k=nrow(clicks)))
-  fity <- mgcv::gam(xy[,2]~s(t,bs=basis,k=nrow(clicks)))
+  fitx <- mgcv::gam(xy[,1]~s(t,bs=basis, k=nrow(clicks)))
+  fity <- mgcv::gam(xy[,2]~s(t,bs=basis, k=nrow(clicks)))
 
   print("BACK")
   r <- orthogonal_path(fitx,fity,t)
