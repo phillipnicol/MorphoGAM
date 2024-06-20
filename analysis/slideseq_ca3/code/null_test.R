@@ -1,12 +1,8 @@
 
 library(STexampleData)
-library(dimRed)
-library(igraph)
 library(tidyverse)
 library(splines)
 library(mgcv)
-
-source("../../../R/curvesearcher.R")
 
 spe <- SlideSeqV2_mouseHPC()
 
@@ -14,8 +10,6 @@ spe <- SlideSeqV2_mouseHPC()
 ixs <- which(spe$celltype == "CA3") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
-
-#out <- CurveSearcher(xy,knn=5) Use this to fit the curve
 
 Y.sub <- counts(spe)[,ixs]
 

@@ -1,4 +1,4 @@
-load("../data/curve_object.rda")
+load("../data/ca3_curve.RData")
 
 library(STexampleData)
 library(MASS)
@@ -18,7 +18,7 @@ xy <- spatialCoords(spe)[ixs,]
 
 df <- xy[-out$outlier,]
 
-kappa <- c(0.5, 0.75, 1, 1.25, 1.5, 1.75, 2)
+kappa <- seq(0.5, 1.5, length.out=6)
 sigma <- seq(100, 1000, by=100)
 niter <- 100
 
