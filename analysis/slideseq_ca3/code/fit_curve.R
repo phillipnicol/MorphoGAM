@@ -2,85 +2,128 @@
 
 library(STexampleData)
 
-spe <- SlideSeqV2_mouseHPC()
-spe <- spe[,!is.na(spe$celltype)]
-
-for(ct in unique(spe$celltype)) {
-  print(ct)
-  ixs <- which(spe$celltype == ct)
-
-  if(length(ixs) < 50) {
-    next
-  }
-
-  xy <- spatialCoords(spe)[ixs,]
-
-  fit <- CurveSearcher.cv(xy,nfolds=10)
-
-  p <- fit$plot + ggtitle(paste0(ct, " ", fit$Rhat))
-  ggsave(p, filename=paste0("../plots/", ct, "curve.png"))
-}
-
+spe <- STexampleData::SlideSeqV2_mouseHPC()
 
 ixs <- which(spe$celltype == "CA3") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
 Y <- counts(spe)[,ixs]
+
 xy.dist <- as.matrix(dist(xy))
+knn <- 20
+prune.outlier <- 3
+nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+outlier <- which(nnk > (prune.outlier)*median(nnk))
 
-nnk <- apply(xy.dist, 1, function(x) sort(x)[3])
-outlier <- which(nnk > 2*median(nnk))
+xy <- xy[-outlier,]; Y <- Y[,-outlier]
 
-if(length(outlier) > 0) {
-  xy.new <- xy[-outlier,]
-} else {
-  xy.new <- xy
-}
+fit <- CurveFinder(xy)
 
-Y <- Y[,-outlier]
-
-
-knng <- dimRed:::makeKNNgraph(x = xy.new,
-                              k = knn,
-                              eps = 0)
-
-
-comp <- components(knng)
-xy <- xy.new[comp$membership == 1,]
-Y <- Y[,comp$membership == 1]
-
-fit <- CurveSearcher(xy,knn=5,cutoff=10)
-
-my.svg <- sparkx(count_in=Y,locus_in =xy)
-
-p.vals <- my.svg$res_mtest |> as.data.frame() |>
-  arrange(adjustedPval)
-
-gene <- rep(0, ncol(Y))
-G <- gam(gene~s(fit$t,k=10,bs="cr"), family=nb(), fit=FALSE)
-X <- G$X
-
-Y <- spe@assays@data$counts[,which(spe$celltype == "CA3")]
-Y <- Y[,-outlier]
-t <- t2
 l.o <- log(colSums(Y))
 coef <- rep(0, nrow(Y))
 p.val <- rep(1,nrow(Y))
+peak <- coef
+range <- coef
 nz <- apply(Y, 1, function(x) sum(x != 0))
-f <- matrix(0,nrow=nrow(Y), ncol=length(t))
+t <- fit$xyt$t
+#f <- matrix(0,nrow=nrow(Y), ncol=length(t))
 for(i in 1:nrow(Y)) {
-  if(nz[i] < 50) {
+  if(nz[i] < 10) {
     next
   }
   print(i)
-  my.fit <- glm(Y[i,]~t+offset(l.o), family=quasipoisson())
-  p.val[i] <- summary(my.fit)$coefficients[2,4]
-  coef[i] <- summary(my.fit)$coefficients[2,1]
+  fit1 <- mgcv::gam(Y[i,] ~ s(t,bs="cr") + offset(l.o),family=nb(), H=diag(10))
+  print(fit1$sig2)
+
+  se_beta <- sqrt(diag(fit1$rV %*% t(fit1$rV))[-1])
+
+  #Shrink
+  my.ash <- ashr::ash(fit1$coefficients[-1], se_beta)
+  beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
+                       2,
+                       median)
+
+  mat <- as.matrix(mgcv::predict.gam(fit1, type = "lpmatrix")[,-1])
+  fx1 <- as.vector(mat %*% beta.shrink)
+
+  #fx.t[i,] <- fx1
+  #fx.r[i,] <- fx2
+
+  peak[i] <- max(fx1)
+  p.val[i] <- summary(fit1)$s.pv
+  range[i] <- max(exp(fit1$coefficients[1] + fx1)) - min(exp(fit1$coefficients[1] + fx1))
 }
 
-df <- data.frame(p.vals=p.val, slope=coef, spark_rank = match(rownames(Y),rownames(p.vals)))
-rownames(df) <- rownames(Y)
+top5peak <- order(peak, decreasing=TRUE)[1:5]
+expr <- t(Y[top5peak,]) |>
+  as.data.frame() |>
+  mutate(t=fit$xyt$t) |>
+  pivot_longer(cols=-c(t))
 
-df |> filter(p.vals < 10^{-6}) |> arrange(desc(slope)) |> head(n=10)
-df |> filter(p.vals < 10^{-6}) |> arrange(slope) |> head(n=10)
 
+ppeak <- ggplot(data=expr,aes(x=t,y=value)) +
+  geom_point(size=0.5) +
+  facet_wrap(~name, nrow=1, scales="free_y") +
+  ylab("count") + theme_bw() +
+  ggtitle("Log-scale")
+
+
+top5range <- order(range, decreasing=TRUE)[1:5]
+expr <- t(Y[top5range,]) |>
+  as.data.frame() |>
+  mutate(t=fit$xyt$t) |>
+  pivot_longer(cols=-c(t))
+
+
+prange <- ggplot(data=expr,aes(x=t,y=value)) +
+  geom_point(size=0.5) +
+  facet_wrap(~name, nrow=1, scales="free_y") +
+  xlab("t") + ylab("count") + theme_bw() +
+  ggtitle("Response-scale")
+
+library(ggpubr)
+p <- ggarrange(ppeak, prange, nrow=2)
+
+
+
+## Rgs14
+i <- which(rownames(Y) == "Rgs14")
+fit1 <- mgcv::gam(Y[i,] ~ s(t,bs="cr") + offset(l.o),family=nb(), H=diag(10))
+print(fit1$sig2)
+
+se_beta <- sqrt(diag(fit1$rV %*% t(fit1$rV))[-1])
+
+#Shrink
+my.ash <- ashr::ash(fit1$coefficients[-1], se_beta)
+beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
+                     2,
+                     median)
+
+mat <- as.matrix(mgcv::predict.gam(fit1, type = "lpmatrix")[,-1])
+fx1 <- as.vector(mat %*% beta.shrink)
+
+prgs14 <- data.frame(x=fit$xyt$t, y=fx1) |> ggplot(aes(x=x,y=y)) +
+  geom_line() + theme_bw() + ggtitle("Rgs14") +
+  xlab("x") + ylab("h_g(t)")
+
+#Cpne9
+i <- which(rownames(Y) == "Cpne9")
+fit1 <- mgcv::gam(Y[i,] ~ s(t,bs="cr") + offset(l.o),family=nb(), H=diag(10))
+print(fit1$sig2)
+
+se_beta <- sqrt(diag(fit1$rV %*% t(fit1$rV))[-1])
+
+#Shrink
+my.ash <- ashr::ash(fit1$coefficients[-1], se_beta)
+beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
+                     2,
+                     median)
+
+mat <- as.matrix(mgcv::predict.gam(fit1, type = "lpmatrix")[,-1])
+fx1 <- as.vector(mat %*% beta.shrink)
+
+pcpne9 <- data.frame(x=fit$xyt$t, y=fx1) |> ggplot(aes(x=x,y=y)) +
+  geom_line() + theme_bw() + ggtitle("Cpne9") +
+  xlab("x") + ylab("h_g(t)")
+
+p.cable <- ggarrange(prgs14, pcpne9,nrow=1)
