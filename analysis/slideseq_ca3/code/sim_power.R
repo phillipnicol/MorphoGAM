@@ -1,4 +1,5 @@
 load("../data/ca3_curve.RData")
+out <- fit
 
 library(STexampleData)
 library(MASS)
@@ -9,14 +10,24 @@ library(splines)
 
 set.seed(1)
 
-spe <- SlideSeqV2_mouseHPC()
 
+spe <- STexampleData::SlideSeqV2_mouseHPC()
 
 ixs <- which(spe$celltype == "CA3") #subset to CA3
 
 xy <- spatialCoords(spe)[ixs,]
+Y <- counts(spe)[,ixs]
 
-df <- xy[-out$outlier,]
+xy.dist <- as.matrix(dist(xy))
+knn <- 20
+prune.outlier <- 3
+nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+outlier <- which(nnk > (prune.outlier)*median(nnk))
+
+df <- xy[-outlier,]
+
+
+
 
 kappa <- seq(0.5, 1.5, length.out=6)
 sigma <- seq(100, 1000, by=100)
@@ -28,9 +39,10 @@ mu <- 1
 theta <- 5
 for(i in 1:length(kappa)) {
   for(j in 1:length(sigma)) {
+    print(i); print(j); 
     pow1 <- 0; pow2 <- 0; pow3 <- 0; pow4 <- 0
     for(k in 1:niter) {
-      y <- rnegbin(n = nrow(df), mu=(exp(-sigma[j]*(out$t - 0.5)^2))*kappa[i] + 1,
+      y <- rnegbin(n = nrow(df), mu=(exp(-sigma[j]*(out$xyt$t - 0.5)^2))*kappa[i] + 1,
                    theta=theta)
       #y <- rnegbin(n = nrow(df), mu=2*sin(40*out$t)+2, theta=theta)
       y <- matrix(y,nrow=1)
@@ -40,13 +52,9 @@ for(i in 1:length(kappa)) {
         pow1 <- pow1 + 1
       }
 
-      X.model <- gam(y[1,]~s(out$t,k=10,bs="cr"),
-                     family=nb(),
-                     fit=FALSE)$X[,-1]
-      lambda <- createPenalty(X.model)
-      H.pen <- lambda*diag(10); H.pen[1,1] <- 0
-      fit <- gam(y[1,]~s(out$t,k=10,bs="cr"),family=nb(),
-                 H=H.pen)
+      
+      fit <- gam(y[1,]~s(out$xyt$t,k=10,bs="cr"),family=nb(),
+                 H=diag(10))
       if(summary(fit)$s.pv < 0.05/20000) {
         pow2 <- pow2 + 1
       }
@@ -57,21 +65,21 @@ for(i in 1:length(kappa)) {
         pow3 <- pow3 + 1
       }
 
-      fit4 <- glm(y[1,] ~ ns(out$t,df=10), family=quasipoisson())
-      fx <- fit4$linear.predictors - fit4$coefficients[1]
-      fx <- fx - mean(fx)
-      Sigma <- vcov(fit4)[-1,-1]
-      Z <- t(rmvnorm(n=10^4,sigma=Sigma))
-      X <- model.matrix(fit4)
-      fx.null <- X[,-1] %*% Z
-      fx.null <- sweep(fx.null, MARGIN=2,
-                       STATS=colMeans(fx.null), FUN = "-")
-      peaks <- apply(fx.null, 2, max)
-      p.val <- (sum(peaks > max(fx)) + 1)/(10^4 + 1)
+      #fit4 <- glm(y[1,] ~ ns(out$t,df=10), family=quasipoisson())
+      #fx <- fit4$linear.predictors - fit4$coefficients[1]
+      #fx <- fx - mean(fx)
+      #Sigma <- vcov(fit4)[-1,-1]
+      #Z <- t(rmvnorm(n=10^4,sigma=Sigma))
+      #X <- model.matrix(fit4)
+      #fx.null <- X[,-1] %*% Z
+      #fx.null <- sweep(fx.null, MARGIN=2,
+      #                 STATS=colMeans(fx.null), FUN = "-")
+      #peaks <- apply(fx.null, 2, max)
+      #p.val <- (sum(peaks > max(fx)) + 1)/(10^4 + 1)
 
-      if(p.val < 0.05/20000) {
-        pow4 <- pow4+1
-      }
+      #if(p.val < 0.05/20000) {
+      #  pow4 <- pow4+1
+      #}
     }
     res[i,j,1] <- pow1/niter
     res[i,j,2] <- pow2/niter
