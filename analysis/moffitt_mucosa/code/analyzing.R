@@ -123,6 +123,12 @@ for(i in 1:nrow(Y.sub)) {
   radial.p[i] <- summary(fit1)$s.pv[2]
 }
 
+results_df <- data.frame(angle=angle, angle.p=angle.p ,radial=radial, radial.p=radial.p,
+                         angle.response=angle.response, radial.response=radial.response)
+rownames(results_df) <- rownames(Y.sub)
+
+saveRDS(results_df, file="../data/loop_svg.RDS")
+
 nnsvg_res <- readRDS("../data/nnSVG_results.RDS")
 #nnsvg_rank <- nnsvg_res$rank
 p.vals <- spark$adjustedPval

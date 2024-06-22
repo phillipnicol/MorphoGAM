@@ -56,4 +56,3 @@ p <- data.frame(x=cutoff, y=t1e) |>
 
 ggsave(filename="../plots/type_1_error.png", width=6.1, height=4.85, units="in")
 
-

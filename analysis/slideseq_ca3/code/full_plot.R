@@ -1,5 +1,11 @@
 
 
+
+results_df <- readRDS("../data/ca3_svg.RDS")
+
+peak <- results_df$peak; range <- results_df$range
+
+
 library(STexampleData)
 
 spe <- STexampleData::SlideSeqV2_mouseHPC()
@@ -9,57 +15,11 @@ ixs <- which(spe$celltype == "CA3") #subset to CA3
 xy <- spatialCoords(spe)[ixs,]
 Y <- counts(spe)[,ixs]
 
-xy.dist <- as.matrix(dist(xy))
-knn <- 20
-prune.outlier <- 3
-nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
-outlier <- which(nnk > (prune.outlier)*median(nnk))
-
-xy <- xy[-outlier,]; Y <- Y[,-outlier]
-
-fit <- CurveFinder(xy)
-
-l.o <- log(colSums(Y))
-coef <- rep(0, nrow(Y))
-p.val <- rep(1,nrow(Y))
-peak <- coef
-range <- coef
-nz <- apply(Y, 1, function(x) sum(x != 0))
-t <- fit$xyt$t
-#f <- matrix(0,nrow=nrow(Y), ncol=length(t))
-for(i in 1:nrow(Y)) {
-  if(nz[i] < 10) {
-    next
-  }
-  print(i)
-  fit1 <- mgcv::gam(Y[i,] ~ s(t,bs="cr") + offset(l.o),family=nb(), H=diag(10))
-
-  se_beta <- sqrt(diag(fit1$rV %*% t(fit1$rV))[-1])
-
-  #Shrink
-  my.ash <- ashr::ash(fit1$coefficients[-1], se_beta)
-  beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
-                       2,
-                       median)
-
-  mat <- as.matrix(mgcv::predict.gam(fit1, type = "lpmatrix")[,-1])
-  fx1 <- as.vector(mat %*% beta.shrink)
-
-  #fx.t[i,] <- fx1
-  #fx.r[i,] <- fx2
-
-  peak[i] <- max(fx1)
-  p.val[i] <- summary(fit1)$s.pv
-  range[i] <- max(exp(fit1$coefficients[1] + fx1)) - min(exp(fit1$coefficients[1] + fx1))
-}
-
-results_df <- data.frame(p.val = p.val, peak=peak, range=range)
-rownames(results_df) <- rownames(Y)
-
-saveRDS(results_df, file="../data/ca3_svg.RDS")
-
-
 Y <- as.matrix(Y)
+
+load("../data/ca3_curve.RData")
+
+
 top5peak <- order(peak, decreasing=TRUE)[1:5]
 expr <- t(Y[top5peak,]) |>
   as.data.frame() |>
@@ -147,5 +107,36 @@ pcpne9 <- data.frame(x=fit$xyt$t, y=Y[i,]/exp(l.o)) |>
   ggtitle("Cpne9")
 
 p.cable <- ggarrange(pgsr14, pcpne9,nrow=1)
-ggsave(p.cable, filename="../plots/cable_genes.png",
-       width=7.4, height=5.33, units="in")
+
+p.curve <- fit$curve.plot
+
+
+
+res <- readRDS("../data/results.RDS")
+res <- res[,,-4]
+library(reshape2)
+library(tidyverse)
+kappa <- c(0.5, 0.75, 1, 1.25, 1.5, 1.75, 2)
+sigma <- seq(100, 1000, by=100)
+df <- melt(res); colnames(df) <- c("kappa", "sigma", "method", "power")
+df$kappa <- paste("k = ", kappa[df$kappa])
+df$sigma <- sigma[df$sigma]
+
+df$method <- c("SPARK-X", "Projection", "nnSVG")[df$method]
+
+p.power <- ggplot(data=df,aes(x=sigma, y=power, color=method)) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(~kappa)+
+  labs(color="Method")+
+  xlab(expression(sigma)) + ylab("Power")+
+  theme_bw() + theme(legend.position = "top")
+
+
+p.full <- ggarrange(ggarrange(p.curve, pgsr14, pcpne9, nrow=1, ncol=3),
+          p,
+          p.power,
+          nrow=3,
+          heights=c(1.5, 2, 2))
+ggsave(p.full, filename="../plots/ca3_full_plot.png",
+       width=9.11, height=11.7, units="in")
