@@ -129,21 +129,14 @@ rownames(results_df) <- rownames(Y.sub)
 
 saveRDS(results_df, file="../data/loop_svg.RDS")
 
+
+results_df <- readRDS("../data/loop_svg.RDS")
 nnsvg_res <- readRDS("../data/nnSVG_results.RDS")
+
+angle <- results_df$angle
+radial.response <- results_df$radial.response
 #nnsvg_rank <- nnsvg_res$rank
 p.vals <- spark$adjustedPval
-
-valid_indices <- which(angle > log(2))
-
-# Get the values of angle.response at these indices
-valid_responses <- angle.response[valid_indices]
-
-# Get the order of these values in decreasing order
-decreasing_order <- order(valid_responses, decreasing = TRUE)
-
-# Final result: indices in the original vector, sorted by decreasing angle.response
-result <- valid_indices[decreasing_order]
-
 
 rownames(Y.sub) <- old.rownames
 top5 <- order(angle, decreasing=TRUE)[1:5]
@@ -162,7 +155,8 @@ expr <- t(Y.sub[top5,]) |>
   mutate(name = fct_inorder(name), type="angle")
 
 p1 <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_point() +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  scale_y_continuous(trans="log1p") +
   facet_wrap(~name, ncol=1, scales="free_y")+
   xlab("t") + theme_bw() +  ylab("Count")
 
@@ -182,7 +176,7 @@ expr <- t(Y.sub[top5,]) |>
 
 
 p2 <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_point() +
+  geom_jitter(width=0,height=0.1,size=0.5) +
   facet_wrap(~name, ncol=1, scales="free_y") +
   xlab("r") + theme_bw() + ylab("Count")
 
@@ -198,4 +192,60 @@ ggsave(ggarrange(p.circ,p.resid,p1,p2,ncol=2,nrow=2,
        filename="../plots/circle_genes.png",
        width=6, height=12)
 
+
+
+
+
+
+
+### Also do angular range and radial peak
+
+
+angle <- results_df$angle
+radial.peak <- results_df$radial
+angle.response <- results_df$angle.response
+#nnsvg_rank <- nnsvg_res$rank
+p.vals <- spark$adjustedPval
+
+rownames(Y.sub) <- old.rownames
+top5 <- order(angle.response, decreasing=TRUE)[1:5]
+#top5 <- result[1:5]
+for(i in top5) {
+  spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
+  nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
+  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
+                              "nnSVG rank =", nnsvg_rank)
+}
+
+expr <- t(Y.sub[top5,]) |>
+  as.data.frame() |>
+  mutate(t=fit$xyt$t) |>
+  pivot_longer(cols=-c(t)) |>
+  mutate(name = fct_inorder(name), type="angle")
+
+p1 <- ggplot(data=expr,aes(x=t,y=value)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  facet_wrap(~name, ncol=1, scales="free_y")+
+  xlab("t") + theme_bw() +  ylab("Count")
+
+top5 <- order(radial.peak, decreasing=TRUE)[1:5]
+for(i in top5) {
+  spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
+  nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
+  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
+                              "nnSVG rank =", nnsvg_rank)
+}
+
+expr <- t(Y.sub[top5,]) |>
+  as.data.frame() |>
+  mutate(t=fit$xyt$r) |>
+  pivot_longer(cols=-c(t)) |>
+  mutate(name = fct_inorder(name), type="radial")
+
+
+p2 <- ggplot(data=expr,aes(x=t,y=value)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  scale_y_continuous(trans="log1p") +
+  facet_wrap(~name, ncol=1, scales="free_y") +
+  xlab("r") + theme_bw() + ylab("Count")
 

@@ -33,13 +33,14 @@ kappa <- seq(0.5, 1.5, length.out=6)
 sigma <- seq(100, 1000, by=100)
 niter <- 100
 
-res <- array(0, dim=c(length(kappa), length(sigma),4))
+res <- array(0, dim=c(length(kappa), length(sigma),4)) #For power
+loc <- array(0, dim=c(length(kappa), length(sigma),niter,2)) #For loc
 
 mu <- 1
 theta <- 5
 for(i in 1:length(kappa)) {
   for(j in 1:length(sigma)) {
-    print(i); print(j); 
+    print(i); print(j);
     pow1 <- 0; pow2 <- 0; pow3 <- 0; pow4 <- 0
     for(k in 1:niter) {
       y <- rnegbin(n = nrow(df), mu=(exp(-sigma[j]*(out$xyt$t - 0.5)^2))*kappa[i] + 1,
@@ -52,12 +53,17 @@ for(i in 1:length(kappa)) {
         pow1 <- pow1 + 1
       }
 
-      
+
       fit <- gam(y[1,]~s(out$xyt$t,k=10,bs="cr"),family=nb(),
                  H=diag(10))
       if(summary(fit)$s.pv < 0.05/20000) {
         pow2 <- pow2 + 1
       }
+      loc[i,j,k,1] <- out$xyt$t[which.max(fitted(fit))]
+
+      fit2 <- gam(y[1,] ~ s(out$xyt$x, out$xyt$y), family=nb())
+      loc[i,j,k,2] <- out$xyt$t[which.max(fitted(fit2))]
+
 
       fit3 <- nnSVG(input=log(y+1), spatial_coords = df, verbose=TRUE,
                     order="Sum_coords")
@@ -89,6 +95,7 @@ for(i in 1:length(kappa)) {
 }
 
 saveRDS(res, "../data/results.RDS")
+saveRDS(loc, "../data/localization.RDS")
 
 res <- readRDS("../data/results.RDS")
 res <- res[,,-4]
