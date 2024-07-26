@@ -123,6 +123,7 @@ p.3.2 <- data.frame(x=res2[,1], y=res2[,2]) |>
 p.big <- ggarrange(ggarrange(p,p1,p2,nrow=1,ncol=3),
                    ggarrange(p.ps.1,p.ps.2,p.ps.3, nrow=1,ncol=3),
                    ggarrange(p.3.1,p.3.2,nrow=1,ncol=2),
-                   nrow=3,ncol=1,heights=c(2,2,1.5))
+                   nrow=3,ncol=1,heights=c(2,2,1.5),
+                   labels=c("a","b","c"))
 
 ggsave(p.big, file="../plots/granule.png", width=8, height=8, units="in")

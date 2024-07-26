@@ -40,7 +40,7 @@ expr <- t(Y[top5peak,]) |>
 ppeak <- ggplot(data=expr,aes(x=t,y=value)) +
   geom_jitter(width=0,height=0.1,size=0.5) +
   facet_wrap(~name, nrow=1, scales="free_y") +
-  ylab("count") + theme_bw() +
+  ylab("Count") + theme_bw() +
   scale_y_continuous(trans="log1p") +
   ggtitle("Peak")
 
@@ -56,7 +56,7 @@ expr <- t(Y[top5range,]) |>
 prange <- ggplot(data=expr,aes(x=t,y=value)) +
   geom_jitter(width=0,height=0.1,size=0.5) +
   facet_wrap(~name, nrow=1, scales="free_y") +
-  xlab("t") + ylab("count") + theme_bw() +
+  xlab("t") + ylab("Count") + theme_bw() +
   ggtitle("Range")
 
 library(ggpubr)
@@ -87,7 +87,7 @@ pgsr14 <- data.frame(x=fit$xyt$t, y=Y[i,]/exp(l.o)) |>
   geom_line(aes(y=exp(fit1$coefficients[1] + fx1)), color="red") +
   scale_y_continuous(trans="log1p") +
   theme_bw() +
-  ylab("Count") +
+  ylab("Depth-normalized count") +
   xlab("t") +
   ggtitle("Rgs14")
 
@@ -113,7 +113,7 @@ pcpne9 <- data.frame(x=fit$xyt$t, y=Y[i,]/exp(l.o)) |>
   geom_line(aes(y=exp(fit1$coefficients[1] + fx1.2)), color="red") +
   scale_y_continuous(trans="log1p") +
   theme_bw() +
-  ylab("Count") +
+  ylab("Depth-normalized count") +
   xlab("t") +
   ggtitle("Cpne9")
 
@@ -144,12 +144,27 @@ p.power <- ggplot(data=df,aes(x=sigma, y=power, color=method)) +
   theme_bw() + theme(legend.position = "top")
 
 
+p.curve <- p.curve + ggtitle("CA3 cells")
 p.full <- ggarrange(ggarrange(p.curve, pgsr14, pcpne9, nrow=1, ncol=3,
                               labels=c("a","b","")),
           p,
           p.power,
           nrow=3,
           heights=c(1.5, 2, 2),
-          labels=c("","d", "e"))
+          labels=c("","c", "d"))
 ggsave(p.full, filename="../plots/ca3_full_plot.png",
        width=9.11, height=11.7, units="in")
+
+
+
+
+
+## Supplement localization
+
+df <- reshape2::melt(v) |>
+  group_by(Var1, Var2, Var4) |>
+  summarise(mean=mean(value))
+
+p <- ggplot(data=df,aes(x=Var2, y=mean, color=Var4)) +
+  geom_point() +
+  facet_wrap(~Var1)

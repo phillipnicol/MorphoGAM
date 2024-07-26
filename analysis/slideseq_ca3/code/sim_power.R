@@ -59,10 +59,16 @@ for(i in 1:length(kappa)) {
       if(summary(fit)$s.pv < 0.05/20000) {
         pow2 <- pow2 + 1
       }
-      loc[i,j,k,1] <- out$xyt$t[which.max(fitted(fit))]
+      x.true <- out$xyt$x[which.min((out$xyt$t - 0.5)^2)]
+      y.true <- out$xyt$y[which.min((out$xyt$t - 0.5)^2)]
+      x.pred <- out$xyt$x[which.max(fitted(fit))]
+      y.pred <- out$xyt$y[which.max(fitted(fit))]
+      loc[i,j,k,1] <- sqrt((x.true-x.pred)^2 + (y.true-y.pred)^2)
 
       fit2 <- gam(y[1,] ~ s(out$xyt$x, out$xyt$y), family=nb())
-      loc[i,j,k,2] <- out$xyt$t[which.max(fitted(fit2))]
+      x.pred <- out$xyt$x[which.max(fitted(fit2))]
+      y.pred <- out$xyt$y[which.max(fitted(fit2))]
+      loc[i,j,k,2] <- sqrt((x.true-x.pred)^2 + (y.true-y.pred)^2)
 
 
       fit3 <- nnSVG(input=log(y+1), spatial_coords = df, verbose=TRUE,
