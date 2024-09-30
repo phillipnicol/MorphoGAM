@@ -58,7 +58,7 @@ rownames(results_df) <- rownames(Y)
 
 saveRDS(results_df, file="../data/ca3_svg.RDS")
 
-
+peak <- res$peak; range <- res$range
 Y <- as.matrix(Y)
 top5peak <- order(peak, decreasing=TRUE)[1:5]
 expr <- t(Y[top5peak,]) |>

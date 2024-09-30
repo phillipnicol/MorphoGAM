@@ -19,7 +19,7 @@ CurveFinder <- function(xy,
                                 k = knn,
                                 eps = 0)
 
-  comp <- components(knng)
+  comp <- igraph::components(knng)
 
   if(comp$no > 5) {
     stop("Graph has too many disconnected components. Increase knn")
@@ -105,7 +105,8 @@ CurveFinder <- function(xy,
   p <- p + geom_path(data=df.line,aes(x=x,y=y,color=color),
                      linewidth=1)
   p <- p + scale_color_gradient(low="navyblue",
-                                high="firebrick1")
+                                high="firebrick1") +
+    labs(color="t")
   p <- p + theme_bw()
 
   xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
@@ -116,16 +117,18 @@ CurveFinder <- function(xy,
   p2 <- data.frame(x=xy[,1],y=xy[,2],color=t) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
     scale_color_gradientn(values=c(0,0.5,1),
-                          colors=c("blue","grey90", "red"))+
+                          colors=c("navyblue","grey90", "firebrick1"))+
     theme_bw() +
-    ggtitle("Coordinate")
+    ggtitle("First Coordinate") +
+    labs(color="t")
 
   p3 <- data.frame(x=xy[,1],y=xy[,2],color=r) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
     scale_color_gradientn(values=c(0,0.5,1),
-                          colors=c("blue","grey90", "red"))+
+                          colors=c("navyblue","grey90", "firebrick1"))+
     theme_bw() +
-    ggtitle("Curve residuals")
+    ggtitle("Second Coordinate") +
+    labs(color="r")
 
   out <- list()
   out$xyt <- xyt

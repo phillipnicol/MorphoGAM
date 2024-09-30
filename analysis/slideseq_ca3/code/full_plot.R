@@ -89,6 +89,7 @@ pgsr14 <- data.frame(x=fit$xyt$t, y=Y[i,]/exp(l.o)) |>
   theme_bw() +
   ylab("Depth-normalized count") +
   xlab("t") +
+  #ylim(0,0.002) +
   ggtitle("Rgs14")
 
 #Cpne9

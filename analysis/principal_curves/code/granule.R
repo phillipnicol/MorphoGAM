@@ -11,13 +11,18 @@ xy <- xy[-outlier,]
 
 load("../data/granule_ground_truth.Rda")
 
-fit <- CurveFinder(xy,knn=5)
+fit1 <- CurveFinder(xy,knn=5)
 
-p <- xy |> ggplot(aes(x=x,y=y)) + geom_point(size=0.5) +
-  theme_bw() +
-  ggtitle("Granule")
-p1 <- fit$curve.plot + guides(color="none") + ggtitle("Path (knn=5)")
-p2 <- fit$coordinate.plot +guides(color="none")
+fit2 <- CurveFinder(xy,knn=10)
+
+fit3 <- CurveFinder(xy,knn=30)
+
+p1 <- fit1$curve.plot + guides(color="none") + ggtitle("MorphoGAM (knn=5)")
+
+p2 <- fit2$curve.plot + guides(color="none") + ggtitle("MorphoGAM (knn=10)")
+
+p3 <- fit3$curve.plot + guides(color="none") + ggtitle("MorphoGAM (knn=30)")
+
 
 library(princurve)
 
@@ -110,7 +115,7 @@ fit_granule <- CurveFinder(as.matrix(xy),knn=6,
 p.3.1 <- data.frame(x=res[,1], y=res[,2]) |>
   ggplot(aes(x=x,y=y)) +
   geom_point() + geom_line() +
-  theme_bw() + xlab("knn") + ylab("r^2 (spearman) with coordinate") +
+  theme_bw() + xlab("knn") + ylab(expression(r^2 ~ "with truth"))+
   ylim(0.5,1)
 
 p.3.2 <- data.frame(x=res2[,1], y=res2[,2]) |>
@@ -120,10 +125,25 @@ p.3.2 <- data.frame(x=res2[,1], y=res2[,2]) |>
   ylab("") +
   ylim(0.5,1)
 
-p.big <- ggarrange(ggarrange(p,p1,p2,nrow=1,ncol=3),
-                   ggarrange(p.ps.1,p.ps.2,p.ps.3, nrow=1,ncol=3),
-                   ggarrange(p.3.1,p.3.2,nrow=1,ncol=2),
-                   nrow=3,ncol=1,heights=c(2,2,1.5),
-                   labels=c("a","b","c"))
+p.big <- ggarrange(ggarrange(p.ps.1,p.ps.2,p.ps.3, nrow=1,ncol=3,
+                             labels=c("a","b","c")),
+                   ggarrange(p1,p2,p3,nrow=1,ncol=3,
+                             labels=c("d","e","f")),
+                   ggarrange(p.3.1,p.3.2,nrow=1,ncol=2,
+                             labels=c("g","h")),
+                   nrow=3,ncol=1,heights=c(2,2,1.5))
 
-ggsave(p.big, file="../plots/granule.png", width=8, height=8, units="in")
+ggsave(p.big, file="../plots/granule.png", units="in",
+       width=9.62, height=8.36)
+
+
+
+p.gt <- ground_truth$curve.plot + guides(color="none") + ggtitle("Hand-drawn ground truth curve")
+ggsave(p.gt, filename="../plots/hand_drawn_curve.png",
+       width=10.1, height=8.25, units="in")
+
+p.firstcoord <- fit1$coordinate.plot
+
+ggsave(p.firstcoord, filename="../plots/first_morpho_coordinate.png",
+       width=10.1, height=8.25, units="in")
+

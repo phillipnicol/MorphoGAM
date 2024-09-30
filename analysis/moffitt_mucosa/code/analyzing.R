@@ -139,7 +139,7 @@ radial.response <- results_df$radial.response
 p.vals <- spark$adjustedPval
 
 rownames(Y.sub) <- old.rownames
-top5 <- order(angle, decreasing=TRUE)[1:5]
+top5 <- order(angle, decreasing=TRUE)[1:6]
 #top5 <- result[1:5]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
@@ -157,10 +157,10 @@ expr <- t(Y.sub[top5,]) |>
 p1 <- ggplot(data=expr,aes(x=t,y=value)) +
   geom_jitter(width=0,height=0.1,size=0.5) +
   scale_y_continuous(trans="log1p") +
-  facet_wrap(~name, ncol=1, scales="free_y")+
+  facet_wrap(~name, ncol=3,nrow=2, scales="free_y")+
   xlab("t") + theme_bw() +  ylab("Count")
 
-top5 <- order(radial.response, decreasing=TRUE)[1:5]
+top5 <- order(radial.response, decreasing=TRUE)[1:6]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
   nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
@@ -177,8 +177,14 @@ expr <- t(Y.sub[top5,]) |>
 
 p2 <- ggplot(data=expr,aes(x=t,y=value)) +
   geom_jitter(width=0,height=0.1,size=0.5) +
-  facet_wrap(~name, ncol=1, scales="free_y") +
+  facet_wrap(~name, ncol=3, nrow=2, scales="free_y") +
+  xlim(c(0.3,1)) +
   xlab("r") + theme_bw() + ylab("Count")
+
+
+ggsave(ggarrange(p1, p2, nrow=2,labels=c("a","b")),
+       filename="../plots/mouse_mucosa_svgs.png",
+       width=11.1, height=8.36, units="in")
 
 
 p.circ <- fit$curve.plot + guides(color="none")+
@@ -208,7 +214,7 @@ angle.response <- results_df$angle.response
 p.vals <- spark$adjustedPval
 
 rownames(Y.sub) <- old.rownames
-top5 <- order(angle.response, decreasing=TRUE)[1:5]
+top5 <- order(angle.response, decreasing=TRUE)[1:9]
 #top5 <- result[1:5]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
@@ -225,7 +231,7 @@ expr <- t(Y.sub[top5,]) |>
 
 p1 <- ggplot(data=expr,aes(x=t,y=value)) +
   geom_jitter(width=0,height=0.1,size=0.5) +
-  facet_wrap(~name, ncol=1, scales="free_y")+
+  facet_wrap(~name, ncol=3,nrow=3, scales="free_y")+
   xlab("t") + theme_bw() +  ylab("Count")
 
 top5 <- order(radial.peak, decreasing=TRUE)[1:5]
@@ -248,4 +254,63 @@ p2 <- ggplot(data=expr,aes(x=t,y=value)) +
   scale_y_continuous(trans="log1p") +
   facet_wrap(~name, ncol=1, scales="free_y") +
   xlab("r") + theme_bw() + ylab("Count")
+
+
+
+
+p.demo1 <- ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(color="none"),
+          fit$coordinate.plot + guides(color="none"),
+          fit$residuals.plot + guides(color="none"), nrow=1,ncol=3)
+
+gene.1 <- Y.sub["Ddx58",]
+gene.2 <- Y.sub["Ephb4",]
+
+p.gene1 <- data.frame(x=fit$xyt$t, y=gene.1) |>
+  ggplot(aes(x=x,y=y)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  theme_bw() +
+  xlab("t") + ylab("Count") + ggtitle("Ddx58")
+
+p.gene2 <- data.frame(x=fit$xyt$r, y=gene.2) |>
+  ggplot(aes(x=x,y=y)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  theme_bw() +
+  xlim(0.3,1) +
+  xlab("r") + ylab("Count") + ggtitle("Ephb4")
+
+p.demo <- ggarrange(ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(color="none"),
+                    fit$coordinate.plot + guides(color="none"),
+                    fit$residuals.plot + guides(color="none"), nrow=1,ncol=3,
+                    labels=c("a","b","c")),
+                    ggarrange(p.gene1, p.gene2, nrow=1,ncol=2,
+                              labels=c("d","e")),nrow=2)
+
+
+ggsave(p.demo, filename="../plots/curve_demo.png",
+       width=8.89, height=7.54, units="in")
+
+
+
+
+
+
+angle <- results_df$angle
+
+top5 <- order(angle, decreasing=TRUE)[1:9]
+expr <- t(Y.sub[top5,]) |>
+  as.data.frame() |>
+  mutate(t=fit$xyt$t) |>
+  pivot_longer(cols=-c(t)) |>
+  mutate(name = fct_inorder(name), type="angle")
+
+p1 <- ggplot(data=expr,aes(x=t,y=value)) +
+  geom_jitter(width=0,height=0.05,size=0.5) +
+  scale_y_continuous(trans="log1p") +
+  facet_wrap(~name, scales="free_y",
+             nrow=3,ncol=3)+
+  xlab("t") + theme_bw() +  ylab("Count")
+
+ggsave(p1, filename="../plots/top9_curvesvg.png",
+       width=8.15, height=6.33)
+
 

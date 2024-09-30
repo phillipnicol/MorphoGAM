@@ -26,8 +26,8 @@ Y.sub <- Y[,meta.sub$X]
 
 
 
-gene.1 <- which(rownames(Y.sub) == "Dhx58")
-gene.2 <- which(rownames(Y.sub) == "Ephb4")
+gene.1 <- which(rownames(Y.sub) == "Ephb4")
+gene.2 <- which(rownames(Y.sub) == "Dhx58")
 
 #Plot these two
 expr <- t(Y.sub[c(gene.1,gene.2),]) |>
@@ -38,12 +38,49 @@ expr <- t(Y.sub[c(gene.1,gene.2),]) |>
 
 plot1 <- expr |> ggplot(aes(x=x,y=y,color=value)) +
   geom_point(size=0.25,alpha=0.75) +
-  scale_color_gradient(low="grey90", high="darkred")+
+  scale_color_gradient(low="grey85", high="darkred")+
   facet_wrap(~name) +
   labs(color="log expression") +
   theme_bw()
 
 ggsave(plot1,"../plots/two_genes_examples.png")
+
+
+
+
+gene.1 <- which(rownames(Y.sub) == "Tnfsf10")
+gene.2 <- which(rownames(Y.sub) == "Nlrc5")
+#Plot these two
+expr <- t(Y.sub[c(gene.1,gene.2),]) |>
+  apply(2,function(x) log2(x+1)) |>
+  as.data.frame() |>
+  mutate(x=meta.sub$x, y=meta.sub$y) |>
+  pivot_longer(cols=-c(x,y)) |>
+  mutate(name=ifelse(name == "Tnfsf10",
+                     "Tnsfs10
+                     (Spark Rank X),
+                     (nnSVG Rank X)",
+                     "Nlrc5
+                     (Spark Rank X),
+                     (nnSVG rank X)"))
+
+plot2 <- expr |>
+  ggplot(aes(x=x, y=y, color=value)) +
+  # Layer for zero values
+  geom_point(data = ~ subset(., value == 0),
+             size = 1, alpha = 0.5) +
+  # Layer for non-zero values
+  geom_point(data = ~ subset(., value != 0),
+             size = 1.5, alpha = 1) +
+  scale_color_gradient(low="grey90", high="darkred") +
+  facet_wrap(~name) +
+  xlim(c(9000, 9500)) + ylim(c(-750,250)) +
+  labs(color="log expression") +
+  theme_bw()
+
+ggsave(plot2,filename="../plots/two_other_examples.png")
+
+
 
 
 ### SPARKX
@@ -97,3 +134,70 @@ plot3 <- expr |> ggplot(aes(x=x,y=y,color=value)) +
   theme_bw()
 
 ggsave(plot3,filename="../plots/nnSVG_top12.png",width=8,height=10)
+
+
+
+
+
+
+## Other examples of 1D paths
+p.mucosa <- expr |> ggplot(aes(x=x,y=y)) +
+  geom_point(size=0.5) +
+  theme_bw() +
+  ggtitle("MERFISH mouse mucosa enterocytes") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank()) +
+  xlab("") + ylab("")
+
+
+
+## Granule
+
+xy <- readRDS("../../data/granule_slideseq.RDS")
+
+## Prune outlier
+xy.dist <- as.matrix(dist(xy))
+nnk <- apply(xy.dist, 1, function(x) sort(x)[6])
+outlier <- which(nnk > 2*median(nnk))
+xy <- xy[-outlier,]
+
+
+p.granule <- xy |> ggplot(aes(x=x,y=y)) + geom_point(size=0.5) +
+  theme_bw() +
+  ggtitle("Slide-seq cerebellum granule cells") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank()) +
+  xlab("") + ylab("")
+
+
+
+## CA3
+
+spe <- STexampleData::SlideSeqV2_mouseHPC()
+
+ixs <- which(spe$celltype == "CA3") #subset to CA3
+
+xy <- spatialCoords(spe)[ixs,]
+Y <- counts(spe)[,ixs]
+
+xy.dist <- as.matrix(dist(xy))
+knn <- 20
+prune.outlier <- 3
+nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+outlier <- which(nnk > (prune.outlier)*median(nnk))
+
+xy <- xy[-outlier,]
+
+p.ca3 <- xy |> ggplot(aes(x=xcoord,y=ycoord)) + geom_point(size=0.5) +
+  theme_bw() +
+  ggtitle("Slide-seq hippocampus CA3 cells") +
+  xlab("") + ylab("") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank())
+
+library(ggpubr)
+
+p <- ggarrange(plot1, ggarrange(p.mucosa, p.granule, p.ca3,nrow=1, labels=c("b","c","d")),nrow=2, labels=c("a",""))
+
+ggsave(p, filename="../plots/example_of_1d.png",
+       width=11.88, height=9.19, units="in")
