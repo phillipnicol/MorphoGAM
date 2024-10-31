@@ -1,5 +1,5 @@
-load("../data/ca3_curve.RData")
-out <- fit
+#load("../data/ca3_curve.RData")
+#out <- fit
 
 library(STexampleData)
 library(MASS)
@@ -10,6 +10,12 @@ library(splines)
 
 set.seed(1)
 
+
+
+
+library(STexampleData)
+library(igraph)
+library(tidyverse)
 
 spe <- STexampleData::SlideSeqV2_mouseHPC()
 
@@ -24,8 +30,11 @@ prune.outlier <- 3
 nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
 outlier <- which(nnk > (prune.outlier)*median(nnk))
 
-df <- xy[-outlier,]
+xy <- xy[-outlier,]; Y <- Y[,-outlier]
+df <- xy
 
+fit <- CurveFinder(xy) #Fit the curve
+out <- fit
 
 
 
@@ -53,22 +62,25 @@ for(i in 1:length(kappa)) {
         pow1 <- pow1 + 1
       }
 
-
-      fit <- gam(y[1,]~s(out$xyt$t,k=10,bs="cr"),family=nb(),
-                 H=diag(10))
-      if(summary(fit)$s.pv < 0.05/20000) {
+      my.res <- MorphoGAM(y[1,] |> as.matrix() |> t(),
+                          curve.fit = out,
+                          design = y~s(t,bs="cr"),
+                          offset = rep(0, nrow(df)))
+      #fit <- gam(y[1,]~s(out$xyt$t,k=10,bs="cr"),family=nb(),
+      #           H=diag(10))
+      if(my.res$results$pv.t < 0.05/20000) {
         pow2 <- pow2 + 1
       }
-      x.true <- out$xyt$x[which.min((out$xyt$t - 0.5)^2)]
-      y.true <- out$xyt$y[which.min((out$xyt$t - 0.5)^2)]
-      x.pred <- out$xyt$x[which.max(fitted(fit))]
-      y.pred <- out$xyt$y[which.max(fitted(fit))]
-      loc[i,j,k,1] <- sqrt((x.true-x.pred)^2 + (y.true-y.pred)^2)
+      #x.true <- out$xyt$x[which.min((out$xyt$t - 0.5)^2)]
+      #y.true <- out$xyt$y[which.min((out$xyt$t - 0.5)^2)]
+      #x.pred <- out$xyt$x[which.max(fitted(fit))]
+      #y.pred <- out$xyt$y[which.max(fitted(fit))]
+      #loc[i,j,k,1] <- sqrt((x.true-x.pred)^2 + (y.true-y.pred)^2)
 
-      fit2 <- gam(y[1,] ~ s(out$xyt$x, out$xyt$y), family=nb())
-      x.pred <- out$xyt$x[which.max(fitted(fit2))]
-      y.pred <- out$xyt$y[which.max(fitted(fit2))]
-      loc[i,j,k,2] <- sqrt((x.true-x.pred)^2 + (y.true-y.pred)^2)
+      #fit2 <- gam(y[1,] ~ s(out$xyt$x, out$xyt$y), family=nb())
+      #x.pred <- out$xyt$x[which.max(fitted(fit2))]
+      #y.pred <- out$xyt$y[which.max(fitted(fit2))]
+      #loc[i,j,k,2] <- sqrt((x.true-x.pred)^2 + (y.true-y.pred)^2)
 
 
       fit3 <- nnSVG(input=log(y+1), spatial_coords = df, verbose=TRUE,
