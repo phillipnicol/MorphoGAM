@@ -3,9 +3,9 @@ get.clicks <- function(xy) {
   interactiveCurve(xy)
 }
 
-CurveFinderInteractive <- function(clicks, loop=FALSE) {
+CurveFinderInteractive <- function(loop=FALSE) {
   #my.clicks <- interactiveCurve(xy)
-
+  clicks <- interactiveCurve(xy)
   basis <- ifelse(loop, "cc", "cr")
   print("BACK")
   t <- seq(0, 1, length.out=nrow(clicks))

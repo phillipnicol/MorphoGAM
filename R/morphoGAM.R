@@ -6,13 +6,18 @@ MorphoGAM <- function(Y,
                       design,
                       shrinkage=TRUE,
                       min.count.per.gene=10,
-                      return.fx = TRUE) {
+                      return.fx = TRUE,
+                      offset=NULL) {
 
-  l.o <- log(colSums(Y))
-  median.depth <- median(exp(l.o))
+  if(!is.null(offset)) {
+    l.o <- log(colSums(Y))
+  } else{
+    l.o <- rep(0,ncol(Y))
+  }
+  median.depth <- median(colSums(Y))
   n <- ncol(Y); p <- nrow(Y)
 
-  data <- data.frame(y = Y.sub[1,],
+  data <- data.frame(y = Y[1,],
                      t = curve.fit$xyt$t,
                      r = curve.fit$xyt$r)
 
@@ -22,19 +27,19 @@ MorphoGAM <- function(Y,
   H <- diag(ncol(fit.setup$X)); H[1,1] <- 0 #Don't penalize intercept
 
   #Setup results data frame
-  results <- matrix(0, nrow=p, ncol=6)
+  results <- matrix(0, nrow=p, ncol=7)
   colnames(results) <- c("peak.t", "range.t", "pv.t",
-                         "peak.r", "range.r", "pv.r")
+                         "peak.r", "range.r", "pv.r", "intercept")
 
-  if(!return.fx) {
+  if(return.fx) {
     fxs.t <- matrix(0,nrow=p,ncol=n)
     fxs.r <- matrix(0,nrow=p,ncol=n)
   }
 
   for(i in 1:nrow(Y)) {
     print(i)
-    if(rowSums(Y.sub)[i] < min.count.per.gene) {
-      results[i,] <- c(0,0,1,0,0,1)
+    if(rowSums(Y)[i] < min.count.per.gene) {
+      results[i,] <- c(0,0,1,0,0,1,0)
       next
     }
 
@@ -43,6 +48,7 @@ MorphoGAM <- function(Y,
                      data=data, H=H)
 
     beta_g0 <- fit$coefficients[1]
+    results[i,"intercept"] <- beta_g0
 
     se_beta <- diag(vcov(fit))[-1] #remove intercept
 
@@ -62,7 +68,7 @@ MorphoGAM <- function(Y,
       range.t <- median.depth*range.t
       pv.t <- summary(fit)$s.table["s(t)",4]
       results[i,c("peak.t","range.t","pv.t")] <- c(peak.t,range.t,pv.t)
-      if(!return.fx) {
+      if(return.fx) {
         fxs.t[i,] <- fx.t
       }
     }
@@ -75,7 +81,7 @@ MorphoGAM <- function(Y,
       range.r <- median.depth*range.r
       pv.r <- summary(fit)$s.table["s(r)",4]
       results[i,c("peak.r","range.r","pv.r")] <- c(peak.r,range.r,pv.r)
-      if(!return.fx) {
+      if(return.fx) {
         fxs.r[i,] <- fx.r
       }
     }
@@ -85,10 +91,13 @@ MorphoGAM <- function(Y,
   out$results <- as.data.frame(results)
   rownames(out$results) <- rownames(Y)
 
-  if(!return.fx) {
+  if(return.fx) {
+    rownames(fxs.t) <- rownames(Y)
+    rownames(fxs.r) <- rownames(Y)
     out$fxs.t <- fxs.t
     out$fxs.r <- fxs.r
   }
 
   return(out)
 }
+
