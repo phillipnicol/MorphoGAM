@@ -9,7 +9,7 @@ MorphoGAM <- function(Y,
                       return.fx = TRUE,
                       offset=NULL) {
 
-  if(!is.null(offset)) {
+  if(is.null(offset)) {
     l.o <- log(colSums(Y))
   } else{
     l.o <- rep(0,ncol(Y))
@@ -19,7 +19,8 @@ MorphoGAM <- function(Y,
 
   data <- data.frame(y = Y[1,],
                      t = curve.fit$xyt$t,
-                     r = curve.fit$xyt$r)
+                     r = curve.fit$xyt$r,
+                     l.o=l.o)
 
   fit.setup <- mgcv::gam(formula=design,family=mgcv::nb(),
                          data=data, fit=FALSE)
@@ -44,8 +45,11 @@ MorphoGAM <- function(Y,
     }
 
     data$y <- Y[i,]
-    fit <- mgcv::gam(formula=design,family=mgcv::nb(), offset=l.o,
-                     data=data, H=H)
+    fit <- mgcv::gam(formula=design,
+                     family=mgcv::nb(),
+                     offset=l.o,
+                     data=data,
+                     H=H)
 
     beta_g0 <- fit$coefficients[1]
     results[i,"intercept"] <- beta_g0
