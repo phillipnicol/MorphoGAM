@@ -10,7 +10,8 @@ library(splines)
 
 set.seed(1)
 
-
+source("../../../R/curvefinder.R")
+source("../../../R/morphoGAM.R")
 
 
 library(STexampleData)
