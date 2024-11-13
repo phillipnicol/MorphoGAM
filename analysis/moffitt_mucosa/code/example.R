@@ -26,22 +26,46 @@ Y.sub <- Y[,meta.sub$X]
 
 
 
-gene.1 <- which(rownames(Y.sub) == "Ephb4")
-gene.2 <- which(rownames(Y.sub) == "Dhx58")
+gene.1 <- which(rownames(Y.sub) == "Apob")
+gene.2 <- which(rownames(Y.sub) == "Ddx58")
 
 #Plot these two
-expr <- t(Y.sub[c(gene.1,gene.2),]) |>
+#expr <- t(Y.sub[c(gene.1,gene.2),]) |>
+# apply(2,function(x) log2(x+1)) |>
+#  as.data.frame() |>
+#  mutate(x=meta.sub$x, y=meta.sub$y) |>
+#  pivot_longer(cols=-c(x,y))
+
+#plot1 <- expr |> ggplot(aes(x=x,y=y,color=value)) +
+#  geom_point(size=0.25,alpha=0.75) +
+#  scale_color_gradient(low="grey85", high="darkred")+
+#  facet_wrap(~name) +
+#  labs(color="log expression") +
+#  theme_bw()
+
+Y.s <- sweep(Y.sub, MARGIN = 2, STATS = colSums(Y.sub)/median(colSums(Y.sub)),
+             FUN="/")
+
+#Plot these two
+expr <- t(Y.s[c(gene.1,gene.2),]) |>
   apply(2,function(x) log2(x+1)) |>
   as.data.frame() |>
   mutate(x=meta.sub$x, y=meta.sub$y) |>
   pivot_longer(cols=-c(x,y))
 
-plot1 <- expr |> ggplot(aes(x=x,y=y,color=value)) +
-  geom_point(size=0.25,alpha=0.75) +
+
+plot1 <- expr |> ggplot(aes(x=x,y=y,color=value,size=value,
+                            alpha=value)) +
+  geom_point(size=0.25) +
   scale_color_gradient(low="grey85", high="darkred")+
+  #scale_size_continuous(range=c(0.1,0.75)) +
+  scale_alpha_continuous(range=c(0.33,1)) +
+  coord_fixed() +
   facet_wrap(~name) +
   labs(color="log expression") +
-  theme_bw()
+  theme_bw() +
+  guides(alpha="none")
+
 
 ggsave(plot1,"../plots/two_genes_examples.png")
 
@@ -107,15 +131,21 @@ expr <- t(Y.sub[top.12,]) |>
 plot2 <- expr |> ggplot(aes(x=x,y=y,color=value)) +
   geom_point(size=0.25,alpha=0.75) +
   scale_color_gradient(low="grey90", high="darkred")+
+  coord_fixed() +
   facet_wrap(~name,nrow=4,ncol=3) +
   labs(color="log expression") +
   theme_bw()
 ggsave(plot2,filename="../plots/spark_top12.png",width=8,height=10)
 
+print(res$res_mtest["Ddx58",])
+print(res$res_mtest["Apob",])
 
-logCPM <- log(sweep(Y.sub, MARGIN=2, STATS = colSums(Y.sub), FUN="/")+1)
-nn.svg <- nnSVG(input=logCPM, spatial_coords = locus,
-                verbose=TRUE)
+
+#logCPM <- log(sweep(Y.sub, MARGIN=2, STATS = colSums(Y.sub), FUN="/")+1)
+#nn.svg <- nnSVG(input=logCPM, spatial_coords = locus,
+#                verbose=TRUE)
+
+nn.svg <- readRDS("../data/nnSVG_results.RDS")
 
 p.vals.nnsvg <- nn.svg |> as.data.frame() |>
   arrange(rank)
@@ -132,6 +162,9 @@ plot3 <- expr |> ggplot(aes(x=x,y=y,color=value)) +
   facet_wrap(~name,nrow=4,ncol=3) +
   labs(color="log expression") +
   theme_bw()
+
+print(nn.svg["Ddx58",])
+print(nn.svg["Apob",])
 
 ggsave(plot3,filename="../plots/nnSVG_top12.png",width=8,height=10)
 
@@ -167,7 +200,8 @@ p.granule <- xy |> ggplot(aes(x=x,y=y)) + geom_point(size=0.5) +
   ggtitle("Slide-seq cerebellum granule cells") +
   theme(axis.text.x = element_blank(),
         axis.text.y = element_blank()) +
-  xlab("") + ylab("")
+  xlab("") + ylab("") +
+  theme(plot.title = element_text(size = 11))
 
 
 
@@ -193,11 +227,18 @@ p.ca3 <- xy |> ggplot(aes(x=xcoord,y=ycoord)) + geom_point(size=0.5) +
   ggtitle("Slide-seq hippocampus CA3 cells") +
   xlab("") + ylab("") +
   theme(axis.text.x = element_blank(),
-        axis.text.y = element_blank())
+        axis.text.y = element_blank()) +
+  theme(plot.title = element_text(size = 11))
 
 library(ggpubr)
 
-p <- ggarrange(plot1, ggarrange(p.mucosa, p.granule, p.ca3,nrow=1, labels=c("b","c","d")),nrow=2, labels=c("a",""))
+plot1 <- plot1 + ggtitle("MERFISH mouse colon enterocytes") +
+  theme(plot.title = element_text(size = 11))
+
+p <- ggarrange(plot1, ggarrange(p.granule, p.ca3,nrow=1, labels=c("c","d")),nrow=2, labels=c("a",""),
+               heights=c(1.5,1))
+ggsave(p, filename="../plots/example_of_1d_new.png",
+       width=7.56, height=6.93, units="in")
 
 ggsave(p, filename="../plots/example_of_1d.png",
        width=11.88, height=9.19, units="in")

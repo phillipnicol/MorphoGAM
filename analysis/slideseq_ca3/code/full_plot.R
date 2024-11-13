@@ -1,9 +1,9 @@
 library(tidyverse)
 library(mgcv)
 
-results_df <- readRDS("../data/ca3_svg.RDS")
+#results_df <- readRDS("../data/ca3_svg.RDS")
 
-peak <- results_df$peak; range <- results_df$range
+#peak <- results_df$peak; range <- results_df$range
 
 
 
@@ -24,106 +24,41 @@ outlier <- which(nnk > (prune.outlier)*median(nnk))
 
 xy <- xy[-outlier,]; Y <- Y[,-outlier]
 
+fit <- CurveFinder(xy)
 
-load("../data/ca3_curve.RData")
+load("../data/mgam_ca3.RData")
 
+
+##First do the previous reported genes
 Y <- as.matrix(Y)
-
-top5peak <- order(peak, decreasing=TRUE)[1:5]
-expr <- t(Y[top5peak,]) |>
-  as.data.frame() |>
-  mutate(t=fit$xyt$t) |>
-  pivot_longer(cols=-c(t)) |>
-  mutate(name=fct_inorder(name))
-
-
-ppeak <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  facet_wrap(~name, nrow=1, scales="free_y") +
-  ylab("Count") + theme_bw() +
-  scale_y_continuous(trans="log1p") +
-  ggtitle("Peak")
-
-
-top5range <- order(range, decreasing=TRUE)[1:5]
-expr <- t(Y[top5range,]) |>
-  as.data.frame() |>
-  mutate(t=fit$xyt$t) |>
-  pivot_longer(cols=-c(t)) |>
-  mutate(name=fct_inorder(name))
-
-
-prange <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  facet_wrap(~name, nrow=1, scales="free_y") +
-  xlab("t") + ylab("Count") + theme_bw() +
-  ggtitle("Range")
-
-library(ggpubr)
-p <- ggarrange(ppeak, prange, nrow=2)
-
-
-l.o <- log(colSums(Y))
-t <- fit$xyt$t
-## Rgs14
-i <- which(rownames(Y) == "Rgs14")
-fit1 <- mgcv::gam(Y[i,] ~ s(t,bs="cr") + offset(l.o),family=nb(), H=diag(10))
-print(fit1$sig2)
-
-se_beta <- sqrt(diag(fit1$rV %*% t(fit1$rV))[-1])
-
-#Shrink
-my.ash <- ashr::ash(fit1$coefficients[-1], se_beta)
-beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
-                     2,
-                     median)
-
-mat <- as.matrix(mgcv::predict.gam(fit1, type = "lpmatrix")[,-1])
-fx1 <- as.vector(mat %*% beta.shrink)
-
-pgsr14 <- data.frame(x=fit$xyt$t, y=Y[i,]/exp(l.o)) |>
-  ggplot(aes(x=x,y=y)) +
-  geom_jitter(size=0.5, col="grey", width=0, height=0.00005) +
-  geom_line(aes(y=exp(fit1$coefficients[1] + fx1)), color="red") +
-  scale_y_continuous(trans="log1p") +
-  theme_bw() +
-  ylab("Depth-normalized count") +
-  xlab("t") +
-  #ylim(0,0.002) +
-  ggtitle("Rgs14")
-
-#Cpne9
-i <- which(rownames(Y) == "Cpne9"); print(i)
-fit1 <- mgcv::gam(Y[i,] ~ s(t,bs="cr") + offset(l.o),family=nb(), H=diag(10))
-print(fit1$sig2)
-
-se_beta <- sqrt(diag(fit1$rV %*% t(fit1$rV))[-1])
-
-#Shrink
-my.ash <- ashr::ash(fit1$coefficients[-1], se_beta)
-beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
-                     2,
-                     median)
-
-mat <- as.matrix(mgcv::predict.gam(fit1, type = "lpmatrix")[,-1])
-fx1.2 <- as.vector(mat %*% beta.shrink)
-
-pcpne9 <- data.frame(x=fit$xyt$t, y=Y[i,]/exp(l.o)) |>
-  ggplot(aes(x=x,y=y)) +
-  geom_jitter(size=0.5, col="grey", width=0, height=0.00005) +
-  geom_line(aes(y=exp(fit1$coefficients[1] + fx1.2)), color="red") +
-  scale_y_continuous(trans="log1p") +
-  theme_bw() +
-  ylab("Depth-normalized count") +
-  xlab("t") +
-  ggtitle("Cpne9")
-
-p.cable <- ggarrange(pgsr14, pcpne9,nrow=1)
-
-p.curve <- fit$curve.plot
+p.prev <- plotGAMestimates(Y,
+                           genes=c("Rgs14", "Cpne9"),
+                           mgam_object = mgam,
+                           curve_fit = fit) +
+  scale_y_sqrt()
 
 
 
+
+
+## Top 5 peak and range
+
+p.peak <- plotGAMestimates(Y,
+                           genes=order(mgam$results$peak.t,
+                                       decreasing = TRUE)[1:5],
+                           mgam_object = mgam,
+                           curve_fit=fit) +
+  scale_y_sqrt()
+
+p.range <- plotGAMestimates(Y,
+                           genes=order(mgam$results$range.t,
+                                       decreasing = TRUE)[1:5],
+                           mgam_object = mgam,
+                           curve_fit=fit) +
+  scale_y_sqrt()
+
+
+## Sim power analysis
 res <- readRDS("../data/results.RDS")
 res <- res[,,-4]
 library(reshape2)
@@ -134,7 +69,7 @@ df <- melt(res); colnames(df) <- c("kappa", "sigma", "method", "power")
 df$kappa <- paste("k = ", kappa[df$kappa])
 df$sigma <- sigma[df$sigma]
 
-df$method <- c("SPARK-X", "Projection", "nnSVG")[df$method]
+df$method <- c("SPARK-X", "MorphoGAM", "nnSVG")[df$method]
 
 p.power <- ggplot(data=df,aes(x=sigma, y=power, color=method)) +
   geom_point() +
@@ -145,16 +80,18 @@ p.power <- ggplot(data=df,aes(x=sigma, y=power, color=method)) +
   theme_bw() + theme(legend.position = "top")
 
 
-p.curve <- p.curve + ggtitle("CA3 cells")
-p.full <- ggarrange(ggarrange(p.curve, pgsr14, pcpne9, nrow=1, ncol=3,
+p.curve <- fit$curve.plot + ggtitle("CA3 cells")
+p.full <- ggarrange(ggarrange(p.curve, p.prev, nrow=1, ncol=2,
                               labels=c("a","b","")),
-          p,
           p.power,
+          ggarrange(p.peak,
+                    p.range,
+                    nrow=2),
           nrow=3,
           heights=c(1.5, 2, 2),
           labels=c("","c", "d"))
 ggsave(p.full, filename="../plots/ca3_full_plot.png",
-       width=9.11, height=11.7, units="in")
+       width=9.11*1.1, height=11.7*1.1, units="in")
 
 
 

@@ -2,7 +2,8 @@ plotGAMestimates <- function(Y,
                              genes,
                              mgam_object,
                              curve_fit,
-                             type="t") {
+                             type="t",
+                             nrow=1) {
   Y.sub <- Y[genes,]
   offset <- colSums(Y)
   nmed <- median(offset)
@@ -19,7 +20,7 @@ plotGAMestimates <- function(Y,
     p <- ggplot(data=df.gg,aes(x=Var1, y=value)) +
       geom_point(size=0.25) +
       geom_line(aes(x=Var1, y=fx), color="red") +
-      facet_wrap(~Var2,scales="free_y",nrow=1) +
+      facet_wrap(~Var2,scales="free_y",nrow=nrow) +
       theme_bw() +
       ylab("Depth-normalized count") +
       xlab("t")
@@ -31,11 +32,11 @@ plotGAMestimates <- function(Y,
 
     df.gg <- reshape2::melt(t(Y.sub))
     df.gg$fx <- reshape2::melt(t(fxs.sub))$value
-
+    print(head(df.gg))
     p <- ggplot(data=df.gg,aes(x=Var1, y=value)) +
       geom_point(size=0.25) +
       geom_line(aes(x=Var1, y=fx), color="red") +
-      facet_wrap(~Var2,scales="free_y",nrow=1) +
+      facet_wrap(~Var2,scales="free_y",nrow=nrow) +
       theme_bw() +
       ylab("Depth-normalized count") +
       xlab("r")

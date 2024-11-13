@@ -79,67 +79,29 @@ sparkplot <- expr |> ggplot(aes(x=x,y=y,color=value)) +
 ggsave(sparkplot, filename="../plots/spark_top9.png",width=13.4,
        height=10.1)
 
+## MorphoGAM
 library(mgcv)
-
-radial.p <- rep(1, nrow(Y.sub))
-angle.p <- rep(1, nrow(Y.sub))
-angle <- rep(0,nrow(Y.sub))
-radial <- rep(0,nrow(Y.sub))
-angle.response <- angle
-radial.response <- radial
-l.o <- log(colSums(Y.sub))
 fit <- CurveFinder(locus,knn=10,loop=TRUE)
-fx.r <- Y.sub
-fx.t <- Y.sub
 
-for(i in 1:nrow(Y.sub)) {
-  print(i)
-  fit1 <- mgcv::gam(Y.sub[i,] ~ s(fit$xyt$t,bs="cc") + s(fit$xyt$r,bs="cr") + offset(l.o), family=nb(),
-                    H = diag(18))
-
-  se_beta <- sqrt(diag(fit1$rV %*% t(fit1$rV))[-1])
-
-  #Shrink
-  my.ash <- ashr::ash(fit1$coefficients[-1], se_beta)
-  beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
-                       2,
-                       median)
-
-  mat <- as.matrix(mgcv::predict.gam(fit1, type = "lpmatrix")[,-1])
-  fx1 <- as.vector(mat[,1:8] %*% beta.shrink[1:8])
-  fx2 <- as.vector(mat[,9:17] %*% beta.shrink[9:17])
-
-  fx.t[i,] <- fx1
-  fx.r[i,] <- fx2
-
-  angle.response[i] <- max(exp(fit1$coefficients[1] + fx1)) - min(exp(fit1$coefficients[1] + fx1))
-  radial.response[i] <- max(exp(fit1$coefficients[1] + fx2)) - min(exp(fit1$coefficients[1] + fx2))
-
-  #pp <- predict(fit1, type="terms")
-
-  angle[i] <- max(abs(fx1))
-  angle.p[i] <- summary(fit1)$s.pv[1]
-  radial[i] <- max(abs(fx2))
-  radial.p[i] <- summary(fit1)$s.pv[2]
-}
-
-results_df <- data.frame(angle=angle, angle.p=angle.p ,radial=radial, radial.p=radial.p,
-                         angle.response=angle.response, radial.response=radial.response)
-rownames(results_df) <- rownames(Y.sub)
-
-saveRDS(results_df, file="../data/loop_svg.RDS")
+mgam <- MorphoGAM(Y.sub,
+                  curve.fit=fit,
+                  design=y~s(t,bs="cc")+s(r,bs="cr"))
 
 
-results_df <- readRDS("../data/loop_svg.RDS")
+save(mgam, file="../data/mucosa_mgam.RData")
+save(fit, file="../data/curve.RData")
+
+
+#results_df <- readRDS("../data/loop_svg.RDS")
 nnsvg_res <- readRDS("../data/nnSVG_results.RDS")
 
-angle <- results_df$angle
-radial.response <- results_df$radial.response
+#angle <- results_df$angle
+#radial.response <- results_df$radial.response
 #nnsvg_rank <- nnsvg_res$rank
-p.vals <- spark$adjustedPval
+#p.vals <- spark$adjustedPval
 
 rownames(Y.sub) <- old.rownames
-top5 <- order(angle, decreasing=TRUE)[1:6]
+top5 <- order(mgam$results$peak.t, decreasing=TRUE)[1:6]
 #top5 <- result[1:5]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
@@ -148,73 +110,17 @@ for(i in top5) {
                               "nnSVG rank =", nnsvg_rank)
 }
 
-expr <- t(Y.sub[top5,]) |>
-  as.data.frame() |>
-  mutate(t=fit$xyt$t) |>
-  pivot_longer(cols=-c(t)) |>
-  mutate(name = fct_inorder(name), type="angle")
 
-p1 <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  scale_y_continuous(trans="log1p") +
-  facet_wrap(~name, ncol=3,nrow=2, scales="free_y")+
-  xlab("t") + theme_bw() +  ylab("Count")
-
-top5 <- order(radial.response, decreasing=TRUE)[1:6]
-for(i in top5) {
-  spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
-  nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
-  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
-                              "nnSVG rank =", nnsvg_rank)
-}
-
-expr <- t(Y.sub[top5,]) |>
-  as.data.frame() |>
-  mutate(t=fit$xyt$r) |>
-  pivot_longer(cols=-c(t)) |>
-  mutate(name = fct_inorder(name), type="radial")
-
-
-p2 <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  facet_wrap(~name, ncol=3, nrow=2, scales="free_y") +
-  xlim(c(0.3,1)) +
-  xlab("r") + theme_bw() + ylab("Count")
-
-
-ggsave(ggarrange(p1, p2, nrow=2,labels=c("a","b")),
-       filename="../plots/mouse_mucosa_svgs.png",
-       width=11.1, height=8.36, units="in")
-
-
-p.circ <- fit$curve.plot + guides(color="none")+
-  xlab("") + ylab("") + ggtitle("Fitted curve")
-
-p.resid <- fit$residuals.plot + guides(color="none") +
-  xlab("") + ylab("")
-
-ggsave(ggarrange(p.circ,p.resid,p1,p2,ncol=2,nrow=2,
-                 heights=c(1,2)),
-       filename="../plots/circle_genes.png",
-       width=6, height=12)
-
-
-
-
-
-
-
-### Also do angular range and radial peak
-
-
-angle <- results_df$angle
-radial.peak <- results_df$radial
-angle.response <- results_df$angle.response
-#nnsvg_rank <- nnsvg_res$rank
-p.vals <- spark$adjustedPval
+p.peak <- plotGAMestimates(Y.sub,
+                           genes=order(mgam$results$peak.t,decreasing = TRUE)[1:6],
+                           curve_fit = fit,
+                           mgam_object = mgam,
+                           nrow=2) +
+  theme(strip.text=element_text(size=3.5*1.5)) +
+  scale_y_sqrt()
 
 rownames(Y.sub) <- old.rownames
-top5 <- order(angle.response, decreasing=TRUE)[1:9]
+top5 <- order(mgam$results$range.r, decreasing=TRUE)[1:6]
 #top5 <- result[1:5]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
@@ -223,18 +129,33 @@ for(i in top5) {
                               "nnSVG rank =", nnsvg_rank)
 }
 
-expr <- t(Y.sub[top5,]) |>
-  as.data.frame() |>
-  mutate(t=fit$xyt$t) |>
-  pivot_longer(cols=-c(t)) |>
-  mutate(name = fct_inorder(name), type="angle")
+p.range <- plotGAMestimates(Y.sub,
+                           genes=order(mgam$results$range.r,decreasing = TRUE)[1:6],
+                           curve_fit = fit,
+                           mgam_object = mgam,
+                           type="r",
+                           nrow=2) +
+  theme(strip.text=element_text(size=3.5*1.5)) +
+  xlim(0.3,0.7) +
+  scale_y_sqrt()
 
-p1 <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  facet_wrap(~name, ncol=3,nrow=3, scales="free_y")+
-  xlab("t") + theme_bw() +  ylab("Count")
+library(ggpubr)
+p <- ggarrange(p.peak, p.range, nrow=2, labels=c("a","b"))
 
-top5 <- order(radial.peak, decreasing=TRUE)[1:5]
+ggsave(p, filename="../plots/mouse_mucosa_svgs.png",
+       width= 4.78*1.5,
+       height= 5.18*1.5)
+
+
+
+
+
+
+
+
+rownames(Y.sub) <- old.rownames
+top5 <- order(mgam$results$range.t, decreasing=TRUE)[1:6]
+#top5 <- result[1:5]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
   nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
@@ -242,75 +163,36 @@ for(i in top5) {
                               "nnSVG rank =", nnsvg_rank)
 }
 
-expr <- t(Y.sub[top5,]) |>
-  as.data.frame() |>
-  mutate(t=fit$xyt$r) |>
-  pivot_longer(cols=-c(t)) |>
-  mutate(name = fct_inorder(name), type="radial")
 
+p.peak <- plotGAMestimates(Y.sub,
+                           genes=order(mgam$results$range.t,decreasing = TRUE)[1:6],
+                           curve_fit = fit,
+                           mgam_object = mgam,
+                           nrow=2) +
+  theme(strip.text=element_text(size=3.5*1.5)) +
+  scale_y_sqrt()
 
-p2 <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  scale_y_continuous(trans="log1p") +
-  facet_wrap(~name, ncol=1, scales="free_y") +
-  xlab("r") + theme_bw() + ylab("Count")
+rownames(Y.sub) <- old.rownames
+top5 <- order(mgam$results$peak.r, decreasing=TRUE)[1:6]
+#top5 <- result[1:5]
+for(i in top5) {
+  spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
+  nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
+  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
+                              "nnSVG rank =", nnsvg_rank)
+}
 
-
-
-
-p.demo1 <- ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(color="none"),
-          fit$coordinate.plot + guides(color="none"),
-          fit$residuals.plot + guides(color="none"), nrow=1,ncol=3)
-
-gene.1 <- Y.sub["Ddx58",]
-gene.2 <- Y.sub["Ephb4",]
-
-p.gene1 <- data.frame(x=fit$xyt$t, y=gene.1) |>
-  ggplot(aes(x=x,y=y)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  theme_bw() +
-  xlab("t") + ylab("Count") + ggtitle("Ddx58")
-
-p.gene2 <- data.frame(x=fit$xyt$r, y=gene.2) |>
-  ggplot(aes(x=x,y=y)) +
-  geom_jitter(width=0,height=0.1,size=0.5) +
-  theme_bw() +
-  xlim(0.3,1) +
-  xlab("r") + ylab("Count") + ggtitle("Ephb4")
-
-p.demo <- ggarrange(ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(color="none"),
-                    fit$coordinate.plot + guides(color="none"),
-                    fit$residuals.plot + guides(color="none"), nrow=1,ncol=3,
-                    labels=c("a","b","c")),
-                    ggarrange(p.gene1, p.gene2, nrow=1,ncol=2,
-                              labels=c("d","e")),nrow=2)
-
-
-ggsave(p.demo, filename="../plots/curve_demo.png",
-       width=8.89, height=7.54, units="in")
+p.range <- plotGAMestimates(Y.sub,
+                            genes=order(mgam$results$peak.r,decreasing = TRUE)[1:6],
+                            curve_fit = fit,
+                            mgam_object = mgam,
+                            type="r",
+                            nrow=2) +
+  theme(strip.text=element_text(size=3.5*1.5)) +
+  xlim(0.3,0.7) +
+  scale_y_sqrt()
 
 
 
-
-
-
-angle <- results_df$angle
-
-top5 <- order(angle, decreasing=TRUE)[1:9]
-expr <- t(Y.sub[top5,]) |>
-  as.data.frame() |>
-  mutate(t=fit$xyt$t) |>
-  pivot_longer(cols=-c(t)) |>
-  mutate(name = fct_inorder(name), type="angle")
-
-p1 <- ggplot(data=expr,aes(x=t,y=value)) +
-  geom_jitter(width=0,height=0.05,size=0.5) +
-  scale_y_continuous(trans="log1p") +
-  facet_wrap(~name, scales="free_y",
-             nrow=3,ncol=3)+
-  xlab("t") + theme_bw() +  ylab("Count")
-
-ggsave(p1, filename="../plots/top9_curvesvg.png",
-       width=8.15, height=6.33)
 
 
