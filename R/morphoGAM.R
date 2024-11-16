@@ -1,6 +1,10 @@
 
 
-
+#' @export
+#'
+#' @title MorphoGAM
+#'
+#' @importFrom ashr ash get_post_sample
 MorphoGAM <- function(Y,
                       curve.fit,
                       design,
@@ -37,8 +41,9 @@ MorphoGAM <- function(Y,
     fxs.r <- matrix(0,nrow=p,ncol=n)
   }
 
+  bar <- txtProgressBar(min=0,max=nrow(Y)-1,initial = 0)
   for(i in 1:nrow(Y)) {
-    print(i)
+    setTxtProgressBar(bar,i)
     if(rowSums(Y)[i] < min.count.per.gene) {
       results[i,] <- c(0,0,1,0,0,1,0)
       next
@@ -57,10 +62,14 @@ MorphoGAM <- function(Y,
     se_beta <- diag(vcov(fit))[-1] #remove intercept
 
     #Shrink
-    my.ash <- ashr::ash(fit$coefficients[-1], se_beta)
-    beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
-                         2,
-                         median)
+    if(shrinkage) {
+      my.ash <- ashr::ash(fit$coefficients[-1], se_beta)
+      beta.shrink <- apply(ashr::get_post_sample(my.ash,1000),
+                           2,
+                           median)
+    } else {
+      beta.shrink <- fit$coefficients[-1]
+    }
 
     basis.functions <- mgcv::predict.gam(fit, type="lpmatrix")[,-1]
 

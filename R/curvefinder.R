@@ -1,5 +1,15 @@
-
-
+#' @export
+#'
+#' @title CurveFinder
+#'
+#' @import ggplot2
+#' @import mgcv
+#' @import dimRed
+#' @importFrom igraph components
+#' @importFrom igraph subgraph
+#' @importFrom RSpectra eigs_sym
+#' @importFrom gratia derivatives
+#' @importFrom gtools permutations
 CurveFinder <- function(xy,
                        knn=5,
                        prune.outlier=NULL,
@@ -33,20 +43,27 @@ CurveFinder <- function(xy,
   for(c in 1:comp$no) {
     xy.sub <- xy[comp$membership == c,]
 
-    knng.sub <- subgraph(knng, V(knng)[comp$membership == c])
+    knng.sub <- igraph::subgraph(knng, V(knng)[comp$membership == c])
 
-    geodist <- igraph::distances(knng.sub, algorithm = "dijkstra")
+    # See ISOMAP function in
+    ##  Kraemer G, Reichstein M, Mahecha MD (2018). “dimRed
+    #and coRanking-Unifying Dimensionality Reduction in
+    #R.” _The R Journal_, *10*(1), 342-358. coRanking
+    #version 0.2.6,
+    #<https://journal.r-project.org/archive/2018/RJ-2018-039/index.html>.
 
-    k <- geodist ^ 2
-    k <- .Call(stats:::C_DoubleCentre, k)
-    k <- - k / 2
+    dG <- igraph::distances(knng.sub, algorithm = "dijkstra")
+
+    dG <- dG ^ 2
+    dG <- .Call(stats:::C_DoubleCentre, dG)
+    dG <- - dG/2
 
     if(loop) {
-      e <- RSpectra::eigs_sym(k, 2, which = "LA",
+      e <- RSpectra::eigs_sym(dG, 2, which = "LA",
                               opts = list(retvec = TRUE))
       t <- (pi+atan2(e$vectors[,1], e$vectors[,2]))/(2*pi)
     } else{
-      e <- RSpectra::eigs_sym(k, 1, which = "LA",
+      e <- RSpectra::eigs_sym(dG, 1, which = "LA",
                               opts = list(retvec = TRUE))
 
       t.list[[c]] <- as.vector(e$vectors)

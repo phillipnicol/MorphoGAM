@@ -1,0 +1,101 @@
+---
+title: "MorphoGAM: Detect spatially variable genes by projecting to morphologically relevant curves"
+author: "R package version 1.0.0"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## System Requirements
+
+`R` is required to use `MorphoGAM`. In development, `R` version 4.3.0 and greater were used, but there may be compatibility with previous versions. 
+
+## Installation 
+
+From the R console, `devtools::install_github("phillipnicol/MorphoGAM")`. Installation should take less than a minute on a standard machine. 
+
+## Demo 
+
+The first step in running `MorphoGAM` is to define a curve from which the morphologically relevant coordinates are defined. To demonstrate this, we use the swiss roll example: 
+
+```{r}
+set.seed(1)
+library(MorphoGAM)
+library(tidyverse)
+xy <- MorphoGAM:::makeSwissRoll()
+data.frame(x=xy[,1],y=xy[,2]) |> ggplot(aes(x=x,y=y)) + 
+  geom_point(size=0.5) + theme_bw()
+```
+
+The function `CurveFinder()` applies the automatic curve estimation method 
+
+```{r}
+library(igraph)
+fit <- CurveFinder(xy)
+```
+
+
+The `fit` object contains plots of the first two morphologically relevant coordinates 
+
+```{r,fig.height=4, fig.width=7, results='hold'}
+fit$curve.plot
+fit$coordinate.plot
+fit$residuals.plot
+```
+
+To interactively specify the curve, use the following function. Press the "Smooth" button when the points have been specified and then close the app to obtain the result: 
+
+```{r, eval=FALSE}
+  fit <- CurveFinderInteractive(xy)
+```
+
+The next step is to identify genes with variable expression along the curve (or in the orthogonal direction). Here we generate a synthetic count matrix `Y`: 
+
+```{r}
+Y <- matrix(rpois(100*nrow(xy), lambda=1),
+            nrow=100, ncol=nrow(xy))
+
+eta <- -3*fit$xyt$t + 2
+Y[1,] <- rpois(nrow(xy),lambda=exp(eta))
+
+rownames(Y) <- paste("Gene", 1:nrow(Y))
+```
+
+Now we apply the generalized additive model (GAM): 
+
+```{r}
+library(mgcv)
+mgam <- MorphoGAM(Y, curve.fit=fit,
+                  design = y ~ s(t, bs="cr"))
+```
+
+
+```{r}
+mgam$results |> arrange(desc(peak.t)) |> head()
+```
+The results indicate gene $1$ has a significant peak and range (region of increased expression), and we can visually confirm this by using `plotGAMestimate()`
+
+```{r}
+plotGAMestimates(Y,genes=c("Gene 1", "Gene 2"),
+                 mgam_object = mgam,
+                 curve_fit=fit,
+                 type="t")
+```
+
+
+For example to run it with 
+
+```{r, eval=FALSE}
+mgam_with_r <- MorphoGAM(Y, curve.fit=fit,
+                          design = y ~ s(t, bs="cr") + s(r, bs="cr"))
+```
+
+
+
+## Reference
+
+If you use `MorphoGAM` in your work, please cite:
+
+

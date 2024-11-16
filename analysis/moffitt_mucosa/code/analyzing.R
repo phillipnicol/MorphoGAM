@@ -48,36 +48,49 @@ saveRDS(nn.svg, file="../data/nnSVG_results.RDS")
 
 
 #Plot these two
-expr <- t(Y.sub[rownames(nn.svg)[1:9],]) |>
+
+Y.s <- sweep(Y.sub, MARGIN = 2, STATS = colSums(Y.sub)/median(colSums(Y.sub)),
+             FUN="/")
+
+expr <- t(Y.s[rownames(nn.svg)[1:9],]) |>
   apply(2,function(x) log2(x+1)) |>
   as.data.frame() |>
   mutate(x=meta.sub$x, y=meta.sub$y) |>
   pivot_longer(cols=-c(x,y))
 
 nnsvgplot <- expr |> ggplot(aes(x=x,y=y,color=value)) +
-  geom_point(size=0.25,alpha=0.75) +
-  scale_color_gradient(low="grey90", high="darkred")+
+  geom_point(size=0.25) +
+  scale_color_gradient(low="grey85", high="darkred")+
+  #scale_size_continuous(range=c(0.1,0.75)) +
+  scale_alpha_continuous(range=c(0.33,1)) +
+  coord_fixed() +
   facet_wrap(~name) +
   labs(color="log expression") +
-  theme_bw() + ggtitle("Top 9 SVGs (nnSVG)")
-ggsave(nnsvgplot, filename="../plots/nnsvg_top9.png",width=13.4,
-       height=10.1)
+  theme_bw() +
+  ggtitle("Top 9 SVGs (nnSVG)")
+ggsave(nnsvgplot, filename="../plots/nnsvg_top9.png",
+       width=1.3*6.42, height=1.3*5.85,
+       units="in")
 
 #Plot these two
-expr <- t(Y.sub[rownames(spark)[1:9],]) |>
+expr <- t(Y.s[rownames(spark)[1:9],]) |>
   apply(2,function(x) log2(x+1)) |>
   as.data.frame() |>
   mutate(x=meta.sub$x, y=meta.sub$y) |>
   pivot_longer(cols=-c(x,y))
 sparkplot <- expr |> ggplot(aes(x=x,y=y,color=value)) +
-  geom_point(size=0.25,alpha=0.75) +
-  scale_color_gradient(low="grey90", high="darkred")+
+  geom_point(size=0.25) +
+  scale_color_gradient(low="grey85", high="darkred")+
+  #scale_size_continuous(range=c(0.1,0.75)) +
+  scale_alpha_continuous(range=c(0.33,1)) +
+  coord_fixed() +
   facet_wrap(~name) +
   labs(color="log expression") +
   theme_bw() +
-  ggtitle("Top 9 SVGs (SPARK)")
-ggsave(sparkplot, filename="../plots/spark_top9.png",width=13.4,
-       height=10.1)
+  ggtitle("Top 9 SVGs (SPARKX)")
+ggsave(sparkplot, filename="../plots/spark_top9.png",
+       width=1.3*6.42, height=1.3*5.85,
+       units="in")
 
 ## MorphoGAM
 library(mgcv)
@@ -100,14 +113,18 @@ nnsvg_res <- readRDS("../data/nnSVG_results.RDS")
 #nnsvg_rank <- nnsvg_res$rank
 #p.vals <- spark$adjustedPval
 
+load("../data/mucosa_mgam.RData")
+load("../data/curve.RData")
+
 rownames(Y.sub) <- old.rownames
 top5 <- order(mgam$results$peak.t, decreasing=TRUE)[1:6]
 #top5 <- result[1:5]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
   nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
-  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
-                              "nnSVG rank =", nnsvg_rank)
+  rownames(Y.sub)[i] <- paste0(old.rownames[i], ": ",
+                               "Spark rank = ", spark_rank,
+                               " nnSVG rank = ", nnsvg_rank)
 }
 
 
@@ -125,8 +142,9 @@ top5 <- order(mgam$results$range.r, decreasing=TRUE)[1:6]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
   nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
-  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
-                              "nnSVG rank =", nnsvg_rank)
+  rownames(Y.sub)[i] <- paste0(old.rownames[i], ": ",
+                               "Spark rank = ", spark_rank,
+                               " nnSVG rank = ", nnsvg_rank)
 }
 
 p.range <- plotGAMestimates(Y.sub,
@@ -147,8 +165,9 @@ ggsave(p, filename="../plots/mouse_mucosa_svgs.png",
        height= 5.18*1.5)
 
 
+mgam$results["Ddx58",]
 
-
+mgam$results["Apob",]
 
 
 
@@ -159,8 +178,9 @@ top5 <- order(mgam$results$range.t, decreasing=TRUE)[1:6]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
   nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
-  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
-                              "nnSVG rank =", nnsvg_rank)
+  rownames(Y.sub)[i] <- paste0(old.rownames[i], ": ",
+                               "Spark rank = ", spark_rank,
+                               " nnSVG rank = ", nnsvg_rank)
 }
 
 
@@ -178,8 +198,9 @@ top5 <- order(mgam$results$peak.r, decreasing=TRUE)[1:6]
 for(i in top5) {
   spark_rank <- which(rownames(spark) == rownames(Y.sub)[i])
   nnsvg_rank <- which(rownames(nnsvg_res) == rownames(Y.sub)[i])
-  rownames(Y.sub)[i] <- paste("Spark rank =", spark_rank,
-                              "nnSVG rank =", nnsvg_rank)
+  rownames(Y.sub)[i] <- paste0(old.rownames[i], ": ",
+                               "Spark rank = ", spark_rank,
+                               " nnSVG rank = ", nnsvg_rank)
 }
 
 p.range <- plotGAMestimates(Y.sub,
@@ -192,6 +213,12 @@ p.range <- plotGAMestimates(Y.sub,
   xlim(0.3,0.7) +
   scale_y_sqrt()
 
+library(ggpubr)
+p <- ggarrange(p.peak, p.range, nrow=2, labels=c("a","b"))
+
+ggsave(p, filename="../plots/mouse_mucosa_svgs_OTHER.png",
+       width= 4.78*1.5,
+       height= 5.18*1.5)
 
 
 

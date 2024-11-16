@@ -52,7 +52,7 @@ expr <- t(Y.s[c(gene.1,gene.2),]) |>
   as.data.frame() |>
   mutate(x=meta.sub$x, y=meta.sub$y) |>
   pivot_longer(cols=-c(x,y))
-
+expr$name <- factor(expr$name, levels=c("Ddx58", "Apob"))
 
 plot1 <- expr |> ggplot(aes(x=x,y=y,color=value,size=value,
                             alpha=value)) +
@@ -235,10 +235,44 @@ library(ggpubr)
 plot1 <- plot1 + ggtitle("MERFISH mouse colon enterocytes") +
   theme(plot.title = element_text(size = 11))
 
-p <- ggarrange(plot1, ggarrange(p.granule, p.ca3,nrow=1, labels=c("c","d")),nrow=2, labels=c("a",""),
+p <- ggarrange(plot1, ggarrange(p.granule, p.ca3,nrow=1, labels=c("b","c")),nrow=2, labels=c("a",""),
                heights=c(1.5,1))
 ggsave(p, filename="../plots/example_of_1d_new.png",
        width=7.56, height=6.93, units="in")
 
 ggsave(p, filename="../plots/example_of_1d.png",
        width=11.88, height=9.19, units="in")
+
+
+
+## Curve Demo
+
+
+
+gene.1 <- Y.sub["Ddx58",]
+gene.2 <- Y.sub["Apob",]
+
+p.gene1 <- data.frame(x=fit$xyt$t, y=gene.1) |>
+  ggplot(aes(x=x,y=y)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  theme_bw() +
+  xlab("t") + ylab("Count") + ggtitle("Ddx58")
+
+p.gene2 <- data.frame(x=fit$xyt$r, y=gene.2) |>
+  ggplot(aes(x=x,y=y)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  theme_bw() +
+  xlim(0.3,1) +
+  xlab("r") + ylab("Count") + ggtitle("Apob")
+
+p.demo <- ggarrange(ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(color="none"),
+                              fit$coordinate.plot + guides(color="none"),
+                              fit$residuals.plot + guides(color="none"), nrow=1,ncol=3,
+                              labels=c("a","b","c")),
+                    ggarrange(p.gene1, p.gene2, nrow=1,ncol=2,
+                              labels=c("d","e")),nrow=2)
+
+ggsave(p.demo, filename="../plots/curve_demo.png",
+       width=8.89, height=7.54, units="in")
+
+

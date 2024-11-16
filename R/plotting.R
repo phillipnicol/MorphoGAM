@@ -1,3 +1,7 @@
+#' @export
+#'
+#' @title plotGAMestimates
+#'
 plotGAMestimates <- function(Y,
                              genes,
                              mgam_object,
