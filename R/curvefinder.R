@@ -33,8 +33,7 @@
 #' @import ggplot2
 #' @import mgcv
 #' @import dimRed
-#' @importFrom igraph components
-#' @importFrom igraph subgraph
+#' @importFrom igraph components subgraph V
 #' @importFrom RSpectra eigs_sym
 #' @importFrom gratia derivatives
 #' @importFrom gtools permutations
@@ -71,7 +70,8 @@ CurveFinder <- function(xy,
   for(c in 1:comp$no) {
     xy.sub <- xy[comp$membership == c,]
 
-    knng.sub <- igraph::subgraph(knng, V(knng)[comp$membership == c])
+    knng.sub <- igraph::subgraph(knng,
+                                 igraph::V(knng)[comp$membership == c])
 
     # See ISOMAP function in
     ##  Kraemer G, Reichstein M, Mahecha MD (2018). “dimRed

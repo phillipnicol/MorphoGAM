@@ -25,22 +25,6 @@ this, we use the swiss roll example:
 set.seed(1)
 library(MorphoGAM)
 library(tidyverse)
-```
-
-    ## Warning: package 'ggplot2' was built under R version 4.3.1
-
-    ## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-    ## ✔ dplyr     1.1.2     ✔ readr     2.1.4
-    ## ✔ forcats   1.0.0     ✔ stringr   1.5.0
-    ## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-    ## ✔ lubridate 1.9.2     ✔ tidyr     1.3.0
-    ## ✔ purrr     1.0.2     
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
-    ## ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-
-``` r
 xy <- MorphoGAM:::makeSwissRoll()
 data.frame(x=xy[,1],y=xy[,2]) |> ggplot(aes(x=x,y=y)) + 
   geom_point(size=0.5) + theme_bw()
@@ -52,46 +36,11 @@ The function `CurveFinder()` applies the automatic curve estimation
 method
 
 ``` r
-library(igraph)
-```
-
-    ## 
-    ## Attaching package: 'igraph'
-
-    ## The following objects are masked from 'package:lubridate':
-    ## 
-    ##     %--%, union
-
-    ## The following objects are masked from 'package:dplyr':
-    ## 
-    ##     as_data_frame, groups, union
-
-    ## The following objects are masked from 'package:purrr':
-    ## 
-    ##     compose, simplify
-
-    ## The following object is masked from 'package:tidyr':
-    ## 
-    ##     crossing
-
-    ## The following object is masked from 'package:tibble':
-    ## 
-    ##     as_data_frame
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     decompose, spectrum
-
-    ## The following object is masked from 'package:base':
-    ## 
-    ##     union
-
-``` r
 fit <- CurveFinder(xy)
 ```
 
 The `fit` object contains plots of the first two morphologically
-relevant coordinates
+relevant coordinates and the fitted curve:
 
 ``` r
 fit$curve.plot
@@ -116,6 +65,7 @@ the “Smooth” button when the points have been specified and then close
 the app to obtain the result:
 
 ``` r
+  #Running this opens a shiny app
   fit <- CurveFinderInteractive(xy)
 ```
 
@@ -136,26 +86,16 @@ rownames(Y) <- paste("Gene", 1:nrow(Y))
 Now we apply the generalized additive model (GAM):
 
 ``` r
-library(mgcv)
-```
-
-    ## Loading required package: nlme
-
-    ## 
-    ## Attaching package: 'nlme'
-
-    ## The following object is masked from 'package:dplyr':
-    ## 
-    ##     collapse
-
-    ## This is mgcv 1.9-0. For overview type 'help("mgcv-package")'.
-
-``` r
 mgam <- MorphoGAM(Y, curve.fit=fit,
                   design = y ~ s(t, bs="cr"))
 ```
 
     ## ================================================================================
+
+The `bs = "cr"` specifies cubic regression splines in the GAM, although
+this can be modified to periodic splines or other basis functions
+provided by `mgcv`. We may wish to sort the results matrix to rank genes
+by summaries of the estimated function:
 
 ``` r
 mgam$results |> arrange(desc(peak.t)) |> head()
@@ -163,15 +103,15 @@ mgam$results |> arrange(desc(peak.t)) |> head()
 
     ##            peak.t   range.t         pv.t peak.r range.r pv.r intercept
     ## Gene 1  1.4270898 6.1790340 0.0000000000      0       0    0 -3.953473
-    ## Gene 10 0.2789934 0.3209224 0.2185367048      0       0    0 -4.645891
-    ## Gene 44 0.2676210 0.5097361 0.0924200551      0       0    0 -4.593755
-    ## Gene 49 0.2295902 0.2818734 0.0506582448      0       0    0 -4.682800
-    ## Gene 33 0.2162524 0.4054095 0.0002472835      0       0    0 -4.618065
-    ## Gene 64 0.2152775 0.3071779 0.1074942791      0       0    0 -4.623618
+    ## Gene 10 0.2789934 0.3209224 0.2185367050      0       0    0 -4.645891
+    ## Gene 44 0.2689231 0.5115989 0.0924200551      0       0    0 -4.593755
+    ## Gene 49 0.2296414 0.2818365 0.0506582449      0       0    0 -4.682800
+    ## Gene 33 0.2162688 0.4054366 0.0002472835      0       0    0 -4.618065
+    ## Gene 64 0.2151618 0.3072443 0.1074942791      0       0    0 -4.623618
 
 The results indicate gene $1$ has a significant peak and range (region
 of increased expression), and we can visually confirm this by using
-`plotGAMestimate()`
+`plotGAMestimate()` to plot the entire function:
 
 ``` r
 plotGAMestimates(Y,genes=c("Gene 1", "Gene 2"),
@@ -180,9 +120,11 @@ plotGAMestimates(Y,genes=c("Gene 1", "Gene 2"),
                  type="t")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](README_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
-For example to run it with
+To also identify genes that vary in the direction of the second
+morphologically relevant coordinate, add the term `s(r, ...)` to the
+`design` argument in `MorphoGAM`.
 
 ``` r
 mgam_with_r <- MorphoGAM(Y, curve.fit=fit,

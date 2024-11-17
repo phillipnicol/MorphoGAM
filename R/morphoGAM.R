@@ -2,7 +2,7 @@
 
 #' @export
 #'
-#' #' @title scDist: Identify perturbed cell types in
+#' @title scDist: Identify perturbed cell types in
 #' single-cell RNA-seq data
 #'
 #' @description Estimate the distance between

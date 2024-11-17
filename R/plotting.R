@@ -47,7 +47,5 @@ plotGAMestimates <- function(Y,
   } else{
     stop("Type must be t or r")
   }
-
-  print(p)
   return(p)
 }

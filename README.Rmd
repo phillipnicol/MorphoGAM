@@ -20,7 +20,7 @@ From the R console, `devtools::install_github("phillipnicol/MorphoGAM")`. Instal
 
 The first step in running `MorphoGAM` is to define a curve from which the morphologically relevant coordinates are defined. To demonstrate this, we use the swiss roll example: 
 
-```{r}
+```{r, warning=FALSE, message=FALSE}
 set.seed(1)
 library(MorphoGAM)
 library(tidyverse)
@@ -32,14 +32,13 @@ data.frame(x=xy[,1],y=xy[,2]) |> ggplot(aes(x=x,y=y)) +
 The function `CurveFinder()` applies the automatic curve estimation method 
 
 ```{r}
-library(igraph)
 fit <- CurveFinder(xy)
 ```
 
 
-The `fit` object contains plots of the first two morphologically relevant coordinates 
+The `fit` object contains plots of the first two morphologically relevant coordinates and the fitted curve: 
 
-```{r,fig.height=4, fig.width=7, results='hold'}
+```{r}
 fit$curve.plot
 fit$coordinate.plot
 fit$residuals.plot
@@ -48,6 +47,7 @@ fit$residuals.plot
 To interactively specify the curve, use the following function. Press the "Smooth" button when the points have been specified and then close the app to obtain the result: 
 
 ```{r, eval=FALSE}
+  #Running this opens a shiny app
   fit <- CurveFinderInteractive(xy)
 ```
 
@@ -66,16 +66,17 @@ rownames(Y) <- paste("Gene", 1:nrow(Y))
 Now we apply the generalized additive model (GAM): 
 
 ```{r}
-library(mgcv)
 mgam <- MorphoGAM(Y, curve.fit=fit,
                   design = y ~ s(t, bs="cr"))
 ```
 
+The `bs = "cr"` specifies cubic regression splines in the GAM, although this can be modified to periodic splines or other basis functions provided by `mgcv`. We may wish to sort the results matrix to rank genes by summaries of the estimated function:
 
 ```{r}
 mgam$results |> arrange(desc(peak.t)) |> head()
 ```
-The results indicate gene $1$ has a significant peak and range (region of increased expression), and we can visually confirm this by using `plotGAMestimate()`
+
+The results indicate gene $1$ has a significant peak and range (region of increased expression), and we can visually confirm this by using `plotGAMestimate()` to plot the entire function:
 
 ```{r}
 plotGAMestimates(Y,genes=c("Gene 1", "Gene 2"),
@@ -85,7 +86,7 @@ plotGAMestimates(Y,genes=c("Gene 1", "Gene 2"),
 ```
 
 
-For example to run it with 
+To also identify genes that vary in the direction of the second morphologically relevant coordinate, add the term `s(r, ...)` to the `design` argument in `MorphoGAM`. 
 
 ```{r, eval=FALSE}
 mgam_with_r <- MorphoGAM(Y, curve.fit=fit,
