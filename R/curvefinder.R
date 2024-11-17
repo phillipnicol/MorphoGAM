@@ -1,6 +1,34 @@
 #' @export
 #'
-#' @title CurveFinder
+#' @title CurveFinder: Estimate curve and morphologically
+#' relevant coordinates in spatial transcriptomics data
+#'
+#' @description An automa
+#'
+#' @param normalized_counts A matrix containing
+#' normalized data with genes on rows and cells
+#' on columns
+#' @param meta.data A data frame containing meta data for each cell.
+#' @param fixed.effects The columns in meta.data corresponding to the fixed effects. In
+#' a typical case, this would be the condition of interest.
+#' @param random.effects The columns in meta.data corresponding to the random effects.
+#' In a typical use case this would be the column containing patient ID.
+#' @param clusters The column containing the cell-type annotation.
+#' @param d The number of PCs to use.
+#' @param truncate Whether or not to round negative distances to 0.
+#' @param min.count.per.cell The minimum number of cells per cluster to perform the estimation.
+#' @param weights An optional vector of length equal to the number of genes specifying the weight
+#' to place on each gene in the distance estimate.
+#'
+#' @return A list with components
+#' \itemize{
+#' \item \code{results} - A data frame containing the cell
+#' type, estimated distance, and other statistics such as p-value.
+#' \item \code{vals} For each cell type a list of more detailed
+#' information (such as raw data) and coefficients for each PC are
+#' included.
+#' }
+#'
 #'
 #' @import ggplot2
 #' @import mgcv
