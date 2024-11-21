@@ -18,6 +18,8 @@ From the R console, `devtools::install_github("phillipnicol/MorphoGAM")`. Instal
 
 ## Demo 
 
+### Step 1: Estimate morphologically relevant coordinates
+
 The first step in running `MorphoGAM` is to define a curve from which the morphologically relevant coordinates are defined. To demonstrate this, we use the swiss roll example: 
 
 ```{r, warning=FALSE, message=FALSE}
@@ -40,18 +42,27 @@ The `fit` object contains plots of the first two morphologically relevant coordi
 
 ```{r}
 fit$curve.plot
-fit$coordinate.plot
-fit$residuals.plot
+fit$coordinate.plot #First morphologically relevant coordinate 
+fit$residuals.plot #Second morphologically relevant coordinate
 ```
 
-To interactively specify the curve, use the following function. Press the "Smooth" button when the points have been specified and then close the app to obtain the result: 
+The morphologically relevant coordintes can be accessed via `fit$xyt`: 
+
+```{r}
+fit$xyt |> head()
+```
+
+
+In some cases the user may wish to draw the curve by hand. For this we provide an interactive shiny app that can be run locally using the function `CurveFinderInteractive()`. Once the app is running you can click the sequence of points defining the curve, then press the "Smooth" button to fit the curve. Once the smoothing is done the app can be closed and `fit` will be returned.
 
 ```{r, eval=FALSE}
   #Running this opens a shiny app
   fit <- CurveFinderInteractive(xy)
 ```
 
-The next step is to identify genes with variable expression along the curve (or in the orthogonal direction). Here we generate a synthetic count matrix `Y`: 
+### Step 2: Apply GAM to morphologically relevant coordinates
+
+The next step is to identify genes with variable expression along the curve (or in the orthogonal direction). Here we generate a synthetic count matrix `Y` with one spatially interesting gene: 
 
 ```{r}
 Y <- matrix(rpois(100*nrow(xy), lambda=1),

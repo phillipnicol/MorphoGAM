@@ -17,6 +17,8 @@ should take less than a minute on a standard machine.
 
 ## Demo
 
+### Step 1: Estimate morphologically relevant coordinates
+
 The first step in running `MorphoGAM` is to define a curve from which
 the morphologically relevant coordinates are defined. To demonstrate
 this, we use the swiss roll example:
@@ -49,29 +51,48 @@ fit$curve.plot
 ![](README_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ``` r
-fit$coordinate.plot
+fit$coordinate.plot #First morphologically relevant coordinate 
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-3-2.png)<!-- -->
 
 ``` r
-fit$residuals.plot
+fit$residuals.plot #Second morphologically relevant coordinate
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-3-3.png)<!-- -->
 
-To interactively specify the curve, use the following function. Press
-the “Smooth” button when the points have been specified and then close
-the app to obtain the result:
+The morphologically relevant coordintes can be accessed via `fit$xyt`:
+
+``` r
+fit$xyt |> head()
+```
+
+    ##            x          y         t         r         f1         f2
+    ## 1 -0.5570179  0.3213394 0.2050271 0.4133826 -0.5474196  0.3125001
+    ## 2 -0.5829042 -0.4035348 0.2980582 0.4115648 -0.5730570 -0.3944718
+    ## 3  0.6330314 -0.3873620 0.4895029 0.7098784  0.6685151 -0.4089267
+    ## 4 -0.8982847  0.2923785 0.8824209 0.6039158 -0.9116261  0.3098966
+    ## 5 -0.2294434  0.5582292 0.1530027 0.4402809 -0.2343397  0.5517795
+    ## 6 -0.8106100  0.3995968 0.8657898 0.6428067 -0.8339070  0.4171639
+
+In some cases the user may wish to draw the curve by hand. For this we
+provide an interactive shiny app that can be run locally using the
+function `CurveFinderInteractive()`. Once the app is running you can
+click the sequence of points defining the curve, then press the “Smooth”
+button to fit the curve. Once the smoothing is done the app can be
+closed and `fit` will be returned.
 
 ``` r
   #Running this opens a shiny app
   fit <- CurveFinderInteractive(xy)
 ```
 
+### Step 2: Apply GAM to morphologically relevant coordinates
+
 The next step is to identify genes with variable expression along the
 curve (or in the orthogonal direction). Here we generate a synthetic
-count matrix `Y`:
+count matrix `Y` with one spatially interesting gene:
 
 ``` r
 Y <- matrix(rpois(100*nrow(xy), lambda=1),
@@ -103,11 +124,11 @@ mgam$results |> arrange(desc(peak.t)) |> head()
 
     ##            peak.t   range.t         pv.t peak.r range.r pv.r intercept
     ## Gene 1  1.4270898 6.1790340 0.0000000000      0       0    0 -3.953473
-    ## Gene 10 0.2789934 0.3209224 0.2185367050      0       0    0 -4.645891
-    ## Gene 44 0.2689231 0.5115989 0.0924200551      0       0    0 -4.593755
-    ## Gene 49 0.2296414 0.2818365 0.0506582449      0       0    0 -4.682800
-    ## Gene 33 0.2162688 0.4054366 0.0002472835      0       0    0 -4.618065
-    ## Gene 64 0.2151618 0.3072443 0.1074942791      0       0    0 -4.623618
+    ## Gene 10 0.2789934 0.3209224 0.2185367048      0       0    0 -4.645891
+    ## Gene 44 0.2676210 0.5097361 0.0924200551      0       0    0 -4.593755
+    ## Gene 49 0.2295902 0.2818734 0.0506582448      0       0    0 -4.682800
+    ## Gene 33 0.2162524 0.4054095 0.0002472835      0       0    0 -4.618065
+    ## Gene 64 0.2152775 0.3071779 0.1074942791      0       0    0 -4.623618
 
 The results indicate gene $1$ has a significant peak and range (region
 of increased expression), and we can visually confirm this by using
@@ -120,7 +141,7 @@ plotGAMestimates(Y,genes=c("Gene 1", "Gene 2"),
                  type="t")
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 To also identify genes that vary in the direction of the second
 morphologically relevant coordinate, add the term `s(r, ...)` to the
