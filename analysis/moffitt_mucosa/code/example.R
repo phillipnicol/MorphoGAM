@@ -67,7 +67,7 @@ plot1 <- expr |> ggplot(aes(x=x,y=y,color=value,size=value,
   guides(alpha="none")
 
 
-ggsave(plot1,"../plots/two_genes_examples.png")
+#ggsave(plot1,"../plots/two_genes_examples.png")
 
 
 
@@ -247,7 +247,8 @@ ggsave(p, filename="../plots/example_of_1d.png",
 
 ## Curve Demo
 
-
+library(MorphoGAM)
+fit <- CurveFinder(locus,knn=10,loop=TRUE)
 
 gene.1 <- Y.sub["Ddx58",]
 gene.2 <- Y.sub["Apob",]
@@ -266,8 +267,8 @@ p.gene2 <- data.frame(x=fit$xyt$r, y=gene.2) |>
   xlab("r") + ylab("Count") + ggtitle("Apob")
 
 p.demo <- ggarrange(ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(color="none"),
-                              fit$coordinate.plot + guides(color="none"),
-                              fit$residuals.plot + guides(color="none"), nrow=1,ncol=3,
+                              fit$coordinate.plot + guides(color="none") + ggtitle("First coordinate (t)"),
+                              fit$residuals.plot + guides(color="none") + ggtitle("Second coordinate (r)"), nrow=1,ncol=3,
                               labels=c("a","b","c")),
                     ggarrange(p.gene1, p.gene2, nrow=1,ncol=2,
                               labels=c("d","e")),nrow=2)

@@ -1,3 +1,4 @@
+library(tidyverse)
 meta <- read.csv("../../data/GL2_distal_colon_cell_type_and_locations_2023.08.11.csv")
 meta <- as.data.frame(meta)
 meta.sub <- meta |> filter(slice_full_name == "20220518_WT_dcol_slice_3") |>
@@ -6,24 +7,29 @@ meta.sub <- meta |> filter(slice_full_name == "20220518_WT_dcol_slice_3") |>
 
 xy <- as.matrix(meta.sub[,c("x","y")])
 
+library(MorphoGAM)
+
+#fit <- CurveFinderInteractive(xy,loop=TRUE)
+#save(fit, file="../data/loop_ground_truth.Rda")
 load("../data/loop_ground_truth.Rda")
+
 
 
 p <- xy |> ggplot(aes(x=x,y=y)) + geom_point(size=0.5) +
   theme_bw() +
-  ggtitle("Mucosa")
-p1 <- ground_truth$curve.plot + guides(color="none") + ggtitle("Path (Hand drawn)")
-p2 <- ground_truth$coordinate.plot +guides(color="none")
+  ggtitle("Mouse colon")
+p1 <- fit$curve.plot + guides(color="none") + ggtitle("Path (Hand drawn)")
+p2 <- fit$coordinate.plot +guides(color="none")
 
 
 out10 <- CurveFinder(xy,knn=10, loop=TRUE)
-p.cf.10 <- out10$curve.plot + guides(color="none") + ggtitle("CurveFinder (knn=10)")
+p.cf.10 <- out10$curve.plot + guides(color="none") + ggtitle("MorphoGAM (knn=10)")
 
 out15 <- CurveFinder(xy,knn=10, loop=TRUE)
-p.cf.15 <- out15$curve.plot + guides(color="none")+ ggtitle("CurveFinder (knn=15)")
+p.cf.15 <- out15$curve.plot + guides(color="none")+ ggtitle("MorphoGAM (knn=15)")
 
 out20 <- CurveFinder(xy,knn=10, loop=TRUE)
-p.cf.20 <- out20$curve.plot + guides(color="none")+ ggtitle("CurveFinder (knn=20)")
+p.cf.20 <- out20$curve.plot + guides(color="none")+ ggtitle("MorphoGAM (knn=20)")
 
 
 ### Principal curves
@@ -76,6 +82,8 @@ p.ps.3 <- data.frame(x=xy[,1], y=xy[,2]) |>
   theme_bw() +
   ggtitle("princurve (f=0.01)") +
   guides(color="none")
+
+library(ggpubr)
 
 p.big <- ggarrange(ggarrange(p,p1,p2,nrow=1,ncol=3),
                    ggarrange(p.cf.10, p.cf.15, p.cf.20,nrow=1,ncol=3),
