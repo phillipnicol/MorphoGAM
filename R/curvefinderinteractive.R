@@ -4,6 +4,7 @@
 #' @title CurveFinderInteractive
 #'
 #' @import shiny
+#' @import princurve
 CurveFinderInteractive <- function(xy,loop=FALSE) {
   ## Written with Claude
   # Define UI
@@ -91,7 +92,7 @@ interactiveCurve <- function(clicks, loop) {
   predy <- predict(fity,newdata=list(t=my.t))
   ft <- data.frame(x=predx,y=predy)
 
-  proj <- project_to_curve(xy,s=as.matrix(ft))
+  proj <- princurve::project_to_curve(xy,s=as.matrix(ft))
   t <- as.numeric(proj$lambda/max(proj$lambda))
 
   fitx <- mgcv::gam(xy[,1]~s(t,bs=basis, k=nrow(clicks)))

@@ -2,8 +2,8 @@
 % Please edit documentation in R/morphoGAM.R, R/zzz.R
 \docType{package}
 \name{MorphoGAM}
-\alias{MorphoGAM}
 \alias{MorphoGAM-package}
+\alias{MorphoGAM}
 \title{scDist: Identify perturbed cell types in
 single-cell RNA-seq data}
 \usage{

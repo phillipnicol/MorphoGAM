@@ -10,3 +10,14 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
+Imports: 
+    ashr,
+    dimRed,
+    ggplot2,
+    gratia,
+    gtools,
+    igraph,
+    mgcv,
+    princurve,
+    RSpectra,
+    shiny
