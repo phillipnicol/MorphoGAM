@@ -4,8 +4,7 @@
 \name{MorphoGAM}
 \alias{MorphoGAM-package}
 \alias{MorphoGAM}
-\title{scDist: Identify perturbed cell types in
-single-cell RNA-seq data}
+\title{MorphoGAM: Apply a GAM to the morphologically relevant coordinates}
 \usage{
 MorphoGAM(
   Y,
@@ -18,40 +17,42 @@ MorphoGAM(
 )
 }
 \arguments{
-\item{normalized_counts}{A matrix containing
-normalized data with genes on rows and cells
-on columns}
+\item{Y}{A numeric matrix where rows represent genes and columns represent samples (e.g., cells).}
 
-\item{meta.data}{A data frame containing meta data for each cell.}
+\item{curve.fit}{An object produced by `CurveFinder`, containing the fitted curve parameters (`t` and `r`) for each sample.}
 
-\item{fixed.effects}{The columns in meta.data corresponding to the fixed effects. In
-a typical case, this would be the condition of interest.}
+\item{design}{A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`).}
 
-\item{random.effects}{The columns in meta.data corresponding to the random effects.
-In a typical use case this would be the column containing patient ID.}
+\item{shrinkage}{A logical value indicating whether to apply shrinkage to smooth term coefficients using `ashr`. Default is `TRUE`.}
 
-\item{clusters}{The column containing the cell-type annotation.}
+\item{min.count.per.gene}{An integer specifying the minimum total count required for a gene to be included in the analysis. Default is 10.}
 
-\item{d}{The number of PCs to use.}
+\item{return.fx}{A logical value indicating whether to return the fitted smooth terms for `t` and `r` for each gene. Default is `TRUE`.}
 
-\item{truncate}{Whether or not to round negative distances to 0.}
-
-\item{min.count.per.cell}{The minimum number of cells per cluster to perform the estimation.}
-
-\item{weights}{An optional vector of length equal to the number of genes specifying the weight
-to place on each gene in the distance estimate.}
+\item{offset}{A numeric vector providing offset values for the GAM model. If `NULL` (default), offsets are computed as the logarithm of the column sums of `Y`.}
 }
 \value{
-A list with components
-\itemize{
-\item \code{results} - A data frame containing the cell
-type, estimated distance, and other statistics such as p-value.
-\item \code{vals} For each cell type a list of more detailed
-information (such as raw data) and coefficients for each PC are
-included.
-}
+A list containing:
+\item{results}{A data frame with rows corresponding to genes and the following columns:
+\describe{
+  \item{peak.t}{Maximum absolute smooth term for `t`.}
+  \item{range.t}{Range of predicted expression values along `t`.}
+  \item{pv.t}{P-value for the smooth term `t`.}
+  \item{peak.r}{Maximum absolute smooth term for `r`.}
+  \item{range.r}{Range of predicted expression values along `r`.}
+  \item{pv.r}{p-value for the smooth term `r`.}
+  \item{intercept}{Intercept of the fitted model.}
+}}
+If `return.fx = TRUE`, the list also includes:
+\item{fxs.t}{A matrix of fitted smooth terms for `t` (genes x samples).}
+\item{fxs.r}{A matrix of fitted smooth terms for `r` (genes x samples).}
 }
 \description{
+The morphologically relevant coordinates can be estimated using
+`CurveFinder()` or `CurveFinderInteractive()`. This function applies a flexible
+count-based model to identify genes with spatially variable expression with
+respect to the morphologically relevant coordinates.
+
 Estimate the distance between
 condition means in gene expression space.
 

@@ -2,38 +2,39 @@
 
 #' @export
 #'
-#' @title scDist: Identify perturbed cell types in
-#' single-cell RNA-seq data
+#' @title MorphoGAM: Apply a GAM to the morphologically relevant coordinates
+#'
+#' @description The morphologically relevant coordinates can be estimated using
+#' `CurveFinder()` or `CurveFinderInteractive()`. This function applies a flexible
+#' count-based model to identify genes with spatially variable expression with
+#' respect to the morphologically relevant coordinates.
 #'
 #' @description Estimate the distance between
 #' condition means in gene expression space.
 #'
-#' @param normalized_counts A matrix containing
-#' normalized data with genes on rows and cells
-#' on columns
-#' @param meta.data A data frame containing meta data for each cell.
-#' @param fixed.effects The columns in meta.data corresponding to the fixed effects. In
-#' a typical case, this would be the condition of interest.
-#' @param random.effects The columns in meta.data corresponding to the random effects.
-#' In a typical use case this would be the column containing patient ID.
-#' @param clusters The column containing the cell-type annotation.
-#' @param d The number of PCs to use.
-#' @param truncate Whether or not to round negative distances to 0.
-#' @param min.count.per.cell The minimum number of cells per cluster to perform the estimation.
-#' @param weights An optional vector of length equal to the number of genes specifying the weight
-#' to place on each gene in the distance estimate.
+#' @param Y A numeric matrix where rows represent genes and columns represent samples (e.g., cells).
+#' @param curve.fit An object produced by `CurveFinder`, containing the fitted curve parameters (`t` and `r`) for each sample.
+#' @param design A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`).
+#' @param shrinkage A logical value indicating whether to apply shrinkage to smooth term coefficients using `ashr`. Default is `TRUE`.
+#' @param min.count.per.gene An integer specifying the minimum total count required for a gene to be included in the analysis. Default is 10.
+#' @param return.fx A logical value indicating whether to return the fitted smooth terms for `t` and `r` for each gene. Default is `TRUE`.
+#' @param offset A numeric vector providing offset values for the GAM model. If `NULL` (default), offsets are computed as the logarithm of the column sums of `Y`.
 #'
-#' @return A list with components
-#' \itemize{
-#' \item \code{results} - A data frame containing the cell
-#' type, estimated distance, and other statistics such as p-value.
-#' \item \code{vals} For each cell type a list of more detailed
-#' information (such as raw data) and coefficients for each PC are
-#' included.
-#' }
+#' @return A list containing:
+#' \item{results}{A data frame with rows corresponding to genes and the following columns:
+#' \describe{
+#'   \item{peak.t}{Maximum absolute smooth term for `t`.}
+#'   \item{range.t}{Range of predicted expression values along `t`.}
+#'   \item{pv.t}{P-value for the smooth term `t`.}
+#'   \item{peak.r}{Maximum absolute smooth term for `r`.}
+#'   \item{range.r}{Range of predicted expression values along `r`.}
+#'   \item{pv.r}{p-value for the smooth term `r`.}
+#'   \item{intercept}{Intercept of the fitted model.}
+#' }}
+#' If `return.fx = TRUE`, the list also includes:
+#' \item{fxs.t}{A matrix of fitted smooth terms for `t` (genes x samples).}
+#' \item{fxs.r}{A matrix of fitted smooth terms for `r` (genes x samples).}
 #'
-#'
-#' @title MorphoGAM
 #'
 #' @importFrom ashr ash get_post_sample
 MorphoGAM <- function(Y,
