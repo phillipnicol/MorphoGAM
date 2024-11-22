@@ -1,34 +1,31 @@
 #' @export
 #'
-#' @title CurveFinder: Estimate curve and morphologically
-#' relevant coordinates in spatial transcriptomics data
+#' @title CurveFinder: Automatically estimate curve in two-dimensional ST data
 #'
-#' @description An automa
+#' @description This function estimates a (possibly closed) parametric curve
+#' passing through spatial transcriptomics data and uses this curve to define
+#' morphologically relevant coordinates `t` and `r`.
 #'
-#' @param normalized_counts A matrix containing
-#' normalized data with genes on rows and cells
-#' on columns
-#' @param meta.data A data frame containing meta data for each cell.
-#' @param fixed.effects The columns in meta.data corresponding to the fixed effects. In
-#' a typical case, this would be the condition of interest.
-#' @param random.effects The columns in meta.data corresponding to the random effects.
-#' In a typical use case this would be the column containing patient ID.
-#' @param clusters The column containing the cell-type annotation.
-#' @param d The number of PCs to use.
-#' @param truncate Whether or not to round negative distances to 0.
-#' @param min.count.per.cell The minimum number of cells per cluster to perform the estimation.
-#' @param weights An optional vector of length equal to the number of genes specifying the weight
-#' to place on each gene in the distance estimate.
+#' @param xy A numeric matrix or data frame with two columns representing the x and y coordinates of the data points.
+#' @param knn An integer specifying the number of nearest neighbors used to construct the KNN graph. Default is 5.
+#' @param prune.outlier A numeric threshold for pruning outliers based on the distance to the k+1 nearest neighbor. Outliers are removed if their distance exceeds `prune.outlier * median(nnk)`. Defaults to NULL (no pruning).
+#' @param loop A logical value indicating whether the curve should be treated as a loop (closed curve). Default is FALSE.
 #'
-#' @return A list with components
-#' \itemize{
-#' \item \code{results} - A data frame containing the cell
-#' type, estimated distance, and other statistics such as p-value.
-#' \item \code{vals} For each cell type a list of more detailed
-#' information (such as raw data) and coefficients for each PC are
-#' included.
-#' }
+#' @return A list containing:
+#' \item{xyt}{A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` abd `f2`).}
+#' \item{curve.plot}{A ggplot object showing the original data with the fitted curve overlaid.}
+#' \item{coordinate.plot}{A ggplot object displaying the data points color-coded by their fitted `t` values.}
+#' \item{residuals.plot}{A ggplot object displaying the data points color-coded by their fitted `r` values.}
 #'
+#' @details
+#' To-do
+#'
+#'
+#' @references
+#' Kraemer G, Reichstein M, Mahecha MD (2018). “dimRed and coRanking—Unifying Dimensionality Reduction in R.” _The R Journal_, *10*(1), 342-358.
+#'
+#' @examples
+#' # TODO
 #'
 #' @import ggplot2
 #' @import mgcv
