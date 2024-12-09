@@ -37,6 +37,7 @@
 #'
 #'
 #' @importFrom ashr ash get_post_sample
+#' @importFrom irlba irlba
 MorphoGAM <- function(Y,
                       curve.fit,
                       design,
@@ -138,7 +139,9 @@ MorphoGAM <- function(Y,
 
   if(return.fx) {
     rownames(fxs.t) <- rownames(Y)
+    mgam$fpca.t <- irlba::irlba(fxs.t)
     rownames(fxs.r) <- rownames(Y)
+    mgam$fpca.r <- irlba::irlba(fxs.r)
     out$fxs.t <- fxs.t
     out$fxs.r <- fxs.r
   }

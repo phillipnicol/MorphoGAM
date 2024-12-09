@@ -6,5 +6,6 @@
 *.log
 *.rda
 *.Rda
+*.RDS
 analysis/data/*
 !analysis/data/.gitkeep
