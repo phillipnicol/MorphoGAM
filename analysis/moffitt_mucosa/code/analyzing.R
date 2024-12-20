@@ -1,5 +1,3 @@
-
-
 Y <- read.csv("../../data/GL2_distal_colon_cell_by_gene_raw.csv")
 
 rownames(Y) <- Y[,1]
