@@ -1,12 +1,13 @@
 Package: MorphoGAM
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Identify spatially variable genes by projecting to morphologically relevant curves.
+Version: 1.0.0
+Author: Phillip B. Nicol <philnicol740@gmail.com>
+Maintainer: Phillip B. Nicol <philnicol740@gmail.com>
+Description: Includes methods (interactive and automatic) for estimating a "morphologically relevant" 
+ curve from spatial transcriptomics data. Implements a generalized additive model (GAM) to identify
+ gene expression variation along the curve. 
+License: MIT
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
