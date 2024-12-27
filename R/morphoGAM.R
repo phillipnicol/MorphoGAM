@@ -139,9 +139,11 @@ MorphoGAM <- function(Y,
 
   if(return.fx) {
     rownames(fxs.t) <- rownames(Y)
-    #out$fpca.t <- irlba::irlba(fxs.t)
     rownames(fxs.r) <- rownames(Y)
-    #out$fpca.r <- irlba::irlba(fxs.r)
+    try({
+      out$fpca.t <- irlba::irlba(fxs.t)
+      out$fpca.r <- irlba::irlba(fxs.r)
+    })
     out$fxs.t <- fxs.t
     out$fxs.r <- fxs.r
   }
