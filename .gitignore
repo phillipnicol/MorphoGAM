@@ -9,3 +9,6 @@
 *.RDS
 analysis/data/*
 !analysis/data/.gitkeep
+
+#renv
+renv/library
