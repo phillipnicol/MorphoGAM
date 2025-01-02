@@ -5,29 +5,23 @@
 \title{Mapper Algorithm}
 \usage{
 get_mapper_graph(
-  data,
-  filter_values,
+  graph,
+  filter_values = igraph::V(graph)$x,
   num_intervals = 10,
-  percent_overlap = 30,
-  eps = 0.1,
-  min_pts = 50
+  percent_overlap = 30
 )
 }
 \arguments{
-\item{data}{A numeric matrix (n x 2) representing spatial coordinates.}
+\item{graph}{An igraph object (n vertices).}
 
-\item{filter_values}{A numeric vector (n) of the filter values on the data.}
+\item{filter_values}{A numeric vector (n) of filter values, specifying how to
+order the vertices of the graph and thus group them into level sets.}
 
 \item{num_intervals}{An integer specifying the resolution of the Mapper
-algorithm (how many level sets to cluster)}
+algorithm (the number of level sets).}
 
 \item{percent_overlap}{A numeric between 0 and 100 specifying the gain of
-Mapper algorithm (what percent should level sets overlap)}
-
-\item{eps}{A numeric specifying the epsilon radius that defines neighboring
-points in DBSCAN.}
-
-\item{min_pts}{An integer specifying the minimum cluster size for DBSCAN.}
+Mapper algorithm (the percentage that level sets should overlap).}
 }
 \value{
 igraph object containing the Mapper graph
@@ -40,9 +34,7 @@ SPBG. 2007.
 }
 \examples{
 my_data <- makeSwissRoll()
-scaled_data <- scale(my_data)
-pc <- prcomp(scaled_data, center = FALSE, scale = FALSE)
-mapper_graph <- get_mapper_graph(scaled_data, pc$x[, 1], num_intervals = 7,
-                                 eps = 0.2, min_pts = 5)
-get_mapper_plot(scaled_data, mapper_graph)
+my_graph <- dimRed:::makeKNNgraph(x = my_data, k = 5, eps = 0)
+mapper_graph <- get_mapper_graph(my_graph, my_data[, 1])
+get_mapper_plot(my_data, mapper_graph)
 }

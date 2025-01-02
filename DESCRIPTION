@@ -13,7 +13,6 @@ LazyData: true
 RoxygenNote: 7.3.2
 Imports: 
     ashr,
-    dbscan,
     dimRed,
     ggplot2,
     gratia,
