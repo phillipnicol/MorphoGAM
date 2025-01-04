@@ -4,7 +4,7 @@
 \alias{CurveFinder}
 \title{CurveFinder: Automatically estimate curve in two-dimensional ST data}
 \usage{
-CurveFinder(xy, knn = 5, prune.outlier = NULL, loop = FALSE)
+CurveFinder(xy, knn = 5, prune.outlier = NULL, loop = "auto")
 }
 \arguments{
 \item{xy}{A numeric matrix or data frame with two columns representing the x and y coordinates of the data points.}
@@ -13,7 +13,7 @@ CurveFinder(xy, knn = 5, prune.outlier = NULL, loop = FALSE)
 
 \item{prune.outlier}{A numeric threshold for pruning outliers based on the distance to the k+1 nearest neighbor. Outliers are removed if their distance exceeds `prune.outlier * median(nnk)`. Defaults to NULL (no pruning).}
 
-\item{loop}{A logical value indicating whether the curve should be treated as a loop (closed curve). Default is FALSE.}
+\item{loop}{Either `"auto"` or a logical value indicating whether the curve should be treated as a loop (closed curve). Default is `"auto"`, which will automatically detect if the curve is a loop.}
 }
 \value{
 A list containing:
