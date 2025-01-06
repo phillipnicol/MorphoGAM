@@ -1,5 +1,6 @@
 
-#setwd("analysis/merfish_swissroll/code") #Assume MorphoGAM is current directory
+source("renv/activate.R")
+setwd("analysis/merfish_swissroll/code") #Assume MorphoGAM is current directory
 
 Y <- read.csv("../../data/061923_D9_m2_Swiss.csv")
 
@@ -31,7 +32,6 @@ t.all2 <- as.numeric(t.all$lambda/max(t.all$lambda))
 saveRDS(t.all2, "../data/061923_D9_m2_Swiss_curve_t.RDS")
 
 # Load the curve
-
 load("../data/061923_D9_m2_Swiss_curve.RData")
 
 my.t <- readRDS("../data/061923_D9_m2_Swiss_curve_t.RDS")
