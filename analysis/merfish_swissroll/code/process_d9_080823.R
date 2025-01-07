@@ -3,7 +3,7 @@
 #renv::activate()
 
 
-here("analysis","merfish_swissroll","code") |> setwd()
+#here("analysis","merfish_swissroll","code") |> setwd()
 
 #setwd("analysis/merfish_swissroll/code") #Assume MorphoGAM is current directory
 
