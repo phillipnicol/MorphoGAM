@@ -1,6 +1,6 @@
 
-source("renv/activate.R")
-setwd("analysis/merfish_swissroll/code") #Assume MorphoGAM is current directory
+#source("renv/activate.R")
+#setwd("analysis/merfish_swissroll/code") #Assume MorphoGAM is current directory
 
 Y <- read.csv("../../data/061923_D9_m2_Swiss.csv")
 
@@ -164,3 +164,6 @@ mgam <- MorphoGAM(gene_matrix,
                   curve.fit = fit,
                   design = y~s(t) + s(r))
 
+
+save(mgam, file="../data/mgam_d9_061923.RData")
+save(fit, file="../data/curve_d9_061923.RData")

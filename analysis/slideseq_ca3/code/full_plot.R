@@ -95,7 +95,19 @@ ggsave(p.full, filename="../plots/ca3_full_plot.png",
 
 
 
+## For talk
 
+p.curve.pow <- ggarrange(ggarrange(p.curve, p.prev, nrow=1, ncol=2),
+                                   p.power, nrow=2,
+                         heights=c(1.5,2))
+
+ggsave(p.curve.pow, filename="../plots/ca3_curve_and_pow.png")
+
+p.new.genes <- ggarrange(p.peak,
+                         p.range,
+                         nrow=2)
+
+ggsave(p.new.genes, filename="../plots/ca3_new_genes.png")
 
 ## Supplement localization
 

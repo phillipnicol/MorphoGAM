@@ -176,4 +176,15 @@ mgam <- MorphoGAM(gene_matrix, curve.fit=fit,design=y~s(t)+s(r))
 
 
 
+save(mgam, file="../data/mgam_d9_080823.RData")
+save(fit, file="../data/curve_d9_080823.RData")
+
+## Find genes correlated with Mmp3
+
+my.cor <- apply(mgam$fxs.t, 1, function(x) {
+  cor(x[order(fit$xyt$t)],mgam$fxs.t["Mmp3",order(fit$xyt$t)] )
+})
+
+
+
 
