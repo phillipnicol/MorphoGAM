@@ -106,9 +106,19 @@ MorphoGAM <- function(Y,
 
     basis.functions <- mgcv::predict.gam(fit, type="lpmatrix")[,-1]
 
+
+
     t.cols <- grep("s\\(t\\)", colnames(basis.functions))
+
+    pred <- predict(fit, newdata = data.frame(t=data$t,r=data$r),
+                    type="terms", se.fit=TRUE)
     if(length(t.cols) > 0) {
       fx.t <- basis.functions[,t.cols] %*% beta.shrink[t.cols]
+      fx.t <- ifelse(pred$fit[,1] > 1.96*pred$se.fit[,1],
+                     pred$fit[,1] - 1.96*pred$se.fit[,1],
+                     ifelse(pred$fit[,1] < -1.96*pred$se.fit[,1],
+                            pred$fit[,1] + 1.96*pred$se.fit[,1],
+                            0))
       peak.t <- max(abs(fx.t))
       range.t <- max(exp(beta_g0 + fx.t)) - min(exp(beta_g0 + fx.t))
       range.t <- median.depth*range.t
@@ -122,6 +132,13 @@ MorphoGAM <- function(Y,
     r.cols <- grep("s\\(r\\)", colnames(basis.functions))
     if(length(r.cols) > 0) {
       fx.r <- basis.functions[,r.cols] %*% beta.shrink[r.cols]
+
+      fx.r <- ifelse(pred$fit[,2] > 1.96*pred$se.fit[,2],
+                        pred$fit[,2] - 1.96*pred$se.fit[,2],
+                        ifelse(pred$fit[,2] < -1.96*pred$se.fit[,2],
+                               pred$fit[,2] + 1.96*pred$se.fit[,2],
+                               0))
+
       peak.r <- max(abs(fx.r))
       range.r <- max(exp(beta_g0 + fx.r)) - min(exp(beta_g0 + fx.r))
       range.r <- median.depth*range.r
