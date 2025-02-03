@@ -8,10 +8,10 @@ plotGAMestimates <- function(Y,
                              curve_fit,
                              type="t",
                              nrow=1) {
-  Y.sub <- Y[genes,]
-  offset <- colSums(Y)
+  Y.sub <- Y[genes,] |> as.matrix()
+  offset <- Matrix::colSums(Y)
   nmed <- median(offset)
-  Y.sub <- sweep(Y.sub, MARGIN = 2, FUN = "/", STATS = colSums(Y)/nmed)
+  Y.sub <- sweep(Y.sub, MARGIN = 2, FUN = "/", STATS = Matrix::colSums(Y)/nmed)
   if(type == "t") {
     colnames(Y.sub) <- curve_fit$xyt$t
     beta_g0 <- mgam_object$results[genes,]$intercept
