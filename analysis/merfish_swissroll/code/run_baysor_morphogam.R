@@ -18,9 +18,9 @@ save(mgam, file="../data/mgam_d9_061923_baysor.RData")
 ### Curve 2
 
 
-load("../data/curve_d9_m5_080823.RData.RData")
+load("../data/curve_d9_m5_080823.RData")
 
-Y <- Matrix::readMM("../data/080823_d9_m5.mtx.mtx")
+Y <- Matrix::readMM("../data/080823_d9_m5.mtx")
 
 Y <- as.matrix(Y)
 
@@ -34,9 +34,9 @@ save(mgam, file="../data/mgam_d9_m5_080823_baysor.RData")
 
 ### Curve 3
 
-load("../data/curve_d9_m13_080823.RData.RData")
+load("../data/curve_d9_m13_080823.RData")
 
-Y <- Matrix::readMM("../data/080823_d9_m13.mtx.mtx")
+Y <- Matrix::readMM("../data/080823_d9_m13.mtx")
 
 Y <- as.matrix(Y)
 
