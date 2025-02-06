@@ -156,4 +156,4 @@ mgam_with_r <- MorphoGAM(Y, curve.fit=fit,
 
 If you use `MorphoGAM` in your work, please cite:
 
-Nicol, P.B., Ma, R., Xu, R.J., Moffitt, J.R., and Irizarry, R.A. (2024). Identifying spatially variable genes by projecting to morphologically relevant curves. doi: 10.1101/2023.04.21.537881
+Nicol, P.B., Ma, R., Xu, R.J., Moffitt, J.R., and Irizarry, R.A. (2024). Identifying spatially variable genes by projecting to morphologically relevant curves. [doi: 10.1101/2023.04.21.537881](https://doi.org/10.1101/2024.11.21.624653)
