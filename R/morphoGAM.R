@@ -41,7 +41,7 @@
 MorphoGAM <- function(Y,
                       curve.fit,
                       design,
-                      shrinkage=TRUE,
+                      shrinkage=FALSE,
                       min.count.per.gene=10,
                       return.fx = TRUE,
                       offset=NULL) {
@@ -114,6 +114,11 @@ MorphoGAM <- function(Y,
                     type="terms", se.fit=TRUE)
     if(length(t.cols) > 0) {
       fx.t <- basis.functions[,t.cols] %*% beta.shrink[t.cols]
+
+      if(return.fx) {
+        fxs.t[i,] <- fx.t
+      }
+
       fx.t <- ifelse(pred$fit[,1] > 1.96*pred$se.fit[,1],
                      pred$fit[,1] - 1.96*pred$se.fit[,1],
                      ifelse(pred$fit[,1] < -1.96*pred$se.fit[,1],
@@ -124,14 +129,14 @@ MorphoGAM <- function(Y,
       range.t <- median.depth*range.t
       pv.t <- summary(fit)$s.table["s(t)",4]
       results[i,c("peak.t","range.t","pv.t")] <- c(peak.t,range.t,pv.t)
-      if(return.fx) {
-        fxs.t[i,] <- fx.t
-      }
     }
 
     r.cols <- grep("s\\(r\\)", colnames(basis.functions))
     if(length(r.cols) > 0) {
       fx.r <- basis.functions[,r.cols] %*% beta.shrink[r.cols]
+      if(return.fx) {
+        fxs.r[i,] <- fx.r
+      }
 
       fx.r <- ifelse(pred$fit[,2] > 1.96*pred$se.fit[,2],
                         pred$fit[,2] - 1.96*pred$se.fit[,2],
@@ -144,9 +149,6 @@ MorphoGAM <- function(Y,
       range.r <- median.depth*range.r
       pv.r <- summary(fit)$s.table["s(r)",4]
       results[i,c("peak.r","range.r","pv.r")] <- c(peak.r,range.r,pv.r)
-      if(return.fx) {
-        fxs.r[i,] <- fx.r
-      }
     }
   }
 
