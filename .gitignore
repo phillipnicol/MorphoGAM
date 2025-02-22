@@ -7,6 +7,8 @@
 *.rda
 *.Rda
 *.RDS
+*.png
+*.mtx
 analysis/data/*
 !analysis/data/.gitkeep
 

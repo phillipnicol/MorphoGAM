@@ -1,3 +1,5 @@
+setwd(here::here("analysis/moffitt_mucosa/code"))
+
 Y <- read.csv("../../data/GL2_distal_colon_cell_by_gene_raw.csv")
 
 rownames(Y) <- Y[,1]
@@ -92,11 +94,17 @@ ggsave(sparkplot, filename="../plots/spark_top9.png",
 
 ## MorphoGAM
 library(mgcv)
+library(MorphoGAM)
 fit <- CurveFinder(locus,knn=10,loop=TRUE)
+
+#ixs <- which(fit$xyt$r > 0.3 & fit$xyt$r < 0.7)
+#Y.sub <- Y.sub[,ixs]
+#fit$xyt <- fit$xyt[ixs,]
 
 mgam <- MorphoGAM(Y.sub,
                   curve.fit=fit,
-                  design=y~s(t,bs="cc")+s(r,bs="cr"))
+                  design=y~s(t,bs="cc")+s(r,bs="cr"),
+                  shrinkage = FALSE)
 
 
 save(mgam, file="../data/mucosa_mgam.RData")
@@ -155,12 +163,28 @@ p.range <- plotGAMestimates(Y.sub,
   xlim(0.3,0.7) +
   scale_y_sqrt()
 
+fpc1 <- plotFPCloading(mgam_object=mgam,
+                       curve.fit=fit,
+                       L=1,num_genes=5)
+
+fpc2 <- plotFPCloading(mgam_object=mgam,
+                       curve.fit=fit,
+                       L=2,num_genes=4)
+
 library(ggpubr)
 p <- ggarrange(p.peak, p.range, nrow=2, labels=c("a","b"))
+
+p2 <- ggarrange(p, ggarrange(fpc1,fpc2, nrow=1), nrow=2,
+          heights=c(2,1), labels=c("", "c"))
 
 ggsave(p, filename="../plots/mouse_mucosa_svgs.png",
        width= 4.78*1.5,
        height= 5.18*1.5)
+
+ggsave(p2, filename="../plots/mouse_mucosa_svgs_fpc.png",
+       width= 4.78*1.5,
+       height= 8.18*1.5)
+
 
 
 mgam$results["Ddx58",]

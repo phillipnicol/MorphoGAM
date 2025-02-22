@@ -1,5 +1,5 @@
 
-
+library(dplyr)
 library(STexampleData)
 library(igraph)
 library(tidyverse)
