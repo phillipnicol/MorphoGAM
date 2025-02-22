@@ -1,5 +1,8 @@
 setwd(here::here("analysis/merfish_swissroll/code"))
 
+library(tidyverse)
+library(ggpubr)
+
 #library(MorphoGAM)
 
 #xy <- matrix(cbind(ad$obs$x, ad$obs$y),ncol=2)
@@ -147,4 +150,17 @@ ggsave(p, filename="../plots/swissroll_all_genes.png",
 
 range.t.min <- apply(meta,1,function(x) min(x[c(2,5,8)]))
 range.t.min <- range.t.min[order(range.t.min, decreasing = TRUE)[1:6]]
+
+
+
+#Plot
+
+df <- data.frame(x=fit2$xyt$x,y=fit2$xyt$y,
+                 color=Y["Cldn15",]) |>
+  ggplot(aes(x=x,y=y,color=color)) +
+  geom_point(size=0.25) +
+  scale_color_gradient(low="grey90", high="red") +
+  theme_bw()
+
+
 
