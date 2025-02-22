@@ -3,6 +3,7 @@
 pull:
 	git pull
 	Rscript -e "renv::restore()"
+	R CMD INSTALL .
 
 push:
 	Rscript -e "renv::snapshot()"
