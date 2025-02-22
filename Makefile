@@ -7,6 +7,7 @@ pull:
 
 push:
 	Rscript -e "renv::snapshot()"
+	Rscript -e "roxygen2::roxygenize()"
 	git add .
-	git commit -m "Update project dependencies"
+	git commit -m "Auto-commit from makefile"
 	git push

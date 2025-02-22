@@ -3,6 +3,7 @@
 export(CurveFinder)
 export(CurveFinderInteractive)
 export(MorphoGAM)
+export(plotFPCloading)
 export(plotGAMestimates)
 import(dimRed)
 import(ggplot2)

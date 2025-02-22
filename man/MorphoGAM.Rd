@@ -10,7 +10,7 @@ MorphoGAM(
   Y,
   curve.fit,
   design,
-  shrinkage = TRUE,
+  shrinkage = FALSE,
   min.count.per.gene = 10,
   return.fx = TRUE,
   offset = NULL
