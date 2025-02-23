@@ -24,6 +24,7 @@ Y <- Matrix::readMM("../data/d9_061923.mtx")
 Y <- Matrix::t(Y)
 
 rownames(Y) <- gene_names
+Y1 <- Y
 rownames(mgam$results) <- gene_names
 rownames(mgam$fxs.r) <- gene_names
 rownames(mgam$fxs.t) <- gene_names
@@ -46,6 +47,7 @@ Y <- Matrix::t(Y)
 
 rownames(Y) <- gene_names
 rownames(mgam$results) <- gene_names
+Y2 <- Y
 rownames(mgam$fxs.r) <- gene_names
 rownames(mgam$fxs.t) <- gene_names
 rownames(mgam$fpca.t$u) <- gene_names
@@ -65,6 +67,7 @@ load("../data/mgam_d9_m13_080823_baysor.RData")
 Y <- Matrix::t(Y)
 
 rownames(Y) <- gene_names
+Y3 <- Y
 rownames(mgam$results) <- gene_names
 rownames(mgam$fxs.r) <- gene_names
 rownames(mgam$fxs.t) <- gene_names
@@ -97,16 +100,19 @@ peak.t.min <- peak.t.min[order(peak.t.min, decreasing = TRUE)[1:6]]
 
 reg.coef1 <- apply(mgam1$fxs.t, 1, function(x) {
   my.fit <- lm(x ~ fit1$xyt$t)
+  #summary(my.fit)$r.squared
   my.fit$coefficient[2]
 })
 
 reg.coef2 <- apply(mgam2$fxs.t, 1, function(x) {
   my.fit <- lm(x ~ fit2$xyt$t)
+  #summary(my.fit)$r.squared
   my.fit$coefficient[2]
 })
 
 reg.coef3 <- apply(mgam3$fxs.t, 1, function(x) {
   my.fit <- lm(x ~ fit3$xyt$t)
+  #summary(my.fit)$r.squared
   my.fit$coefficient[2]
 })
 
@@ -114,9 +120,14 @@ max.min.reg <- pmax(reg.coef1, reg.coef2, reg.coef3)
 
 min.max.reg <- pmin(reg.coef1, reg.coef2, reg.coef3)
 
+min.max.reg[order(min.max.reg, decreasing=TRUE)[1:10]]
+max.min.reg[order(max.min.reg, decreasing=FALSE)[1:10]]
 
 plotting.genes <- c("Spdef", "Cldn15", "Muc4", "Igfbp5", "C3", "Il21r")
 df <- data.frame(t=c(), curve=c(), y=c(), gene=c())
+
+max.min.reg <- pmax(reg.coef1, reg.coef2, reg.coef3)
+
 
 for(gene in plotting.genes) {
   df <- rbind(df,data.frame(t=fit1$xyt$t, curve="Swissroll 1", y=mgam1$fxs.t[gene,],
@@ -126,6 +137,8 @@ for(gene in plotting.genes) {
               data.frame(t=fit3$xyt$t, curve="Swissroll 3", y=mgam3$fxs.t[gene,],gene=gene))
 
 }
+
+df$gene <- factor(df$gene, levels=plotting.genes)
 
 
 p.genes <- ggplot(data=df,aes(x=t,y=y,color=curve)) + geom_line() +
@@ -148,19 +161,56 @@ ggsave(p, filename="../plots/swissroll_all_genes.png",
        width=9.44, height=7.78)
 
 
-range.t.min <- apply(meta,1,function(x) min(x[c(2,5,8)]))
-range.t.min <- range.t.min[order(range.t.min, decreasing = TRUE)[1:6]]
-
-
 
 #Plot
 
-df <- data.frame(x=fit2$xyt$x,y=fit2$xyt$y,
-                 color=Y["Cldn15",]) |>
+gene <- "Spdef"
+
+p1 <- data.frame(x=fit1$xyt$x,y=fit1$xyt$y,
+                 color=log(Y1[gene,] + 1)) |>
+  ggplot(aes(x=x,y=y,color=color,alpha=color)) +
+  geom_point(size=0.25) +
+  scale_color_gradient(low="grey90", high="red") +
+  scale_alpha_continuous(range=c(0.5,1)) +
+  xlab("") + ylab("") + guides(alpha="none") +
+  labs(color="Log expression") +
+  theme_bw()
+
+
+p2 <- data.frame(x=fit2$xyt$x,y=fit2$xyt$y,
+                 color=log(Y2[gene,] + 1)) |>
   ggplot(aes(x=x,y=y,color=color)) +
   geom_point(size=0.25) +
   scale_color_gradient(low="grey90", high="red") +
+  scale_alpha_continuous(range=c(0.5,1)) +
+  xlab("") + ylab("") + guides(alpha="none") +
+  labs(color="Log expression") +
   theme_bw()
 
 
 
+p3 <- data.frame(x=fit3$xyt$x,y=fit3$xyt$y,
+                 color=log(Y3[gene,] + 1)) |>
+  ggplot(aes(x=x,y=y,color=color)) +
+  geom_point(size=0.25) +
+  scale_color_gradient(low="grey90", high="red") +
+  scale_alpha_continuous(range=c(0.5,1)) +
+  xlab("") + ylab("") + guides(alpha="none") +
+  labs(color="Log expression") +
+  theme_bw()
+
+
+
+p.swissgene <- ggarrange(p1,p2,p3,
+                         nrow=1,
+                         common.legend = TRUE,
+                         legend = "bottom")
+
+
+
+
+p <- ggarrange(p.swiss, p.genes, p.swissgene, nrow=3, labels=c("a","b", "c"),
+               heights=c(1,1.25,1))
+
+ggsave(p, filename="../plots/swissroll_all_genes_spdef.png",
+       width=9.44, height=10.78)
