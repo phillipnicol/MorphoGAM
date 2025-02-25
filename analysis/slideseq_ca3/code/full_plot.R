@@ -1,3 +1,5 @@
+setwd(here::here("analysis/slideseq_ca3/code"))
+
 library(tidyverse)
 library(mgcv)
 
@@ -111,10 +113,10 @@ ggsave(p.new.genes, filename="../plots/ca3_new_genes.png")
 
 ## Supplement localization
 
-df <- reshape2::melt(v) |>
-  group_by(Var1, Var2, Var4) |>
-  summarise(mean=mean(value))
+#df <- reshape2::melt(v) |>
+#  group_by(Var1, Var2, Var4) |>
+#  summarise(mean=mean(value))
 
-p <- ggplot(data=df,aes(x=Var2, y=mean, color=Var4)) +
-  geom_point() +
-  facet_wrap(~Var1)
+#p <- ggplot(data=df,aes(x=Var2, y=mean, color=Var4)) +
+#  geom_point() +
+#  facet_wrap(~Var1)

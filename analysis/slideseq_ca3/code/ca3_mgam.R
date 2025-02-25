@@ -1,8 +1,10 @@
+setwd(here::here("analysis/slideseq_ca3/code"))
 
 library(dplyr)
 library(STexampleData)
 library(igraph)
 library(tidyverse)
+library(MorphoGAM)
 
 spe <- STexampleData::SlideSeqV2_mouseHPC()
 

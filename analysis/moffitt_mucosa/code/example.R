@@ -1,5 +1,4 @@
-
-
+setwd(here::here("analysis/moffitt_mucosa/code"))
 
 Y <- read.csv("../../data/GL2_distal_colon_cell_by_gene_raw.csv")
 
@@ -235,19 +234,66 @@ library(ggpubr)
 plot1 <- plot1 + ggtitle("MERFISH mouse colon enterocytes") +
   theme(plot.title = element_text(size = 11))
 
-p <- ggarrange(plot1, ggarrange(p.granule, p.ca3,nrow=1, labels=c("b","c")),nrow=2, labels=c("a",""),
-               heights=c(1.5,1))
-ggsave(p, filename="../plots/example_of_1d_new.png",
-       width=7.56, height=6.93, units="in")
+### Also add swiss roll examples here
 
-ggsave(p, filename="../plots/example_of_1d.png",
-       width=11.88, height=9.19, units="in")
+
+load("../../merfish_swissroll/data/curve_d9_061923.RData")
+
+p.swiss1 <- data.frame(x=fit$xyt$x, y=fit$xyt$y) |>
+  ggplot(aes(x=x,y=y)) + geom_point(size=0.25) +
+  theme_bw() +
+  ggtitle("MERFISH swissroll 1") +
+  xlab("") + ylab("") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank()) +
+  theme(plot.title = element_text(size = 11))
+
+
+
+load("../../merfish_swissroll/data/curve_d9_m5_080823.RData")
+
+p.swiss2 <- data.frame(x=fit$xyt$x, y=fit$xyt$y) |>
+  ggplot(aes(x=x,y=y)) + geom_point(size=0.25) +
+  theme_bw() +
+  ggtitle("MERFISH swissroll 2") +
+  xlab("") + ylab("") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank()) +
+  theme(plot.title = element_text(size = 11))
+
+load("../../merfish_swissroll/data/curve_d9_m13_080823.RData")
+
+p.swiss3 <- data.frame(x=fit$xyt$x, y=fit$xyt$y) |>
+  ggplot(aes(x=x,y=y)) + geom_point(size=0.25) +
+  theme_bw() +
+  ggtitle("MERFISH swissroll 3") +
+  xlab("") + ylab("") +
+  theme(axis.text.x = element_blank(),
+        axis.text.y = element_blank()) +
+  theme(plot.title = element_text(size = 11))
+
+p <- ggarrange(plot1, ggarrange(p.granule, p.ca3,nrow=1, labels=c("b","c")),
+               ggarrange(p.swiss1, p.swiss2, p.swiss3,nrow=1),
+               nrow=3, labels=c("a","", "d"),
+               heights=c(1.5,1,1))
+
+
+ggsave(p, filename="../plots/example_of_1d_new.png",
+       width=7.56, height=9.75, units="in")
+
+#ggsave(p, filename="../plots/example_of_1d.png",
+#       width=11.88, height=9.19, units="in")
 
 
 
 ## Curve Demo
 
 library(MorphoGAM)
+library(tidyverse)
+library(ggpubr)
+
+locus <- as.matrix(meta.sub[,c("x","y")])
+
 fit <- CurveFinder(locus,knn=10,loop=TRUE)
 
 gene.1 <- Y.sub["Ddx58",]
@@ -259,6 +305,13 @@ p.gene1 <- data.frame(x=fit$xyt$t, y=gene.1) |>
   theme_bw() +
   xlab("t") + ylab("Count") + ggtitle("Ddx58")
 
+p.gene1r <- data.frame(x=fit$xyt$r, y=gene.1) |>
+  ggplot(aes(x=x,y=y)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  theme_bw() +
+  xlim(0.3,1) +
+  xlab("r") + ylab("Count") + ggtitle("Ddx58")
+
 p.gene2 <- data.frame(x=fit$xyt$r, y=gene.2) |>
   ggplot(aes(x=x,y=y)) +
   geom_jitter(width=0,height=0.1,size=0.5) +
@@ -266,14 +319,24 @@ p.gene2 <- data.frame(x=fit$xyt$r, y=gene.2) |>
   xlim(0.3,1) +
   xlab("r") + ylab("Count") + ggtitle("Apob")
 
+
+p.gene2t <- data.frame(x=fit$xyt$t, y=gene.2) |>
+  ggplot(aes(x=x,y=y)) +
+  geom_jitter(width=0,height=0.1,size=0.5) +
+  theme_bw() +
+  xlab("t") + ylab("Count") + ggtitle("Apob")
+
 p.demo <- ggarrange(ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(color="none"),
                               fit$coordinate.plot + guides(color="none") + ggtitle("First coordinate (t)"),
                               fit$residuals.plot + guides(color="none") + ggtitle("Second coordinate (r)"), nrow=1,ncol=3,
                               labels=c("a","b","c")),
-                    ggarrange(p.gene1, p.gene2, nrow=1,ncol=2,
-                              labels=c("d","e")),nrow=2)
+                    ggarrange(p.gene1, p.gene2,
+                              p.gene1r, p.gene2t,
+                              nrow=2,ncol=2,
+                              labels=c("d","e", "f","g")),nrow=2,
+                    heights=c(1,2))
 
 ggsave(p.demo, filename="../plots/curve_demo.png",
-       width=8.89, height=7.54, units="in")
+       width=8.89, height=9.54, units="in")
 
 
