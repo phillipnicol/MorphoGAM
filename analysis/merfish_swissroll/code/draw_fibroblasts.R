@@ -57,6 +57,6 @@ save(fit, file="../data/080823_D9_m13_Swiss_fibroblast.RData")
 
 Y <- ad$raw[rownames(meta.sub3),]
 Y <- as(t(Y), "sparseMatrix")
-Matrix::writeMM(Y, file="../data/080823_D9_m5_Swiss_fibroblast_counts.mtx")
+Matrix::writeMM(Y, file="../data/080823_D9_m13_Swiss_fibroblast_counts.mtx")
 
 
