@@ -24,7 +24,7 @@ rownames(mgam$fpca.t$u) <- gene_names
 vil1.1 <- mgam$fxs.t["Vil1",]
 
 cos.sim1 <- apply(mgam$fxs.t, 1, function(x) {
-  sum(x*vil1)/(sqrt(sum(x^2)*sum(vil1^2)))
+  sum(x*vil1.1)/(sqrt(sum(x^2)*sum(vil1.1^2)))
 })
 
 mgam1 <- mgam
@@ -101,9 +101,11 @@ df <- data.frame(roll1 = cos.sim1,
 df$neg.markers <- pmin(df$roll1, df$roll2, df$roll3)
 df$pos.markers <- pmax(df$roll1, df$roll2, df$roll3)
 
-df |> arrange(desc(neg.markers)) |> head(n=10)
+df |> arrange(desc(neg.markers)) |>
+  select(roll1, roll2, roll3) |> head(n=10)
 
-df |> arrange(pos.markers) |> head(n=10)
+df |> arrange(pos.markers) |>
+  select(roll1, roll2, roll3) |> head(n=10)
 
 
 
