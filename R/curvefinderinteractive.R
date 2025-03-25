@@ -111,7 +111,7 @@ interactiveCurve <- function(clicks, loop) {
                      linewidth=1)
   p <- p + scale_color_gradient(low="navyblue",
                                 high="firebrick1")
-  p <- p + theme_bw()
+  p <- p + theme_bw() + labs(color="t")
 
   xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
                     f1 = fitted(fitx),
@@ -123,14 +123,14 @@ interactiveCurve <- function(clicks, loop) {
     scale_color_gradientn(values=c(0,0.5,1),
                           colors=c("blue","grey90", "red"))+
     theme_bw() +
-    ggtitle("Coordinate")
+    ggtitle("Coordinate") + labs(color="t")
 
   p3 <- data.frame(x=xy[,1],y=xy[,2],color=r) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
     scale_color_gradientn(values=c(0,0.5,1),
                           colors=c("blue","grey90", "red"))+
     theme_bw() +
-    ggtitle("Curve residuals")
+    ggtitle("Curve residuals") + labs(color="r")
 
   out <- list()
   out$xyt <- xyt
