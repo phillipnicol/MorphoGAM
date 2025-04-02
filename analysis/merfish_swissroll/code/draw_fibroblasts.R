@@ -14,6 +14,8 @@ library(tidyverse)
 meta.sub1 <- meta |> filter(Mouse_ID == "061923_D9_m2_Swiss") |>
   filter(Tier1 %in% c("Fibroblast", "Epithelial"))
 
+saveRDS(meta.sub1, file="../data/061923_D9_m2_Swiss_fibroblast_meta.RDS")
+
 xy <- meta.sub1 |> select(x,y) |> as.matrix()
 fit <- CurveFinderInteractive(xy)
 
@@ -28,6 +30,8 @@ Matrix::writeMM(Y, file="../data/061923_D9_m2_Swiss_fibroblast_counts.mtx")
 
 meta.sub2 <- meta |> filter(Mouse_ID == "080823_D9_m5_Swiss") |>
   filter(Tier1 %in% c("Fibroblast", "Epithelial"))
+
+saveRDS(meta.sub2, file="../data/080823_D9_m5_Swiss_fibroblast_meta.RDS")
 
 
 xy <- meta.sub2 |> select(x,y) |> as.matrix()
@@ -45,6 +49,9 @@ Matrix::writeMM(Y, file="../data/080823_D9_m5_Swiss_fibroblast_counts.mtx")
 
 meta.sub3 <- meta |> filter(Mouse_ID == "080823_D9_m13_Swiss") |>
   filter(Tier1 %in% c("Fibroblast", "Epithelial"))
+
+
+saveRDS(meta.sub3, file="../data/080823_D9_m13_Swiss_fibroblast_meta.RDS")
 
 
 
