@@ -13,7 +13,9 @@ MorphoGAM(
   shrinkage = FALSE,
   min.count.per.gene = 10,
   return.fx = TRUE,
-  offset = NULL
+  offset = NULL,
+  knots.t = NULL,
+  knots.r = NULL
 )
 }
 \arguments{

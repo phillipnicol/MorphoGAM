@@ -44,7 +44,9 @@ MorphoGAM <- function(Y,
                       shrinkage=FALSE,
                       min.count.per.gene=10,
                       return.fx = TRUE,
-                      offset=NULL) {
+                      offset=NULL,
+                      knots.t = NULL,
+                      knots.r = NULL) {
 
   if(is.null(offset)) {
     l.o <- log(colSums(Y))
@@ -83,11 +85,21 @@ MorphoGAM <- function(Y,
     }
 
     data$y <- Y[i,]
-    fit <- mgcv::gam(formula=design,
-                     family=mgcv::nb(),
-                     offset=l.o,
-                     data=data,
-                     H=H)
+
+    if(is.null(knots.t)) {
+      fit <- mgcv::gam(formula=design,
+                       family=mgcv::nb(),
+                       offset=l.o,
+                       data=data,
+                       H=H)
+    } else{
+      fit <- mgcv::gam(formula=design,
+                       family=mgcv::nb(),
+                       offset=l.o,
+                       data=data,
+                       H=H,
+                       knots=list(t = knots.t))
+    }
 
     beta_g0 <- fit$coefficients[1]
     results[i,"intercept"] <- beta_g0

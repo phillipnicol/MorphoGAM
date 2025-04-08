@@ -11,7 +11,7 @@ gene_names <- readRDS("../data/gene_names.RDS")
 
 library(MorphoGAM)
 
-
+meta.sub1 <- readRDS("../data/061923_D9_m2_Swiss_fibroblast_meta.RDS")
 rownames(Y) <- gene_names
 Y1 <- Y
 rownames(mgam$results) <- gene_names
@@ -21,6 +21,9 @@ rownames(mgam$fpca.t$u) <- gene_names
 rownames(mgam$fpca.t$u) <- gene_names
 
 fit1 <- fit
+fit1$xyt <- fit1$xyt[meta.sub1$Tier1 == "Fibroblast",]
+
+Y1 <- Y1[,meta.sub1$Tier1 == "Fibroblast"]
 
 # Find genes correlated with Vil1
 vil1.1 <- mgam$fxs.t["Vil1",]
@@ -35,13 +38,14 @@ mgam1 <- mgam
 ## Two
 
 
-load("../data/mgam_d9_m5_080823_fibroblast_baysor.RData")
+load("../data/mgam_d9_m5_Swiss_080823_fibroblast_baysor.RData")
 
 load("../data/080823_D9_m5_Swiss_fibroblast.RData")
 
 Y <- Matrix::readMM("../data/080823_D9_m5_Swiss_fibroblast_counts.mtx")
 
 
+meta.sub2 <- readRDS("../data/080823_D9_m5_Swiss_fibroblast_meta.RDS")
 rownames(Y) <- gene_names
 Y2 <- Y
 rownames(mgam$results) <- gene_names
@@ -51,6 +55,11 @@ rownames(mgam$fpca.t$u) <- gene_names
 rownames(mgam$fpca.t$u) <- gene_names
 
 fit2 <- fit
+
+fit2 <- fit
+fit2$xyt <- fit2$xyt[meta.sub2$Tier1 == "Fibroblast",]
+
+Y2 <- Y2[,meta.sub2$Tier1 == "Fibroblast"]
 
 # Find genes correlated with Vil1
 vil1.2 <- mgam$fxs.t["Vil1",]
@@ -86,6 +95,13 @@ rownames(mgam$fpca.t$u) <- gene_names
 rownames(mgam$fpca.t$u) <- gene_names
 
 fit3 <- fit
+
+
+meta.sub3 <- readRDS("../data/080823_D9_m13_Swiss_fibroblast_meta.RDS")
+
+fit3$xyt <- fit3$xyt[meta.sub3$Tier1 == "Fibroblast",]
+
+Y3 <- Y3[,meta.sub3$Tier1 == "Fibroblast"]
 
 # Find genes correlated with Vil1
 vil1.3 <- mgam$fxs.t["Vil1",]
