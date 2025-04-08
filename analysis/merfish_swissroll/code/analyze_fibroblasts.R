@@ -135,6 +135,8 @@ pos.markers <- df |> arrange(pos.markers) |>
 
 #pos.markers <- c("Syt11", "Fpr1", "Cr2", "Plek", "Mstn")
 
+pos.markers <- c("Col18a1", "Il11", "Mmp3", "Mmp10", "Mmp13")
+
 p1 <- t(mgam3$fxs.t[pos.markers,]) |> as.data.frame() |>
   mutate(t = fit3$xyt$t,) |>
   pivot_longer(cols=-t) |>
@@ -232,4 +234,6 @@ ggsave(p.neg, filename="../plots/ulcerated_neg.png",
 
 ggsave(p.pos, filename="../plots/ulcerated_pos.png",
        width=7.32, height=8.36, units="in")
+
+
 
