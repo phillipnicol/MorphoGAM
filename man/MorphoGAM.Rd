@@ -39,7 +39,7 @@ A list containing:
 \describe{
   \item{peak.t}{Maximum absolute smooth term for `t`.}
   \item{range.t}{Range of predicted expression values along `t`.}
-  \item{pv.t}{P-value for the smooth term `t`.}
+  \item{pv.t}{p-value for the smooth term `t`.}
   \item{peak.r}{Maximum absolute smooth term for `r`.}
   \item{range.r}{Range of predicted expression values along `r`.}
   \item{pv.r}{p-value for the smooth term `r`.}
