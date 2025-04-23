@@ -18,4 +18,4 @@ analysis/data/*
 renv/library
 
 analysis/gaston/code/venv/*
-analysis/colorectal_tumor_tutorial_outputs/*
+analysis/gaston/code/colorectal_tumor_tutorial_outputs/*
