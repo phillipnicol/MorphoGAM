@@ -14,3 +14,6 @@ analysis/data/*
 
 #renv
 renv/library
+
+analysis/gaston/code/venv/*
+analysis/colorectal_tumor_tutorial_outputs/*

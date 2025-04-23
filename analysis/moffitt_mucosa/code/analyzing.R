@@ -244,7 +244,3 @@ ggsave(p, filename="../plots/mouse_mucosa_svgs_OTHER.png",
 
 
 
-
-d
-
-
