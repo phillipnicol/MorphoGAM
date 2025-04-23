@@ -9,6 +9,8 @@
 *.RDS
 *.png
 *.mtx
+*.npy
+*.csv
 analysis/data/*
 !analysis/data/.gitkeep
 
