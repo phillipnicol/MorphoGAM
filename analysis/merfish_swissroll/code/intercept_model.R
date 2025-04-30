@@ -78,13 +78,19 @@ saveRDS(res2, file = "../data/roll2_intercept_model.RDS")
 saveRDS(res3, file = "../data/roll3_intercept_model.RDS")
 
 
+res1 <- readRDS("../data/roll1_intercept_model.RDS")
+res2 <- readRDS("../data/roll2_intercept_model.RDS")
+res3 <- readRDS("../data/roll3_intercept_model.RDS")
+
 
 library(tidyverse)
 df <- data.frame(gene = rownames(res1),
                  beta1 = res1[,1],
                  beta2 = res2[,1],
                  beta3 = res3[,1],
-                 pval = nrow(res1)*pmax(res1[,3], res2[,3], res3[,3]))
+                 pval = pmax(res1[,3], res2[,3], res3[,3]))
+
+df$pval <- p.adjust(df$pval, method = "BH")
 
 #df <- df |> mutate(stat = -2*stat) |>
 #  mutate(pval = pchisq(stat, df = 6, lower.tail=FALSE)) |>
@@ -92,19 +98,22 @@ df <- data.frame(gene = rownames(res1),
 
 #df <- df |> mutate(pval = round(pmin(pval, 1), digits=3))
 
-up.genes <- df |> mutate(max.min = pmin(beta1, beta2, beta3)) |>
-  arrange(desc(max.min)) |> head(n=10) |> select(gene) |> unlist()
+#up.genes <- df |> mutate(max.min = pmin(beta1, beta2, beta3)) |>
+#  arrange(desc(max.min)) |> head(n=10) |> select(gene) |> unlist()
 
 #df |> arrange(pval) |> head(n=20)
 
+up.genes <- df |> mutate(max.min = beta1 + beta2 + beta3) |>
+  arrange(desc(max.min))
+
+
+#bottom.genes <- df |> mutate(min.max = pmax(beta1, beta2, beta3)) |>
+#  arrange(min.max) |> head(n=20) |> select(gene)
 
 
 
-bottom.genes <- df |> mutate(min.max = pmax(beta1, beta2, beta3)) |>
+bottom.genes <- df |> mutate(min.max = beta1 + beta2 + beta3) |>
   arrange(min.max) |> head(n=20) |> select(gene)
-
-
-
 
 fxs.t <- Y1 |> as.matrix()
 ### Roll 1
@@ -241,3 +250,102 @@ p.pos <- ggarrange(p1, p2, p3, nrow=3, ncol=1, common.legend=TRUE, legend="top")
 
 ggsave(p.pos, filename="../plots/ulcerated_intercept_pos.png",
        width=7.32, height=8.36, units="in")
+
+
+
+
+
+
+
+### Counts
+
+
+
+
+
+
+
+indic <- rep(0, length(fit1$xyt$t))
+
+indic[fit1$xyt$t > 0.95 & fit1$xyt$t < 0.97] <- 1
+
+fxs.t[,indic == 0] <- 0
+fxs.t[,indic == 1] <- res1[,1]
+
+
+
+df <- t(Y1[c("Mmp3", "Plek", "Nos3"),]) |>
+  as.data.frame() |>
+  mutate(t = fit1$xyt$t) |>
+  pivot_longer(-t)
+
+# Arrange and identify horizontal segments
+segments <- df %>%
+  arrange(name, t) %>%
+  group_by(name) %>%
+  mutate(next_t = lead(t),
+         next_value = lead(value)) %>%
+  filter(!is.na(next_t), value == next_value) %>%
+  ungroup()
+
+
+
+
+# Plot horizontal segments only
+p1 <- ggplot(df, aes(x = t, y = value)) +
+  theme_bw() +
+  geom_point() +
+  annotate("rect", xmin = 0.95, xmax = 0.97, ymin = -Inf, ymax = Inf,
+           fill = "lightgrey", alpha = 0.5) +
+  ylab("Log FC from baseline") +
+  facet_wrap(~name) +
+  labs(color = "Gene") +
+  xlim(c(0.9, 1))
+
+
+
+### Roll 2
+
+
+
+
+indic <- rep(0, length(fit2$xyt$t))
+
+indic[fit2$xyt$t > 0.25 & fit2$xyt$t < 0.6] <- 1
+indic[fit2$xyt$t > 0.78 & fit2$xyt$t < 0.8] <- 1
+indic[fit2$xyt$t > 0.88 & fit2$xyt$t < 0.9] <- 1
+
+
+df <- t(as.matrix(Y2)[c("Mmp3", "Plek", "Nos3"),]) |>
+  as.data.frame() |>
+  mutate(t = fit2$xyt$t) |>
+  pivot_longer(-t)
+
+# Arrange and identify horizontal segments
+segments <- df %>%
+  arrange(name, t) %>%
+  group_by(name) %>%
+  mutate(next_t = lead(t),
+         next_value = lead(value)) %>%
+  filter(!is.na(next_t), value == next_value) %>%
+  ungroup()
+
+
+
+
+# Plot horizontal segments only
+p2 <- ggplot(df, aes(x = t, y = value)) +
+  theme_bw() +
+  geom_point() +
+  annotate("rect", xmin = 0.25, xmax = 0.6, ymin = -Inf, ymax = Inf,
+           fill = "lightgrey", alpha = 0.5) +
+  annotate("rect", xmin = 0.78, xmax = 0.8, ymin = -Inf, ymax = Inf,
+           fill = "lightgrey", alpha = 0.5) +
+  annotate("rect", xmin = 0.88, xmax = 0.9, ymin = -Inf, ymax = Inf,
+           fill = "lightgrey", alpha = 0.5) +
+  ylab("Log FC from baseline") +
+  facet_wrap(~name) +
+  labs(color = "Gene")
+
+
+

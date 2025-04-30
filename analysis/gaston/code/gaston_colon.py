@@ -112,7 +112,7 @@ num_epochs = 10000 # number of epochs to train NN (NOTE: it is sometimes benefic
 checkpoint = 500 # save model after number of epochs = multiple of checkpoint
 out_dir='colorectal_tumor_tutorial_outputs' # folder to save model runs
 optimizer = "adam"
-num_restarts=3
+num_restarts=30
 
 ######################################
 
@@ -128,9 +128,9 @@ for seed in seed_list:
     
 
 # gaston_model, A, S= process_NN_output.process_files('colorectal_tumor_tutorial_outputs') # model trained above
-gaston_model, A, S= process_NN_output.process_files('./colorectal_tumor_data/rep1') # MATCH PAPER FIGURES
+gaston_model, A, S= process_NN_output.process_files('colorectal_tumor_tutorial_outputs') # MATCH PAPER FIGURES
 
-num_layers=5 # CHANGE FOR YOUR APPLICATION: use number of layers from above!
+num_layers=1 # CHANGE FOR YOUR APPLICATION: use number of layers from above!
 gaston_isodepth, gaston_labels=dp_related.get_isodepth_labels(gaston_model,A,S,num_layers)
 
 # DATASET-SPECIFIC: so domains are ordered with tumor being last
@@ -148,3 +148,7 @@ cluster_plotting.plot_isodepth(gaston_isodepth, S, gaston_model, figsize=(7,6), 
 
 plt.savefig('../plots/isodepth_plot.png', dpi=300, bbox_inches='tight')
 plt.close()  # Close the figure to free memory
+
+
+#Save the isodepth values as csv
+np.savetxt('../data/gaston_isodepth.csv', gaston_isodepth, delimiter=',')
