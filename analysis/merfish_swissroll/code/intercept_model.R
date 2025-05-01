@@ -259,8 +259,9 @@ ggsave(p.pos, filename="../plots/ulcerated_intercept_pos.png",
 
 ### Counts
 
-gene.names <- c("Mmp3", "Selp", "Mmp10", "Col12a1", "Il11")
-
+#gene.names <- c("Mmp3", "Selp", "Mmp10", "Col12a1", "Il11")
+#gene.names <- c("Selp", "Ghsr", "Blank-32", "Nlrp9a", "Plek")
+gene.names <- c("Igfbp6", "Wnt2b", "Ackr4", "Dkk3")
 
 
 Y1.dn <- sweep(as.matrix(Y1), MARGIN = 2, FUN = "/", STATS = colSums(Y1))
