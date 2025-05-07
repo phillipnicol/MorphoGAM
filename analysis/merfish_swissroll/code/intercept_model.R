@@ -51,7 +51,11 @@ res2 <- apply(Y2, 1, function(x) {
 
 indic <- rep(0, length(fit3$xyt$t))
 
-indic[fit3$xyt$t > 0.4 & fit3$xyt$t < 0.7] <- 1
+
+
+indic[fit3$xyt$t > 0.3 & fit3$xyt$t < 0.6] <- 1
+indic[fit3$xyt$t > 0.63 & fit3$xyt$t < 0.75] <- 1
+indic[fit3$xyt$t > 0.9 & fit3$xyt$t < 0.94] <- 1
 
 l.o <- log(colSums(as.matrix(Y3)))
 res3 <- apply(Y3, 1, function(x) {
@@ -259,19 +263,24 @@ ggsave(p.pos, filename="../plots/ulcerated_intercept_pos.png",
 
 ### Counts
 
-#gene.names <- c("Mmp3", "Selp", "Mmp10", "Col12a1", "Il11")
+#gene.names <- c("Mmp3", "Vil1", "Mmp10", "Col12a1", "Il11")
 #gene.names <- c("Selp", "Ghsr", "Blank-32", "Nlrp9a", "Plek")
-gene.names <- c("Igfbp6", "Wnt2b", "Ackr4", "Dkk3")
+#gene.names <- c("Igfbp6", "Wnt2b", "Ackr4", "Dkk3")
 
+#gene.names <- c("Il11", "Mmp3", "Mmp10", "Grem1", "Il6")
 
-Y1.dn <- sweep(as.matrix(Y1), MARGIN = 2, FUN = "/", STATS = colSums(Y1))
+gene.names <- c("Mmp3", "Timp1", "Mmp10", "Il11", "Grem1")
+
+Y1 <- as.matrix(Y1)
+nmed <- median(colSums(Y1))
+Y1.dn <- sweep(as.matrix(Y1), MARGIN = 2, FUN = "/", STATS = colSums(Y1)/nmed)
 fxs.t <- Y1
 indic <- rep(0, length(fit1$xyt$t))
 
 indic[fit1$xyt$t > 0.95 & fit1$xyt$t < 0.97] <- 1
 
-fxs.t[,indic == 0] <- exp(res1[,2])
-fxs.t[,indic == 1] <- exp(res1[,2] + res1[,1])
+fxs.t[,indic == 0] <- nmed*exp(res1[,2])
+fxs.t[,indic == 1] <- nmed*exp(res1[,2] + res1[,1])
 
 df <- t(Y1.dn[gene.names,]) |>
   as.data.frame() |>
@@ -304,11 +313,12 @@ p1 <- ggplot(df, aes(x = t, y = value)) +
   geom_point(size=0.25) +
   annotate("rect", xmin = 0.95, xmax = 0.97, ymin = 0, ymax = Inf,
            fill = "lightgrey", alpha = 0.5) +
-  ylab("Log FC from baseline") +
-  facet_wrap(~name, ncol= 1) +
+  ylab("Depth-normalized count") +
+  facet_wrap(~name, ncol= 1, scales="free_y") +
   geom_line(aes(x = t, y = fitted, color = name)) +
   labs(color = "Gene") +
-  scale_y_sqrt()
+  scale_y_sqrt() +
+  guides(color="none")
 
 
 
@@ -316,7 +326,8 @@ p1 <- ggplot(df, aes(x = t, y = value)) +
 
 
 Y2 <- as.matrix(Y2)
-Y2.dn <- sweep(as.matrix(Y2), MARGIN = 2, FUN = "/", STATS = colSums(Y2))
+nmed <- median(colSums(Y2))
+Y2.dn <- sweep(as.matrix(Y2), MARGIN = 2, FUN = "/", STATS = colSums(Y2)/nmed)
 fxs.t <- Y2 |> as.matrix()
 indic <- rep(0, length(fit2$xyt$t))
 
@@ -325,8 +336,8 @@ indic[fit2$xyt$t > 0.25 & fit2$xyt$t < 0.6] <- 1
 indic[fit2$xyt$t > 0.78 & fit2$xyt$t < 0.8] <- 1
 indic[fit2$xyt$t > 0.88 & fit2$xyt$t < 0.9] <- 1
 
-fxs.t[,indic == 0] <- exp(res2[,2])
-fxs.t[,indic == 1] <- exp(res2[,2] + res1[,1])
+fxs.t[,indic == 0] <- nmed*exp(res2[,2])
+fxs.t[,indic == 1] <- nmed*exp(res2[,2] + res1[,1])
 
 df <- t(Y2.dn[gene.names,]) |>
   as.data.frame() |>
@@ -356,16 +367,18 @@ segments <- df %>%
 p2 <- ggplot(df, aes(x = t, y = value)) +
   theme_bw() +
   geom_point(size=0.25) +
-  annotate("rect", xmin = 0.25, xmax = 0.6, ymin = -Inf, ymax = Inf,
+  annotate("rect", xmin = 0.25, xmax = 0.6, ymin = 0, ymax = Inf,
            fill = "lightgrey", alpha = 0.5) +
-  annotate("rect", xmin = 0.78, xmax = 0.8, ymin = -Inf, ymax = Inf,
+  annotate("rect", xmin = 0.78, xmax = 0.8, ymin = 0, ymax = Inf,
            fill = "lightgrey", alpha = 0.5) +
-  annotate("rect", xmin = 0.88, xmax = 0.9, ymin = -Inf, ymax = Inf,
+  annotate("rect", xmin = 0.88, xmax = 0.9, ymin = 0, ymax = Inf,
            fill = "lightgrey", alpha = 0.5) +
-  ylab("Log FC from baseline") +
+  ylab("Depth-normalized count") +
   geom_line(aes(x = t, y = fitted, color = name)) +
-  facet_wrap(~name, ncol = 1) +
-  labs(color = "Gene")
+  facet_wrap(~name, ncol = 1, scales="free_y") +
+  labs(color = "Gene") +
+  scale_y_sqrt() +
+  guides(color="none")
 
 
 
@@ -373,15 +386,18 @@ p2 <- ggplot(df, aes(x = t, y = value)) +
 
 indic <- rep(0, length(fit3$xyt$t))
 
-indic[fit3$xyt$t > 0.4 & fit3$xyt$t < 0.7] <- 1
+indic[fit3$xyt$t > 0.3 & fit3$xyt$t < 0.6] <- 1
+indic[fit3$xyt$t > 0.63 & fit3$xyt$t < 0.75] <- 1
+indic[fit3$xyt$t > 0.9 & fit3$xyt$t < 0.94] <- 1
 
 
 Y3 <- as.matrix(Y3)
-Y3.dn <- sweep(as.matrix(Y3), MARGIN = 2, FUN = "/", STATS = colSums(Y3))
+nmed <- median(colSums(Y3))
+Y3.dn <- sweep(as.matrix(Y3), MARGIN = 2, FUN = "/", STATS = colSums(Y3)/nmed)
 fxs.t <- Y3 |> as.matrix()
 
-fxs.t[,indic == 0] <- exp(res3[,2])
-fxs.t[,indic == 1] <- exp(res3[,2] + res3[,1])
+fxs.t[,indic == 0] <- nmed*exp(res3[,2])
+fxs.t[,indic == 1] <- nmed*exp(res3[,2] + res3[,1])
 
 df <- t(Y3.dn[gene.names,]) |>
   as.data.frame() |>
@@ -400,12 +416,32 @@ df$fitted <- df.fit$value
 p3 <- ggplot(df, aes(x = t, y = value)) +
   geom_point(size=0.25) +
   theme_bw() +
-  annotate("rect", xmin = 0.4, xmax = 0.7, ymin = -Inf, ymax = Inf,
+  annotate("rect", xmin = 0.3, xmax = 0.6, ymin = 0, ymax = Inf,
            fill = "lightgrey", alpha = 0.5) +
-  ylab("Log FC from baseline") +
+  annotate("rect", xmin = 0.63, xmax = 0.75, ymin = 0, ymax = Inf,
+           fill = "lightgrey", alpha = 0.5) +
+  annotate("rect", xmin = 0.9, xmax = 0.94, ymin = 0, ymax = Inf,
+           fill = "lightgrey", alpha = 0.5) +
+  ylab("Depth-normalized count") +
   geom_line(aes(x = t, y = fitted, color = name)) +
-  facet_wrap(~name, ncol = 1) +
-  labs(color = "Gene")
+  facet_wrap(~name, ncol = 1, scales="free_y") +
+  labs(color = "Gene") +
+  scale_y_sqrt() +
+  guides(color="none")
+
+library(ggpubr)
+
+#ggarrange(p1, p2, p3, nrow=1)
 
 
+p.swiss1 <- fit1$curve.plot + guides(color="none") + ggtitle("Swiss roll 1")
+p.swiss2 <- fit2$curve.plot + guides(color="none") + ggtitle("Swiss roll 2")
+p.swiss3 <- fit3$curve.plot + guides(color="none") + ggtitle("Swiss roll 3")
 
+
+p <- ggarrange(ggarrange(p.swiss1, p.swiss2, p.swiss3, nrow=1),
+          ggarrange(p1, p2, p3, nrow=1),
+          nrow=2, heights=c(1,1.5),
+          labels=c("a","b"))
+
+ggsave(filename="../plots/swissrolls_ulceratedgenes.png")
