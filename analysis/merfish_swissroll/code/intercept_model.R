@@ -116,8 +116,8 @@ up.genes <- beta.combine |> mutate(max.min = pmin(beta1, beta2, beta3)) |>
 
 
 
-bottom.genes <- df |> mutate(min.max = beta1 + beta2 + beta3) |>
-  arrange(min.max) |> head(n=20) |> select(gene)
+#bottom.genes <- df |> mutate(min.max = beta1 + beta2 + beta3) |>
+#  arrange(min.max) |> head(n=20) |> select(gene)
 
 fxs.t <- Y1 |> as.matrix()
 ### Roll 1
@@ -439,9 +439,64 @@ p.swiss2 <- fit2$curve.plot + guides(color="none") + ggtitle("Swiss roll 2")
 p.swiss3 <- fit3$curve.plot + guides(color="none") + ggtitle("Swiss roll 3")
 
 
-p <- ggarrange(ggarrange(p.swiss1, p.swiss2, p.swiss3, nrow=1),
-          ggarrange(p1, p2, p3, nrow=1),
-          nrow=2, heights=c(1,1.5),
-          labels=c("a","b"))
+#Ulcerated region
+indic <- rep(0, length(fit1$xyt$t))
+indic[fit1$xyt$t > 0.95 & fit1$xyt$t < 0.97] <- 1
+df <- data.frame(x=fit1$xyt$x,
+                 y=fit1$xyt$y,
+                 color=ifelse(indic==1,
+                                "Ulcerated",
+                                "Non-ulcerated"))
 
-ggsave(filename="../plots/swissrolls_ulceratedgenes.png")
+p.swiss.ulc1 <- ggplot(df,aes(x=x,y=y,color=color)) +
+  geom_point(size=0.25) + theme_bw() + xlab("") + ylab("") +
+  scale_color_manual(values=c("Ulcerated"="orange", "Non-ulcerated"="grey90")) +
+  labs(color="") +
+  xlab("x") + ylab("y")
+
+
+indic <- rep(0, length(fit2$xyt$t))
+indic[fit2$xyt$t > 0.25 & fit2$xyt$t < 0.6] <- 1
+indic[fit2$xyt$t > 0.78 & fit2$xyt$t < 0.8] <- 1
+indic[fit2$xyt$t > 0.88 & fit2$xyt$t < 0.9] <- 1
+df <- data.frame(x=fit2$xyt$x,
+                 y=fit2$xyt$y,
+                 color=ifelse(indic==1,
+                              "Ulcerated",
+                              "Non-ulcerated"))
+
+p.swiss.ulc2 <- ggplot(df,aes(x=x,y=y,color=color)) +
+  geom_point(size=0.25) + theme_bw() + xlab("") + ylab("") +
+  scale_color_manual(values=c("Ulcerated"="orange", "Non-ulcerated"="grey90")) +
+  labs(color="") +
+  xlab("x") + ylab("y")
+
+
+
+indic <- rep(0, length(fit3$xyt$t))
+indic[fit3$xyt$t > 0.3 & fit3$xyt$t < 0.6] <- 1
+indic[fit3$xyt$t > 0.63 & fit3$xyt$t < 0.75] <- 1
+indic[fit3$xyt$t > 0.9 & fit3$xyt$t < 0.94] <- 1
+df <- data.frame(x=fit3$xyt$x,
+                 y=fit3$xyt$y,
+                 color=ifelse(indic==1,
+                              "Ulcerated",
+                              "Non-ulcerated"))
+
+
+p.swiss.ulc3 <- ggplot(df,aes(x=x,y=y,color=color)) +
+  geom_point(size=0.25) + theme_bw() + xlab("") + ylab("") +
+  scale_color_manual(values=c("Ulcerated"="orange", "Non-ulcerated"="grey90")) +
+  labs(color="") +
+  xlab("x") + ylab("y")
+
+p <- ggarrange(ggarrange(p.swiss1, p.swiss2, p.swiss3, nrow=1),
+               ggarrange(p.swiss.ulc1, p.swiss.ulc2, p.swiss.ulc3, nrow=1,
+                         common.legend=TRUE, legend="top"),
+          ggarrange(p1, p2, p3, nrow=1),
+          nrow=3, heights=c(1,1,1.5),
+          labels=c("a","b","c"))
+
+crush <- 0.5
+ggsave(p, filename="../plots/swissrolls_ulceratedgenes.png",
+       height=crush*6171, width = crush*4911, units="px")
