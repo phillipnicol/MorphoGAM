@@ -127,6 +127,8 @@ MorphoGAM <- function(Y,
     if(length(t.cols) > 0) {
       fx.t <- basis.functions[,t.cols] %*% beta.shrink[t.cols]
 
+      fx.t <- pred$fit[,1]/(1 + pred$se.fit[,1]^2)
+
       if(return.fx) {
         fxs.t[i,] <- fx.t
       }
@@ -146,6 +148,8 @@ MorphoGAM <- function(Y,
     r.cols <- grep("s\\(r\\)", colnames(basis.functions))
     if(length(r.cols) > 0) {
       fx.r <- basis.functions[,r.cols] %*% beta.shrink[r.cols]
+      fx.r <- pred$fit[,2]/(1 + pred$se.fit[,2]^2)
+
       if(return.fx) {
         fxs.r[i,] <- fx.r
       }

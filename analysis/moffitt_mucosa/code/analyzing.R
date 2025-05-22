@@ -12,7 +12,6 @@ Y <- as.matrix(Y)
 
 Y <- t(Y) #Transpose to get genes x cells
 
-
 meta <- read.csv("../../data/GL2_distal_colon_cell_type_and_locations_2023.08.11.csv")
 
 library(tidyverse)
@@ -142,6 +141,8 @@ p.peak <- plotGAMestimates(Y.sub,
   theme(strip.text=element_text(size=3.5*1.5)) +
   scale_y_sqrt()
 
+ggsave(p.peak, filename="../plots/mouse_mucosa_peak.png")
+
 rownames(Y.sub) <- old.rownames
 top5 <- order(mgam$results$range.r, decreasing=TRUE)[1:6]
 #top5 <- result[1:5]
@@ -176,6 +177,9 @@ p <- ggarrange(p.peak, p.range, nrow=2, labels=c("a","b"))
 
 p2 <- ggarrange(p, ggarrange(fpc1,fpc2, nrow=1), nrow=2,
           heights=c(2,1), labels=c("", "c"))
+
+ggsave(ggarrange(fpc1,fpc2, nrow=1),
+       filename="../plots/mouse_mucosa_fpcs.png")
 
 ggsave(p, filename="../plots/mouse_mucosa_svgs.png",
        width= 4.78*1.5,

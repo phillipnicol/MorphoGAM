@@ -500,3 +500,19 @@ p <- ggarrange(ggarrange(p.swiss1, p.swiss2, p.swiss3, nrow=1),
 crush <- 0.5
 ggsave(p, filename="../plots/swissrolls_ulceratedgenes.png",
        height=crush*6171, width = crush*4911, units="px")
+
+
+# Just ulcerated
+p <- ggarrange(ggarrange(p.swiss1, p.swiss2, p.swiss3, nrow=1),
+          ggarrange(p.swiss.ulc1, p.swiss.ulc2, p.swiss.ulc3, nrow=1,
+                    common.legend=TRUE, legend="top"),
+          nrow=2)
+
+
+ggsave(p, filename="../plots/ulcerated_swissrolls.png")
+
+p <- ggarrange(p1, p2, p3, nrow=1)
+
+
+ggsave(p, filename="../plots/ulcerated_iaf_markers.png")
+
