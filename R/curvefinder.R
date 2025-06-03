@@ -9,7 +9,7 @@
 #' @param xy A numeric matrix or data frame with two columns representing the x and y coordinates of the data points.
 #' @param knn An integer specifying the number of nearest neighbors used to construct the KNN graph. Default is 5.
 #' @param prune.outlier A numeric threshold for pruning outliers based on the distance to the k+1 nearest neighbor. Outliers are removed if their distance exceeds `prune.outlier * median(nnk)`. Defaults to NULL (no pruning).
-#' @param loop A logical value indicating whether the curve should be treated as a loop (closed curve). Default is FALSE.
+#' @param loop Either `"auto"` or a logical value indicating whether the curve should be treated as a loop (closed curve). Default is `"auto"`, which will automatically detect if the curve is a loop.
 #'
 #' @return A list containing:
 #' \item{xyt}{A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` abd `f2`).}
@@ -37,7 +37,7 @@
 CurveFinder <- function(xy,
                        knn=5,
                        prune.outlier=NULL,
-                       loop=FALSE) {
+                       loop="auto") {
   xy.dist <- as.matrix(dist(xy))
 
   if(!is.null(prune.outlier)) {
@@ -53,12 +53,15 @@ CurveFinder <- function(xy,
                                 k = knn,
                                 eps = 0)
 
-  comp <- igraph::components(knng)
-
-  if(comp$no > 5) {
-    stop("Graph has too many disconnected components. Increase knn")
+  if (!is.logical(loop) && loop != "auto") {
+    stop("'loop' must be one of TRUE, FALSE, or \"auto\"")
+  } else if (loop == "auto") {
+    loop <- is_loop(xy, knng)
+    message(ifelse(loop, "Detected loop.", "Detected path."))
   }
-  if(loop & comp$no > 1) {
+
+  comp <- igraph::components(knng)
+  if(comp$no > 5 || (loop && comp$no > 1)) {
     stop("Graph has too many disconnected components. Increase knn.")
   }
 
