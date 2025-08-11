@@ -35,6 +35,8 @@ res <- SPARK::sparkx(count_in = Y.sub,
 spark <- res$res_mtest |> as.data.frame() |>
   arrange(adjustedPval)
 
+saveRDS(spark, file="../data/spark_results.RDS")
+
 # nnSVG
 library(nnSVG)
 logCPM <- log(sweep(Y.sub, MARGIN=2, STATS = colSums(Y.sub), FUN="/")+1)
