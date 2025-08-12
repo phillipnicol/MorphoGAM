@@ -4,9 +4,12 @@ library(tidyverse)
 
 library(piano)
 
+gene_sets <- loadGSC(file="../data/h.all.v2025.1.Hs.symbols.gmt",
+                     type="gmt")
+
 
 # View the top enriched Hallmark pathways
-print(head(summary_table_sorted, 10))
+#print(head(summary_table_sorted, 10))
 
 nnsvg <- readRDS("../data/nnSVG_results.RDS")
 
@@ -49,7 +52,7 @@ spark <- readRDS("../data/spark_results.RDS")
 
 
 #spark <- spark[1:100,]
-ranked.list <- spark$combinedPval
+ranked.list <- -log10(spark$combinedPval)
 names(ranked.list) <- toupper(rownames(spark))
 
 
@@ -92,8 +95,6 @@ mgam.df <- mgam$results |> arrange(desc(peak.t))
 ranked.list <- mgam.df$peak.t
 names(ranked.list) <- toupper(rownames(mgam.df))
 
-gene_sets <- loadGSC(file="../data/h.all.v2025.1.Hs.symbols.gmt",
-                     type="gmt")
 
 gsa_result <- runGSA(
   geneLevelStats = ranked.list,
@@ -131,9 +132,9 @@ always_include <- c(
   "HALLMARK_INTERFERON_GAMMA_RESPONSE",
   "HALLMARK_INTERFERON_ALPHA_RESPONSE",
   "HALLMARK_APICAL_SURFACE",
+  "HALLMARK_HEDGEHOG_SIGNALING",
   "HALLMARK_PANCREAS_BETA_CELLS",
-  "HALLMARK_UNFOLDED_PROTEIN_RESPONSE",
-  "HALLMARK_MITOTIC_SPINDLE"
+  "HALLMARK_UNFOLDED_PROTEIN_RESPONSE"
 )
 
 # Step 2: Top 2 gene sets by statistic (x) per method
@@ -218,12 +219,12 @@ p.full <- ggplot(data = df.all, aes(x = x, y = fct_rev(label))) +
   geom_point(aes(color = y %in% highlighted), size = 2) +
   scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black"), guide = "none") +
   facet_wrap(~Method, scales = "free_x") +
-  theme_minimal(base_size = 13) +
+  theme_bw() +
   theme(
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
     axis.text.y = element_markdown(),
     strip.text = element_text(face = "bold")
   ) +
-  labs(x = NULL, y = NULL)
+  labs(x = "GSEA test statistic", y = NULL)
 
