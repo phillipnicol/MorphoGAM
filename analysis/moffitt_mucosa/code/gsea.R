@@ -4,41 +4,13 @@ library(tidyverse)
 
 library(piano)
 
-load("../data/mucosa_mgam.RData")
-
-mgam.df <- mgam$results |> arrange(desc(peak.t))
-
-mgam.df <- mgam.df[1:100,]
-
-ranked.list <- mgam.df$peak.t
-names(ranked.list) <- toupper(rownames(mgam.df))
-
-gene_sets <- loadGSC(file="../data/h.all.v2025.1.Hs.symbols.gmt",
-                     type="gmt")
-
-gsa_result <- runGSA(
-  geneLevelStats = ranked.list,
-  geneSetStat = "mean",       # or "mean", "median", "fisher", etc.
-  gsc = gene_sets,
-  nPerm = 1000                # Increase for stability
-)
-
-summary_table <- GSAsummaryTable(gsa_result)
-
-gsea.morphogam <- summary_table[order(summary_table$`Stat (non-dir.)`,decreasing = TRUE), ]
-
-
-df.mgam <- data.frame(y=gsea.morphogam$Name,
-                 x=gsea.morphogam$`Stat (non-dir.)`,
-                 Method="MorphoGAM")
-
 
 # View the top enriched Hallmark pathways
 print(head(summary_table_sorted, 10))
 
 nnsvg <- readRDS("../data/nnSVG_results.RDS")
 
-nnsvg <- nnsvg[1:100,]
+#nnsvg <- nnsvg[1:100,]
 ranked.list <- nnsvg$LR_stat
 names(ranked.list) <- toupper(rownames(nnsvg))
 
@@ -76,7 +48,7 @@ spark <- readRDS("../data/spark_results.RDS")
 
 
 
-spark <- spark[1:100,]
+#spark <- spark[1:100,]
 ranked.list <- spark$combinedPval
 names(ranked.list) <- toupper(rownames(spark))
 
@@ -110,7 +82,39 @@ df.spark <- data.frame(y=gsea.spark$Name,
                        Method="Spark-X")
 
 
+
+load("../data/mucosa_mgam.RData")
+
+mgam.df <- mgam$results |> arrange(desc(peak.t))
+
+#mgam.df <- mgam.df[1:100,]
+
+ranked.list <- mgam.df$peak.t
+names(ranked.list) <- toupper(rownames(mgam.df))
+
+gene_sets <- loadGSC(file="../data/h.all.v2025.1.Hs.symbols.gmt",
+                     type="gmt")
+
+gsa_result <- runGSA(
+  geneLevelStats = ranked.list,
+  geneSetStat = "mean",       # or "mean", "median", "fisher", etc.
+  gsc = gene_sets,
+  nPerm = 1000                # Increase for stability
+)
+
+summary_table <- GSAsummaryTable(gsa_result)
+
+gsea.morphogam <- summary_table[order(summary_table$`Stat (non-dir.)`,decreasing = TRUE), ]
+
+
+df.mgam <- data.frame(y=gsea.morphogam$Name,
+                      x=gsea.morphogam$`Stat (non-dir.)`,
+                      Method="MorphoGAM")
+
+
 df.full <- rbind(df.spark, df.mgam, df.nnsvg)
+
+saveRDS(df.full, "../data/gsea_results.RDS")
 
 p <- ggplot(data=df.full, aes(x=x,y=y)) +
   geom_point() + facet_wrap(~Method, scales="free_x")
@@ -122,37 +126,104 @@ library(dplyr)
 library(forcats)
 library(ggtext)
 
-# Step 1: Define highlighted gene sets
+# Step 1: Define always-include gene sets
+always_include <- c(
+  "HALLMARK_INTERFERON_GAMMA_RESPONSE",
+  "HALLMARK_INTERFERON_ALPHA_RESPONSE",
+  "HALLMARK_APICAL_SURFACE",
+  "HALLMARK_PANCREAS_BETA_CELLS",
+  "HALLMARK_UNFOLDED_PROTEIN_RESPONSE",
+  "HALLMARK_MITOTIC_SPINDLE"
+)
+
+# Step 2: Top 2 gene sets by statistic (x) per method
+top2_per_method <- df.full %>%
+  group_by(Method) %>%
+  slice_max(order_by = x, n = 2) %>%
+  ungroup() %>%
+  pull(y)
+
+# Step 3: Filter to keep only relevant gene sets
+keep_genes <- union(always_include, top2_per_method)
+
+df.filtered <- df.full %>%
+  filter(y %in% keep_genes)
+
+# Step 4: Set ordering and HTML label coloring
 highlighted <- c("HALLMARK_INTERFERON_GAMMA_RESPONSE", "HALLMARK_INTERFERON_ALPHA_RESPONSE")
-
-# Step 2: Randomize other gene sets
 set.seed(123)
-all_genes <- unique(df.full$y)
-other_genes <- setdiff(all_genes, highlighted)
-shuffled_others <- sample(other_genes)
+other_genes <- setdiff(unique(df.filtered$y), highlighted)
+ordered_genes <- c(highlighted, sample(other_genes))
 
-# Step 3: Final ordering: highlighted at the top
-ordered_genes <- c(highlighted, shuffled_others)
-
-# Step 4: Apply reordering and HTML labels
-df.full <- df.full %>%
+df.filtered <- df.filtered %>%
   mutate(
-    y = factor(y, levels = ordered_genes),  # NO rev() here to keep top at top
+    y = factor(y, levels = ordered_genes),
     label = ifelse(as.character(y) %in% highlighted,
                    paste0("<span style='color:red'>", as.character(y), "</span>"),
                    as.character(y))
   )
 
-# Step 5: Plot
-ggplot(data = df.full, aes(x = x, y = fct_rev(label))) +  # flip y-axis to show top-to-bottom
-  geom_point(aes(color = y %in% highlighted)) +
+# Step 5: Plot with lollipops
+p.sub <- ggplot(data = df.filtered, aes(x = x, y = fct_rev(label))) +
+  # Lollipop lines
+  geom_segment(aes(x = 0, xend = x, y = fct_rev(label), yend = fct_rev(label)),
+               color = "gray60", linewidth = 0.5) +
+  # Points
+  geom_point(aes(color = y %in% highlighted), size = 2) +
   scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black"), guide = "none") +
   facet_wrap(~Method, scales = "free_x") +
   theme_bw() +
   theme(
     axis.text.x = element_blank(),
     axis.ticks.x = element_blank(),
-    axis.text.y = element_markdown(),  # enables red text rendering
+    axis.text.y = element_markdown(),
+    strip.text = element_text(face = "bold")
+  ) +
+  labs(x = "GSEA TODO", y = NULL)
+
+
+
+
+library(ggplot2)
+library(dplyr)
+library(forcats)
+library(ggtext)
+
+# Step 1: Use the full dataset (no filtering)
+df.all <- df.full
+
+# Step 2: Highlight the same interferon gene sets
+highlighted <- c("HALLMARK_INTERFERON_GAMMA_RESPONSE", "HALLMARK_INTERFERON_ALPHA_RESPONSE")
+
+# Step 3: Set order: interferons on top, rest randomized
+set.seed(123)
+all_genes <- unique(df.all$y)
+other_genes <- setdiff(all_genes, highlighted)
+ordered_genes <- c(highlighted, sample(other_genes))
+
+df.all <- df.all %>%
+  mutate(
+    y = factor(y, levels = ordered_genes),
+    label = ifelse(as.character(y) %in% highlighted,
+                   paste0("<span style='color:red'>", as.character(y), "</span>"),
+                   as.character(y))
+  )
+
+# Step 4: Plot with lollipops for all gene sets
+p.full <- ggplot(data = df.all, aes(x = x, y = fct_rev(label))) +
+  # Lollipop lines
+  geom_segment(aes(x = 0, xend = x, y = fct_rev(label), yend = fct_rev(label)),
+               color = "gray60", linewidth = 0.5) +
+  # Points
+  geom_point(aes(color = y %in% highlighted), size = 2) +
+  scale_color_manual(values = c("TRUE" = "red", "FALSE" = "black"), guide = "none") +
+  facet_wrap(~Method, scales = "free_x") +
+  theme_minimal(base_size = 13) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    axis.text.y = element_markdown(),
     strip.text = element_text(face = "bold")
   ) +
   labs(x = NULL, y = NULL)
+
