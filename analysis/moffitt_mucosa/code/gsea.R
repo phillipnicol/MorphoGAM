@@ -4,7 +4,10 @@ library(tidyverse)
 
 library(piano)
 
-gene_sets <- loadGSC(file="../data/h.all.v2025.1.Hs.symbols.gmt",
+gene_sets <- loadGSC(file="../data/m5.go.bp.v2025.1.Mm.symbols.gmt",
+                     type="gmt")
+
+gene_sets <- loadGSC(file="../data/mh.all.v2025.1.Mm.symbols.gmt",
                      type="gmt")
 
 
@@ -15,7 +18,8 @@ nnsvg <- readRDS("../data/nnSVG_results.RDS")
 
 #nnsvg <- nnsvg[1:100,]
 ranked.list <- nnsvg$LR_stat
-names(ranked.list) <- toupper(rownames(nnsvg))
+names(ranked.list) <- rownames(nnsvg)
+#names(ranked.list) <- toupper(rownames(nnsvg))
 
 
 gsa_result <- runGSA(
@@ -53,8 +57,8 @@ spark <- readRDS("../data/spark_results.RDS")
 
 #spark <- spark[1:100,]
 ranked.list <- -log10(spark$combinedPval)
-names(ranked.list) <- toupper(rownames(spark))
-
+#names(ranked.list) <- toupper(rownames(spark))
+names(ranked.list) <- rownames(spark)
 
 gsa_result <- runGSA(
   geneLevelStats = ranked.list,
@@ -93,7 +97,8 @@ mgam.df <- mgam$results |> arrange(desc(peak.t))
 #mgam.df <- mgam.df[1:100,]
 
 ranked.list <- mgam.df$peak.t
-names(ranked.list) <- toupper(rownames(mgam.df))
+#names(ranked.list) <- toupper(rownames(mgam.df))
+names(ranked.list) <- rownames(mgam.df)
 
 
 gsa_result <- runGSA(
@@ -227,4 +232,9 @@ p.full <- ggplot(data = df.all, aes(x = x, y = fct_rev(label))) +
     strip.text = element_text(face = "bold")
   ) +
   labs(x = "GSEA test statistic", y = NULL)
+
+
+ggsave(p.full,
+       filename="../plots/gsea_full.png",
+       width=1.5*6.73, height=1.5*3.87)
 
