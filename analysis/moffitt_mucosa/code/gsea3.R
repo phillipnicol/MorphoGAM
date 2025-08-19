@@ -120,16 +120,13 @@ df.mgam <- data.frame(y=gsea.morphogam$Name,
 
 df.full <- rbind(df.spark, df.mgam, df.nnsvg)
 
-saveRDS(df.full, "../data/gsea2_results.RDS")
-
-
+saveRDS(df.full, "../data/gsea3_results.RDS")
 
 
 library(dplyr)
 library(ggplot2)
 library(stringr)
 
-# Mark interferon-related GO terms (tweak the pattern if you want it stricter/looser)
 df_plot <- df.full %>%
   mutate(
     Interferon = str_detect(
@@ -139,12 +136,13 @@ df_plot <- df.full %>%
     )
   )
 
-# Optional: order methods the way you prefer
-# df_plot <- df_plot %>%
-#   mutate(Method = factor(Method, levels = c("Spark-X", "MorphoGAM", "nnSVG")))
-
-ggplot(df_plot, aes(x = Method, y = x)) +
+p <- ggplot(df_plot, aes(x = Method, y = x)) +
   geom_boxplot(outlier.shape = NA, fill = "grey90", color = "grey40") +
+  geom_jitter(
+    data = dplyr::filter(df_plot, !Interferon),
+    width = 0.18, height = 0,
+    color = "grey50", size = 1.8, alpha = 0.6
+  ) +
   geom_jitter(
     data = dplyr::filter(df_plot, Interferon),
     width = 0.18, height = 0,
@@ -152,51 +150,11 @@ ggplot(df_plot, aes(x = Method, y = x)) +
   ) +
   labs(
     x = NULL,
-    y = "-log10 p-value",
-    title = "GO Biological Process Enrichment by Method",
-    subtitle = "Red points = Interferon-related gene sets"
-  ) +
-  theme_classic(base_size = 12)
-
-
-
-library(dplyr)
-library(ggplot2)
-library(stringr)
-
-df_plot <- df.full %>%
-  mutate(
-    Interferon = if_else(
-      str_detect(
-        y,
-        regex("interferon|\\bIFN\\b|type\\s*[I1]\\s*interferon|type\\s*II\\s*interferon",
-              ignore_case = TRUE)
-      ),
-      "Interferon gene sets",
-      "Other gene sets"
-    )
-  )
-
-ggplot(df_plot, aes(x = Method, y = x, fill = Interferon)) +
-  geom_boxplot(
-    outlier.shape = NA,
-    position = position_dodge(width = 0.8),
-    width = 0.7,
-    color = "grey30"
-  ) +
-  geom_jitter(
-    color = "black",
-    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.8),
-    alpha = 0.6, size = 1.8
-  ) +
-  labs(
-    x = NULL,
-    y = "-log10(p-val)",
-    title = "GO Biological Process Enrichment by Method",
-    subtitle = "Dodged boxplots for Interferon vs. Other gene sets"
-  ) +
-  scale_fill_manual(
-    values = c("Interferon gene sets" = "#1f78b4",   # blue
-               "Other gene sets"      = "grey80")
+    y = "GSEA test statistic (Scaled)",
+    title = "",
+    subtitle = "Red points = Interferon-related gene sets; Grey = Other gene sets"
   ) +
   theme_bw()
+
+
+ggsave(p,filename="../plots/gsea3_results.png")

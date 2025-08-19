@@ -4,8 +4,8 @@ library(tidyverse)
 
 library(piano)
 
-gene_sets <- loadGSC(file="../data/m5.go.bp.v2025.1.Mm.symbols.gmt",
-                     type="gmt")
+#gene_sets <- loadGSC(file="../data/m5.go.bp.v2025.1.Mm.symbols.gmt",
+#                     type="gmt")
 
 gene_sets <- loadGSC(file="../data/mh.all.v2025.1.Mm.symbols.gmt",
                      type="gmt")
