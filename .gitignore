@@ -18,5 +18,5 @@ analysis/data/*
 #renv
 renv/library
 
-analysis/gaston/code/venv/*
-analysis/gaston/code/colorectal_tumor_tutorial_outputs/*
+analysis/python_models/code/venv/*
+analysis/python_models/code/colorectal_tumor_tutorial_outputs/*
