@@ -10,6 +10,7 @@ pull:
 push:
 	Rscript -e "renv::snapshot()"
 	Rscript -e "roxygen2::roxygenize()"
+	R CMD INSTALL .
 	git add .
 	git commit -m "$(MSG)"
 	git push
