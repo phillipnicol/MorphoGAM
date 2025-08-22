@@ -2,6 +2,7 @@ setwd(here::here("analysis/slideseq_ca3/code"))
 
 library(tidyverse)
 library(mgcv)
+library(ggpubr)
 
 #results_df <- readRDS("../data/ca3_svg.RDS")
 
