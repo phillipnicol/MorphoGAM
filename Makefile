@@ -1,5 +1,7 @@
 .PHONY: pull push
 
+MSG ?= Auto-commit from makefile
+
 pull:
 	git pull
 	Rscript -e "renv::restore()"
@@ -9,5 +11,5 @@ push:
 	Rscript -e "renv::snapshot()"
 	Rscript -e "roxygen2::roxygenize()"
 	git add .
-	git commit -m "Auto-commit from makefile"
+	git commit -m "$(MSG)"
 	git push
