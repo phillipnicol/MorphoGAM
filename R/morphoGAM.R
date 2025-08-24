@@ -133,12 +133,11 @@ MorphoGAM <- function(Y,
         fxs.t[i,] <- fx.t
       }
 
-      # Alternative shrinkage
-      #fx.t <- ifelse(pred$fit[,1] > 1.96*pred$se.fit[,1],
-      #               pred$fit[,1] - 1.96*pred$se.fit[,1],
-      #               ifelse(pred$fit[,1] < -1.96*pred$se.fit[,1],
-      #                      pred$fit[,1] + 1.96*pred$se.fit[,1],
-      #                      0))
+      fx.t <- ifelse(pred$fit[,1] > 1.96*pred$se.fit[,1],
+                     pred$fit[,1] - 1.96*pred$se.fit[,1],
+                     ifelse(pred$fit[,1] < -1.96*pred$se.fit[,1],
+                            pred$fit[,1] + 1.96*pred$se.fit[,1],
+                            0))
       peak.t <- max(abs(fx.t))
       range.t <- max(exp(beta_g0 + fx.t)) - min(exp(beta_g0 + fx.t))
       range.t <- median.depth*range.t
@@ -155,11 +154,11 @@ MorphoGAM <- function(Y,
         fxs.r[i,] <- fx.r
       }
 
-      #fx.r <- ifelse(pred$fit[,2] > 1.96*pred$se.fit[,2],
-      #                  pred$fit[,2] - 1.96*pred$se.fit[,2],
-      #                  ifelse(pred$fit[,2] < -1.96*pred$se.fit[,2],
-      #                         pred$fit[,2] + 1.96*pred$se.fit[,2],
-      #                         0))
+      fx.r <- ifelse(pred$fit[,2] > 1.96*pred$se.fit[,2],
+                        pred$fit[,2] - 1.96*pred$se.fit[,2],
+                        ifelse(pred$fit[,2] < -1.96*pred$se.fit[,2],
+                               pred$fit[,2] + 1.96*pred$se.fit[,2],
+                               0))
 
       peak.r <- max(abs(fx.r))
       range.r <- max(exp(beta_g0 + fx.r)) - min(exp(beta_g0 + fx.r))
