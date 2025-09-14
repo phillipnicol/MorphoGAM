@@ -9,6 +9,8 @@
 *.RDS
 *.png
 *.mtx
+*.tsv
+*.xlsx
 *.npy
 *.csv
 *.gmt
