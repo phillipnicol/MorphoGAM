@@ -1,3 +1,5 @@
+#' @import RColorBrewer
+#' @import ggrepel
 #' @export
 #'
 #' @title plotGAMestimates

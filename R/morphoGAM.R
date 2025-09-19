@@ -51,7 +51,8 @@ MorphoGAM <- function(Y,
   if(is.null(offset)) {
     l.o <- log(colSums(Y))
   } else{
-    l.o <- rep(0,ncol(Y))
+    #No offset
+    l.o <- offset
   }
   median.depth <- median(colSums(Y))
   n <- ncol(Y); p <- nrow(Y)

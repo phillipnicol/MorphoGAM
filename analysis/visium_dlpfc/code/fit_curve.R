@@ -1,29 +1,27 @@
 
+setwd(here::here("analysis", "visium_dlpfc", "code"))
 
 library(STexampleData)
 
 
 spe <- Visium_humanDLPFC()
 
-for(i in 1:6) {
+for(i in 2:6) {
   print(i)
   layer <- paste0("Layer", i)
   ixs <- which(spe$ground_truth == layer) #subset to Layer
 
   xy <- spatialCoords(spe)[ixs,]
 
-  out <- CurveSearcher(xy,knn=5,tau=100)
+  fit <- CurveFinder(xy, knn=10)
 
-  p <- out$plot+ggtitle(paste("DLPFC layer ", i)) + guides(color="none")
-  p <- p + theme_void()
-  p <- p + theme(axis.title.x=element_blank(),
-                 axis.text.x=element_blank(),
-                 axis.ticks.x=element_blank(),
-                 axis.title.y=element_blank(),
-                 axis.text.y=element_blank(),
-                 axis.ticks.y=element_blank())
-  ggsave(p,
-         file=paste0("../plots/curve_", layer, ".png"))
+  mgam <- MorphoGAM(Y = counts(spe)[,ixs] |> as.matrix(),
+                    curve.fit = fit,
+                    design = y ~ s(t, bs="cr", k=10) + s(r, bs="cr", k=10))
 
-  save(out, file=paste0("../data/curve_object_", layer, ".rda"))
+  my.t <- mgam$results |> arrange(desc(peak.t))
+
+  plotGAMestimates(Y, genes=rownames(my.t)[1:5], curve_fit=fit, mgam_object = mgam,nrow=1)
+
+
 }
