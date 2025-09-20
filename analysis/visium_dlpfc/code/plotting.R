@@ -1,6 +1,12 @@
 
 setwd(here::here("analysis", "visium_dlpfc", "code"))
 
+
+library(tidyverse)
+library(ggpubr)
+
+
+
 library(STexampleData)
 
 library(MorphoGAM)
@@ -40,10 +46,14 @@ Y.big <- Y.big[genes$ensembl_gene_id, ]
 rownames(Y.big) <- genes$hgnc_symbol
 
 
-
+plist <- list()
 for(i in 2:6) {
   print(i)
   layer <- paste0("Layer", i)
+  load(paste0("../data/curve_fit_layer_", i, ".Rdata"))
+  load(paste0("../data/mgam_layer_", i, ".Rdata"))
+
+
   ixs <- which(spe$ground_truth == layer) #subset to Layer
 
   xy <- spatialCoords(spe)[ixs,]
@@ -52,14 +62,20 @@ for(i in 2:6) {
 
   Y <- Y.big[,ixs]
 
-  mgam <- MorphoGAM(Y = Y,
-                    curve.fit = fit,
-                    design = y ~ s(t, bs="cr", k=10) + s(r, bs="cr", k=10))
+  my.t <- mgam$results |> arrange(desc(peak.t))
 
-  #my.t <- mgam$results |> arrange(desc(peak.t))
+  plotGAMestimates(Y, genes=rownames(my.t)[1:3], curve_fit=fit, mgam_object = mgam,nrow=3)
 
-  #plotGAMestimates(Y, genes=rownames(my.t)[1:5], curve_fit=fit, mgam_object = mgam,nrow=1)
+  p.curveplot <- fit$curve.plot + ggtitle(paste0("Layer ", i)) + guides(color="none")
+  p <- ggarrange(p.curveplot,   plotGAMestimates(Y, genes=rownames(my.t)[1:3], curve_fit=fit, mgam_object = mgam,nrow=3), ncol=1,
+                 heights=c(1,2))
 
-  save(fit, file=paste0("../data/curve_fit_layer_", i, ".Rdata"))
-  save(mgam, file=paste0("../data/mgam_layer_", i, ".Rdata"))
+  plist[[i]] <- p
+
 }
+
+p.all <- ggarrange(plotlist=plist[2:6], ncol=5, nrow=1)
+
+ggsave(p.all, filename="../plots/dlpfc_mgam.png", width=12, height=5)
+
+
