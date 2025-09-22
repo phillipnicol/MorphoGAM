@@ -70,12 +70,14 @@ for(i in 2:6) {
   p <- ggarrange(p.curveplot,   plotGAMestimates(Y, genes=rownames(my.t)[1:3], curve_fit=fit, mgam_object = mgam,nrow=3), ncol=1,
                  heights=c(1,2))
 
+
   plist[[i]] <- p
 
 }
 
 p.all <- ggarrange(plotlist=plist[2:6], ncol=5, nrow=1)
 
-ggsave(p.all, filename="../plots/dlpfc_mgam.png", width=12, height=5)
+ggsave(p.all, filename="../plots/dlpfc_mgam.png",width=1.5*7.58, height=1.5*4.38,
+       units="in")
 
 

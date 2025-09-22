@@ -184,6 +184,6 @@ p.curves <- ggarrange(p, p2, p3, nrow=1)
 p.genes <- ggarrange(p.firstpc, p.secondpc, nrow=2, ncol=1)
 
 
-ggarrange(p.curves, p.genes, nrow=2)
+ggarrange(p.curves, p.genes, nrow=2, labels=c("a","b"))
 
 
