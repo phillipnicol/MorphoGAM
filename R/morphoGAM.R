@@ -102,6 +102,7 @@ MorphoGAM <- function(Y,
                        knots=list(t = knots.t))
     }
 
+
     beta_g0 <- fit$coefficients[1]
     results[i,"intercept"] <- beta_g0
 

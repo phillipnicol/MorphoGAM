@@ -55,7 +55,7 @@ rownames(Y) <- genes$V2
 
 t.old <- fit$xyt$t
 
-fit$xyt$t <- 2*abs(fit$xyt$t - 0.5) #Transform
+#fit$xyt$t <- 2*abs(fit$xyt$t - 0.5) #Transform
 
 fit$xyt$t.old <- t.old
 
@@ -114,8 +114,8 @@ spark <- res$res_mtest |> as.data.frame() |>
 
 saveRDS(spark, file="../data/spark_results.RDS")
 
-plotGAMestimates(Y, genes=c("Pou3f1","Fibcd1","Ndst4","Wfs1","Satb2"), curve_fit=fit, mgam_object = mgam)
-plotGAMestimates(Y, genes=c("Cpne4","Slit2","Rspo2","Cdh9","Galnt14"), curve_fit=fit, mgam_object = mgam)
+plotGAMestimates(Y, genes=c("Pou3f1","Fibcd1","Ndst4","Satb2","Wfs1"), curve_fit=fit, mgam_object = mgam)
+plotGAMestimates(Y, genes=c("Cpne4","Slit2","Cdh9","Rspo2","Galnt14"), curve_fit=fit, mgam_object = mgam)
 
 fpca.t <- irlba::irlba(mgam$fxs.t[1:248,], nv=20, nu=20)
 
@@ -134,9 +134,8 @@ fit$coordinate.plot
 
 fit$residuals.plot
 
-p.firstpc <- plotGAMestimates(Y, genes=c("Pou3f1","Fibcd1","Ndst4","Wfs1","Satb2"), curve_fit=fit, mgam_object = mgam)
-p.secondpc <- plotGAMestimates(Y, genes=c("Cpne4","Slit2","Rspo2","Cdh9","Galnt14"), curve_fit=fit, mgam_object = mgam)
-
+p.firstpc <- plotGAMestimates(Y, genes=c("Pou3f1","Fibcd1","Ndst4","Satb2","Wfs1"), curve_fit=fit, mgam_object = mgam)
+p.secondpc <- plotGAMestimates(Y, genes=c("Cpne4","Slit2","Cdh9","Rspo2","Galnt14"), curve_fit=fit, mgam_object = mgam)
 
 
 write.csv(xy,"../../data/xenium_brain_coords.csv")
@@ -157,7 +156,7 @@ p <- ggplot(data=df.new,aes(x=x,y=y)) + geom_point(col="grey",
 df.line <- data.frame(x=xyt$f1, y=xyt$f2)
 p <- p + geom_path(data=df.line,aes(x=x,y=y),
                    linewidth=1)
-p <- p + theme_bw()
+p <- p + theme_bw() + ggtitle("CA Cells")
 
 
 p2 <- data.frame(x=xyt$x,y=xyt$y,color=xyt$t) |>
@@ -166,7 +165,7 @@ p2 <- data.frame(x=xyt$x,y=xyt$y,color=xyt$t) |>
                         colors=c("navyblue","grey90", "firebrick1"))+
   theme_bw() +
   ggtitle("First Coordinate") +
-  labs(color="t")
+  labs(color="t") + guides(color="none")
 
 p3 <- data.frame(x=xyt$x,y=xyt$y,color=xyt$r) |>
   ggplot(aes(x=x,y=y,color=color)) + geom_point() +
@@ -174,16 +173,20 @@ p3 <- data.frame(x=xyt$x,y=xyt$y,color=xyt$r) |>
                         colors=c("navyblue","grey90", "firebrick1"))+
   theme_bw() +
   ggtitle("Second Coordinate") +
-  labs(color="r")
+  labs(color="r") + guides(color="none")
 
 
 library(ggpubr)
 
 p.curves <- ggarrange(p, p2, p3, nrow=1)
 
+p.firstpc  <- p.firstpc + ylab("")
+p.secondpc <- p.secondpc + ylab("")
 p.genes <- ggarrange(p.firstpc, p.secondpc, nrow=2, ncol=1)
 
 
-ggarrange(p.curves, p.genes, nrow=2, labels=c("a","b"))
+p <- ggarrange(p.curves, p.genes, nrow=2, labels=c("a","b"), heights=c(1,1.5))
 
+ggsave(p,filename="../plots/xenium_brain_fig.png",
+       width=1.5*5.5, height=1.5*3.32, units="in")
 
