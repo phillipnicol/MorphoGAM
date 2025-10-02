@@ -135,8 +135,58 @@ Y.input <- Y.input[rowSums(Y.input) >= 25,]
 #mgam <- MorphoGAM(Y=Y.input[1:100,],curve.fit=fit,
 #                  design=y ~ s(t, bs="cr", k=10) + s(r, bs="cr", k=10))
 
+beta.coef <- rep(0, nrow(Y.input))
+p.coef <- rep(0,nrow(Y.input))
+l.o <- log(colSums(Y.input))
+for(i in 1:nrow(Y.input)) {
+  if(i %% 100 == 0) { print(i) }
+  y <- Y.input[i,]
+  fit$xyt$gene <- y
+  fit$xyt$logr <- log(fit$xyt$r + 0.01)
+  fit.gam <- mgcv::gam(gene ~ s(t, bs="cr", k=10) + logr + offset(l.o), data=fit$xyt, family=mgcv::nb())
+
+
+  beta.coef[i] <- fit.gam$coefficients[2]
+
+  #print(fit.gam$coefficients)
+
+  sumfit <- summary(fit.gam)
+
+  p.val[i] <- sumfit$pTerms.table["logr","p-value"]
+
+}
+
+pv <- p.adjust(p.val,method="bonferroni")
+
+df <- data.frame(gene = rownames(Y.input), beta = beta.coef, pv=pv) |>
+  filter(pv < 10^{-5}) |> arrange(desc(beta))
+
+
+
+plotGAMestimates(Y.input, df$gene[1:5],
+                 type="r", curve_fit=fit, mgam_object = mgam, nrow=1,
+                 include.gam=FALSE)
+
+
+df <- data.frame(gene = rownames(Y.input), beta = beta.coef, pv=pv) |>
+  filter(pv < 10^{-5}) |> arrange(beta)
+
+
+
+plotGAMestimates(Y.input, df$gene[1:5],
+                 type="r", curve_fit=fit, mgam_object = mgam, nrow=1,
+                 include.gam = FALSE)
+
+
+
+plotGAMestimates(Y.input, rownames(Y.input)[order(beta.coef[ixs], decreasing = FALSE)[1:10]],
+                 type="r", curve_fit=fit, mgam_object = mgam, nrow=2)
+
 mgam <- MorphoGAM(Y=Y.input,curve.fit=fit,
                   design = y ~ s(t, bs="cr", k=10) + s(r, bs ="cr", k=10))
+
+
+
 
 
 save(mgam, file="../data/mgam_all.RData")

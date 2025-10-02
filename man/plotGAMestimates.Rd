@@ -4,7 +4,15 @@
 \alias{plotGAMestimates}
 \title{plotGAMestimates}
 \usage{
-plotGAMestimates(Y, genes, mgam_object, curve_fit, type = "t", nrow = 1)
+plotGAMestimates(
+  Y,
+  genes,
+  mgam_object,
+  curve_fit,
+  type = "t",
+  nrow = 1,
+  include.gam = TRUE
+)
 }
 \description{
 plotGAMestimates

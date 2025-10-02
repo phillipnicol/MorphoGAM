@@ -19,6 +19,46 @@ my.svd <- irlba::irlba(mgam$fxs.r[mgam$results$pv.r < 0.05/nrow(Y.input),], nv=1
 
 Y.sub <- Y.input[mgam$results$pv.r < 0.05/nrow(Y.input),]
 
+my.pca <- irlba::prcomp_irlba(t(mgam$fxs.r[mgam$results$pv.r < 0.05/nrow(Y.input),]))
+
+p.firstpc <- data.frame(x=fit$xyt$x, y=fit$xyt$y, color=my.pca$x[,1]) |>
+  ggplot(aes(x=x,y=y,color=color)) + geom_point() +
+  scale_color_gradient2(low="orange",mid="grey",high="forestgreen",midpoint=0) +
+  theme_bw() + ggtitle("First PC score") + labs(color="PC 1 score")
+
+my.pca <- irlba::prcomp_irlba(t(mgam$fxs.r))
+
+p.firstpc <- data.frame(x=fit$xyt$x, y=fit$xyt$y, color=my.pca$x[,1]) |>
+  ggplot(aes(x=x,y=y,color=color)) + geom_point() +
+  scale_color_gradient2(low="orange",mid="grey",high="forestgreen",midpoint=0) +
+  theme_bw() + ggtitle("First PC score") + labs(color="PC 1 score")
+
+#library(scGBM)
+#scgbm <- gbm.sc(Y.input, M=20)
+
+scgbm <- gbm.sc(Y.sub, M=20)
+#ggarrange(p.scgbm, p.scgbm2, nrow=1)
+
+p.scgbm2 <- data.frame(x=fit$xyt$x, y=fit$xyt$y, color=scgbm$scores[,2]) |>
+  ggplot(aes(x=x,y=y,color=color)) + geom_point() +
+  scale_color_gradient2(low="orange",mid="grey",high="forestgreen",midpoint=0) +
+  theme_bw() + ggtitle("GLMPCA 2") + guides(color="none")
+
+
+library(uwot)
+
+set.seed(1)
+my.umap <- umap(scgbm$scores, n_components = 1)
+
+p.umap <- data.frame(x=fit$xyt$x, y=fit$xyt$y, color=my.umap[,1]) |>
+  ggplot(aes(x=x,y=y,color=color)) + geom_point() +
+  scale_color_gradient2(low="orange",mid="grey",high="forestgreen",midpoint=0) +
+  theme_bw() + ggtitle("UMAP coordinate") + guides(color="none")
+
+p.umap1d <- data.frame(x=fit$xyt$r, y=my.umap[,1]) |>
+  ggplot(aes(x=x,y=y)) + geom_point() + xlab("r coordinate") +
+  ylab("UMAP coordinate") + theme_bw()
+
 plotGAMestimates(Y.input, genes=c("SEMA3E", "CUX2"), curve_fit=fit, mgam_object = mgam, nrow=1,type="r")
 
 plotGAMestimates(Y.input, genes=c("TRABD2A", "PENK"), curve_fit=fit, mgam_object = mgam, nrow=1,type="r")
@@ -82,10 +122,41 @@ p.spatial <- ggarrange(p.layers +labs(color="ground truth"),p.t + guides(color="
                        p.r + guides(color="none") + ggtitle("r coordinate"),nrow=1,
                        labels=c("a","b",""))
 
-p.all <- ggarrange(p.spatial, p.existing_genes,
+
+
+p.scgbm1 <- data.frame(x=fit$xyt$r, y=scgbm$scores[,1]) |>
+  ggplot(aes(x=x,y=y)) + geom_point(size=0.5) +
+  theme_bw() + xlab("r") + ylab("PC 1")
+
+
+p.scgbm2 <- data.frame(x=fit$xyt$r, y=scgbm$scores[,2]) |>
+  ggplot(aes(x=x,y=y)) + geom_point(size=0.5) +
+  theme_bw() + xlab("r") + ylab("PC 2")
+
+p.gbmall <- ggarrange(p.scgbm1, p.scgbm2, nrow=1)
+
+#Add title for p.gbmall
+p.gbmall <- annotate_figure(p.gbmall, top=text_grob("PCA scores vs r", size=14))
+
+p.all <- ggarrange(p.spatial,
+                   p.gbmall,
+                   p.existing_genes,
                    ggarrange(p.gene.fitted,p.gene,nrow=1),
-                   nrow=3, heights=c(1,1.3,1),
-                   labels=c("","c","d"))
+                   nrow=4, heights=c(1.2,1,1.3,1),
+                   labels=c("","c", "d", "e"))
 
 ggsave(p.all, filename="../plots/dlpca_all_slice.png",
-       width=1.5*6.09, height=1.5*5.2, units="in")
+       width=2*4.43,height=2*5.2, units="in")
+
+
+
+
+
+
+
+gene.expr <- log(Y.input["RELN",]/median(colSums(Y.input)) + 1)
+p.gene <- data.frame(x=fit$xyt$x, y=fit$xyt$y, color=gene.expr) |>
+  ggplot(aes(x=x,y=y,color=color)) + geom_point() +
+  scale_color_gradient2(low="blue",mid="grey",high="red",midpoint=median(gene.expr)) +
+  theme_bw() + ggtitle("GFAP log expression") + guides(color="none")
+
