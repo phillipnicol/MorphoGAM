@@ -1,0 +1,20 @@
+citHeader("To cite MorphoGAM or its methodology, please use:")
+
+bibentry(
+  bibtype  = "Article",
+  title    = "Identifying spatially variable genes by projecting to morphologically relevant curves",
+  author   = c(
+    person("Phillip B", "Nicol"),
+    person("Rong", "Ma"),
+    person("Rosalind J", "Xu"),
+    person("Jeffrey R", "Moffitt"),
+    person("Rafael A", "Irizarry")
+  ),
+  journal  = "bioRxiv",
+  year     = "2024",
+  note     = "doi:10.1101/2024.01.31.578163",
+  textVersion =
+    "Nicol PB, Ma R, Xu RJ, Moffitt JR, and Irizarry RA (2024).
+    Identifying spatially variable genes by projecting to morphologically relevant curves.
+    bioRxiv. https://doi.org/10.1101/2024.01.31.578163"
+)

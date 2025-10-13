@@ -14,6 +14,33 @@ knitr::opts_chunk$set(
 )
 ```
 
+First let's load the necessary packages: 
+
 ```{r setup}
+library(dplyr)
+library(STexampleData)
+library(igraph)
+library(tidyverse)
 library(MorphoGAM)
 ```
+
+Now, let 's load the Slide-seqV2 mouse hippocampus data from the STexampleData package:
+
+```{r}
+
+spe <- STexampleData::SlideSeqV2_mouseHPC()
+
+ixs <- which(spe$celltype == "CA3") #subset to CA3
+
+xy <- spatialCoords(spe)[ixs,]
+Y <- counts(spe)[,ixs]
+
+plot(xy)
+```
+
+
+
+
+
+
+
