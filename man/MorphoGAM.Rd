@@ -32,6 +32,10 @@ MorphoGAM(
 \item{return.fx}{A logical value indicating whether to return the fitted smooth terms for `t` and `r` for each gene. Default is `TRUE`.}
 
 \item{offset}{A numeric vector providing offset values for the GAM model. If `NULL` (default), offsets are computed as the logarithm of the column sums of `Y`.}
+
+\item{knots.t}{Optional numeric vector specifying knot locations for the smooth term in `t`.}
+
+\item{knots.r}{Optional numeric vector specifying knot locations for the smooth term in `r`.}
 }
 \value{
 A list containing:

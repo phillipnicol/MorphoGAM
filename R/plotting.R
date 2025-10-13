@@ -1,8 +1,35 @@
-#' @import RColorBrewer
-#' @import ggrepel
 #' @export
 #'
-#' @title plotGAMestimates
+#' @title Plot depth-normalized counts with fitted GAM overlay
+#'
+#' @description
+#' For a set of \code{genes}, this plots depth-normalized counts across either
+#' the coordinate \code{t} or the coordinate \code{r}, with an
+#' optional overlaid fitted function from a mixed GAM object.
+#'
+#' @details
+#' Columns (cells/samples) are depth-normalized by dividing by the library size
+#' (column sum) and multiplying by the median library size across all columns.
+#' If \code{type = "t"}, the x-axis uses \code{curve_fit$xyt$t} and fitted
+#' values come from \code{mgam_object$fxs.t}. If \code{type = "r"}, the x-axis
+#' uses \code{curve_fit$xyt$r} and fitted values come from \code{mgam_object$fxs.r}.
+#' Fitted curves are constructed as \eqn{n_{med} \cdot \exp(\beta_{g0} + f_g(x))},
+#' where \eqn{\beta_{g0}} is the gene-specific intercept and \eqn{f_g(x)} is the
+#' smooth contribution for that gene.
+#'
+#' @param Y A numeric matrix-like (e.g., \code{matrix}, \code{Matrix::dgCMatrix})
+#'   of counts with \strong{genes in rows} and \strong{cells/samples in columns}.
+#'   Row names should include the values provided in \code{genes}.
+#' @param genes A character vector (or integer indices) of gene identifiers to plot.
+#' @param mgam_object The output from running the \code{MorphoGAM} function.
+#' @param curve_fit The output from running the \code{CurveFinder} (or interactive version) function.
+#' @param type Character string; one of \code{"t"} or \code{"r"} specifying which
+#'   coordinate to plot against.
+#' @param nrow Integer; number of rows in the facet layout.
+#' @param include.gam Logical; if \code{TRUE}, overlay the red GAM fit line.
+#'
+#' @return A \code{ggplot2} object showing depth-normalized counts for each gene
+#'   (facets) versus \code{t} or \code{r}, with an optional fitted curve.
 #'
 plotGAMestimates <- function(Y,
                              genes,
@@ -62,10 +89,36 @@ plotGAMestimates <- function(Y,
 
 
 
-
+#' @import ggplot2
+#' @import RColorBrewer
+#' @import ggrepel
+#' @importFrom stats reorder
+#' @importFrom grDevices colorRampPalette
+#' @importFrom dplyr group_by slice_max
+#' @importFrom tidyr pivot_longer
 #' @export
 #'
-#' @title plotFPCloading
+#' @title Plot top gene loadings from SVD Analysis
+#'
+#' @description
+#' Visualize the \eqn{L}-th FPCA eigenfunction together with the top
+#' \code{num_genes} genes most strongly associated with that component,
+#' over either the \code{t} or \code{r} coordinate.
+#'
+#' @details
+#' The function identifies the \code{num_genes} genes with the largest absolute
+#' scores in \code{mgam_object$fpca.t}. It may flip sign to improve visualization.
+#'
+#' @param mgam_object The output of \code{MorphoGAM}
+#' @param curve.fit The output of \code{CurveFinder}
+#' @param L Integer; index of the FPCA component.
+#' @param num_genes Integer; number of top-loading genes to display.
+#' @param type Character string; one of \code{"t"} or \code{"r"} specifying
+#'   which coordinate to plot against.
+#'
+#' @return A \code{ggplot2} object showing lines for the eigenfunction and the
+#'   selected gene smooths. A bright qualitative palette (excluding yellow) is
+#'   used for gene curves; labels are placed near each curve's maximum.
 #'
 plotFPCloading <- function(mgam_object,
                            curve.fit,

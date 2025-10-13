@@ -1,7 +1,7 @@
 MorphoGAM: Detect spatially variable genes by projecting to
 morphologically relevant curves
 ================
-R package version 1.0.0
+R package version 1.1.0
 
 ## System Requirements
 
@@ -113,6 +113,11 @@ mgam <- MorphoGAM(Y, curve.fit=fit,
 
     ## ================================================================================
 
+    ## Warning in irlba::irlba(fxs.r): fast code path error starting vector near the
+    ## null space; re-trying with fastpath=FALSE.
+
+    ## Error in irlba::irlba(fxs.r) : starting vector near the null space
+
 The `bs = "cr"` specifies cubic regression splines in the GAM, although
 this can be modified to periodic splines or other basis functions
 provided by `mgcv`. We may wish to sort the results matrix to rank genes
@@ -122,13 +127,13 @@ by summaries of the estimated function:
 mgam$results |> arrange(desc(peak.t)) |> head()
 ```
 
-    ##            peak.t   range.t         pv.t peak.r range.r pv.r intercept
-    ## Gene 1  1.4270898 6.1790340 0.0000000000      0       0    0 -3.953473
-    ## Gene 10 0.2789934 0.3209224 0.2185367048      0       0    0 -4.645891
-    ## Gene 44 0.2676210 0.5097361 0.0924200551      0       0    0 -4.593755
-    ## Gene 49 0.2295902 0.2818734 0.0506582448      0       0    0 -4.682800
-    ## Gene 33 0.2162524 0.4054095 0.0002472835      0       0    0 -4.618065
-    ## Gene 64 0.2152775 0.3071779 0.1074942791      0       0    0 -4.623618
+    ##             peak.t    range.t         pv.t peak.r range.r pv.r intercept
+    ## Gene 1  1.18349653 5.40344926 0.0000000000      0       0    0 -3.953473
+    ## Gene 33 0.10195765 0.18728675 0.0002472835      0       0    0 -4.618065
+    ## Gene 20 0.06313620 0.11151799 0.0063965136      0       0    0 -4.647023
+    ## Gene 49 0.04881890 0.05290388 0.0506582449      0       0    0 -4.682800
+    ## Gene 16 0.03538251 0.04356503 0.0392955411      0       0    0 -4.610617
+    ## Gene 10 0.03233560 0.03115972 0.2185367051      0       0    0 -4.645891
 
 The results indicate gene $1$ has a significant peak and range (region
 of increased expression), and we can visually confirm this by using
@@ -155,5 +160,3 @@ mgam_with_r <- MorphoGAM(Y, curve.fit=fit,
 ## Reference
 
 If you use `MorphoGAM` in your work, please cite:
-
-Nicol, P.B., Ma, R., Xu, R.J., Moffitt, J.R., and Irizarry, R.A. (2024). Identifying spatially variable genes by projecting to morphologically relevant curves. doi: 10.1101/2023.04.21.537881

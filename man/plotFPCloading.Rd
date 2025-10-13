@@ -2,10 +2,33 @@
 % Please edit documentation in R/plotting.R
 \name{plotFPCloading}
 \alias{plotFPCloading}
-\title{plotFPCloading}
+\title{Plot top gene loadings from SVD Analysis}
 \usage{
 plotFPCloading(mgam_object, curve.fit, L = 1, num_genes = 5, type = "t")
 }
+\arguments{
+\item{mgam_object}{The output of \code{MorphoGAM}}
+
+\item{curve.fit}{The output of \code{CurveFinder}}
+
+\item{L}{Integer; index of the FPCA component.}
+
+\item{num_genes}{Integer; number of top-loading genes to display.}
+
+\item{type}{Character string; one of \code{"t"} or \code{"r"} specifying
+which coordinate to plot against.}
+}
+\value{
+A \code{ggplot2} object showing lines for the eigenfunction and the
+  selected gene smooths. A bright qualitative palette (excluding yellow) is
+  used for gene curves; labels are placed near each curve's maximum.
+}
 \description{
-plotFPCloading
+Visualize the \eqn{L}-th FPCA eigenfunction together with the top
+\code{num_genes} genes most strongly associated with that component,
+over either the \code{t} or \code{r} coordinate.
+}
+\details{
+The function identifies the \code{num_genes} genes with the largest absolute
+scores in \code{mgam_object$fpca.t}. It may flip sign to improve visualization.
 }

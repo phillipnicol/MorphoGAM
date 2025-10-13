@@ -19,6 +19,8 @@
 #' @param min.count.per.gene An integer specifying the minimum total count required for a gene to be included in the analysis. Default is 10.
 #' @param return.fx A logical value indicating whether to return the fitted smooth terms for `t` and `r` for each gene. Default is `TRUE`.
 #' @param offset A numeric vector providing offset values for the GAM model. If `NULL` (default), offsets are computed as the logarithm of the column sums of `Y`.
+#' @param knots.t Optional numeric vector specifying knot locations for the smooth term in `t`.
+#' @param knots.r Optional numeric vector specifying knot locations for the smooth term in `r`.
 #'
 #' @return A list containing:
 #' \item{results}{A data frame with rows corresponding to genes and the following columns:

@@ -2,10 +2,44 @@
 % Please edit documentation in R/curvefinderinteractive.R
 \name{CurveFinderInteractive}
 \alias{CurveFinderInteractive}
-\title{CurveFinderInteractive}
+\title{Interactively sketch and smooth a curve through 2D points}
 \usage{
 CurveFinderInteractive(xy, loop = FALSE)
 }
+\arguments{
+\item{xy}{A numeric matrix or data.frame with exactly two columns
+(interpreted as \code{x}, \code{y}). Row order is treated as the set of
+points to visualize/project.}
+
+\item{loop}{Logical; if \code{TRUE}, the smoothed curve uses a cyclic basis
+(appropriate for closed loops). If \code{FALSE}, uses a non-cyclic basis.}
+}
+\value{
+A list with the elements produced by \code{interactiveCurve()}:
+\itemize{
+  \item \code{xyt}: a data.frame with columns \code{x}, \code{y},
+        \code{t} (curve coordinate scaled to \code{[0,1]}),
+        \code{r} (orthogonal residual-like coordinate),
+        \code{f1}, \code{f2} (fitted \code{x(t)} and \code{y(t)} values).
+  \item \code{curve.plot}: a \pkg{ggplot2} object showing the data and the
+        smoothed curve colored by \code{t}.
+  \item \code{coordinate.plot}: a \pkg{ggplot2} scatter plot colored by \code{t}.
+  \item \code{residuals.plot}: a \pkg{ggplot2} scatter plot colored by \code{r}.
+}
+}
 \description{
-CurveFinderInteractive
+Launches a small Shiny app where you can click points to sketch a polyline
+through 2D data \code{xy}. When you press **Smooth**, the clicked polyline is
+smoothed with \pkg{mgcv} and then used to project the data onto the curve
+(via \pkg{princurve}), returning coordinates \eqn{t \in [0,1]} along the
+curve and a residual-like coordinate \eqn{r} orthogonal to it.
+}
+\details{
+- Input \code{xy} must be 2 columns corresponding to \code{x} and \code{y}.
+- Click at least 3 points to define a path; use **Clear clicks** to restart.
+- Smoothing uses \code{mgcv::gam} with a cyclic cubic spline (\code{bs = "cc"})
+  if \code{loop = TRUE}, otherwise a cubic regression spline (\code{bs = "cr"}).
+- After smoothing, points are projected to the smoothed curve using
+  \code{princurve::project_to_curve}, and a set of outputs (including plots)
+  is returned and the app closes.
 }

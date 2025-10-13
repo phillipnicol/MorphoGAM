@@ -1,6 +1,6 @@
 ---
 title: "MorphoGAM: Detect spatially variable genes by projecting to morphologically relevant curves"
-author: "R package version 1.0.0"
+author: "R package version 1.1.0"
 output: github_document
 ---
 
