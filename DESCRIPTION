@@ -15,6 +15,7 @@ Imports:
     ashr,
     dimRed,
     ggplot2,
+    ggrepel,
     gratia,
     gtools,
     igraph,
