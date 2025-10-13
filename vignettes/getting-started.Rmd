@@ -22,6 +22,7 @@ library(STexampleData)
 library(igraph)
 library(tidyverse)
 library(MorphoGAM)
+library(ggpubr)
 ```
 
 Now, let 's load the Slide-seqV2 mouse hippocampus data from the STexampleData package:
@@ -39,8 +40,27 @@ plot(xy)
 ```
 
 
+To remove outliers, we calculate the distance matrix and remove points that are further away than a certain threshold:
+
+```{r}
+xy.dist <- as.matrix(dist(xy))
+knn <- 20
+prune.outlier <- 3
+nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+outlier <- which(nnk > (prune.outlier)*median(nnk))
+
+xy <- xy[-outlier,]; Y <- Y[,-outlier]
+```
 
 
+Next, we fit a curve to the spatial coordinates using the `CurveFinder` function:
 
+```{r}
+fit <- CurveFinder(xy)
+```
 
+```{r}
+ggarrange(fit$curve.plot, fit$coordinate.plot, nrow=1)
+```
 
+Now, we can fit a GAM model using the `MorphoGAM` function:

@@ -24,8 +24,9 @@ Imports:
     RSpectra,
     shiny,
     RANN
-Suggests: 
+Suggests:
     knitr,
-    rmarkdown
+    rmarkdown,
+    STexampleData
 VignetteBuilder: knitr
 URL: https://phillipnicol.github.io/MorphoGAM/
