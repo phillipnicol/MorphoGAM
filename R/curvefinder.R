@@ -24,8 +24,6 @@
 #' @references
 #' Kraemer G, Reichstein M, Mahecha MD (2018). “dimRed and coRanking—Unifying Dimensionality Reduction in R.” _The R Journal_, *10*(1), 342-358.
 #'
-#' @examples
-#' # TODO
 #'
 #' @import ggplot2
 #' @import mgcv
@@ -53,13 +51,17 @@ CurveFinder <- function(xy,
                                 k = knn,
                                 eps = 0)
 
+  if (!is.logical(loop) && loop != "auto") {
+    stop("'loop' must be one of TRUE, FALSE, or \"auto\"")
+  } else if (loop == "auto") {
+    loop <- is_loop(xy, knng)
+    message(ifelse(loop, "Detected loop.", "Detected path."))
+  }
+
   comp <- igraph::components(knng)
 
-  if(comp$no > 5) {
+  if(comp$no > 5 || (loop && comp$no > 1)) {
     stop("Graph has too many disconnected components. Increase knn")
-  }
-  if(loop & comp$no > 1) {
-    stop("Graph has too many disconnected components. Increase knn.")
   }
 
   endpoints <- matrix(0, nrow=2*comp$no, ncol=2)
