@@ -64,6 +64,13 @@ condition means in gene expression space.
 
 DESCRIPTION
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://phillipnicol.github.io/MorphoGAM/}
+}
+
+}
 \author{
 Phillip B. Nicol <philnicol740@gmail.com>
 }

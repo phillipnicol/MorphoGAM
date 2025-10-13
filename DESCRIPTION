@@ -22,3 +22,8 @@ Imports:
     princurve,
     RSpectra,
     shiny
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+URL: https://phillipnicol.github.io/MorphoGAM/
