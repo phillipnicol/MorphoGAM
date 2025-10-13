@@ -1,4 +1,5 @@
 
+#source("renv/activate.R")
 #setwd("analysis/merfish_swissroll/code") #Assume MorphoGAM is current directory
 
 Y <- read.csv("../../data/061923_D9_m2_Swiss.csv")
@@ -31,7 +32,6 @@ t.all2 <- as.numeric(t.all$lambda/max(t.all$lambda))
 saveRDS(t.all2, "../data/061923_D9_m2_Swiss_curve_t.RDS")
 
 # Load the curve
-
 load("../data/061923_D9_m2_Swiss_curve.RData")
 
 my.t <- readRDS("../data/061923_D9_m2_Swiss_curve_t.RDS")
@@ -126,3 +126,44 @@ p <- ggplot(data = df, aes(x = t, y = value,
   ylab("Log FC from baseline") +
   xlab("t")
 
+
+
+
+
+
+
+## Bin based on x and y
+Y.sub <- Y.sub[,c("gene_name", "abs_position_1", "abs_position_2")]
+Y.sub <- as.data.frame(Y.sub)
+colnames(Y.sub) <- c("gene","x","y")
+
+Y.sub$x <- (Y.sub$x - min(Y.sub$x))/(max(Y.sub$x) - min(Y.sub$x))
+Y.sub$y <- (Y.sub$y - min(Y.sub$y))/(max(Y.sub$y) - min(Y.sub$y))
+
+# Discretize
+Y.sub$x <- round(Y.sub$x,digits=2)
+Y.sub$y <- round(Y.sub$y, digits=2)
+
+Y.sub$xy <- paste(Y.sub$x, Y.sub$y, sep = ",")
+gene_matrix <- table(Y.sub$gene, Y.sub$xy)
+gene_matrix <- gene_matrix[,colSums(gene_matrix) > 100]
+
+# Extract x and y coordinates from the column names of gene_matrix
+coordinates <- strsplit(colnames(gene_matrix), ",")
+coordinates_matrix <- do.call(rbind, coordinates)
+colnames(coordinates_matrix) <- c("x", "y")
+#coordinates_matrix <- as.data.frame(coordinates_matrix)
+
+# Convert x and y to numeric for clarity (optional)
+mode(coordinates_matrix) <- "numeric"
+
+xy <- coordinates_matrix
+fit <- CurveFinderInteractive(xy)
+
+mgam <- MorphoGAM(gene_matrix,
+                  curve.fit = fit,
+                  design = y~s(t) + s(r))
+
+
+save(mgam, file="../data/mgam_d9_061923.RData")
+save(fit, file="../data/curve_d9_061923.RData")

@@ -10,10 +10,12 @@ MorphoGAM(
   Y,
   curve.fit,
   design,
-  shrinkage = TRUE,
+  shrinkage = FALSE,
   min.count.per.gene = 10,
   return.fx = TRUE,
-  offset = NULL
+  offset = NULL,
+  knots.t = NULL,
+  knots.r = NULL
 )
 }
 \arguments{
@@ -30,6 +32,10 @@ MorphoGAM(
 \item{return.fx}{A logical value indicating whether to return the fitted smooth terms for `t` and `r` for each gene. Default is `TRUE`.}
 
 \item{offset}{A numeric vector providing offset values for the GAM model. If `NULL` (default), offsets are computed as the logarithm of the column sums of `Y`.}
+
+\item{knots.t}{Optional numeric vector specifying knot locations for the smooth term in `t`.}
+
+\item{knots.r}{Optional numeric vector specifying knot locations for the smooth term in `r`.}
 }
 \value{
 A list containing:
@@ -37,7 +43,7 @@ A list containing:
 \describe{
   \item{peak.t}{Maximum absolute smooth term for `t`.}
   \item{range.t}{Range of predicted expression values along `t`.}
-  \item{pv.t}{P-value for the smooth term `t`.}
+  \item{pv.t}{p-value for the smooth term `t`.}
   \item{peak.r}{Maximum absolute smooth term for `r`.}
   \item{range.r}{Range of predicted expression values along `r`.}
   \item{pv.r}{p-value for the smooth term `r`.}
@@ -57,6 +63,13 @@ Estimate the distance between
 condition means in gene expression space.
 
 DESCRIPTION
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://phillipnicol.github.io/MorphoGAM/}
+}
+
 }
 \author{
 Phillip B. Nicol <philnicol740@gmail.com>

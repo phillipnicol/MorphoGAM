@@ -30,10 +30,6 @@ morphologically relevant coordinates `t` and `r`.
 \details{
 To-do
 }
-\examples{
-# TODO
-
-}
 \references{
 Kraemer G, Reichstein M, Mahecha MD (2018). “dimRed and coRanking—Unifying Dimensionality Reduction in R.” _The R Journal_, *10*(1), 342-358.
 }

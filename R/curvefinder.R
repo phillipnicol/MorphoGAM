@@ -24,16 +24,14 @@
 #' @references
 #' Kraemer G, Reichstein M, Mahecha MD (2018). “dimRed and coRanking—Unifying Dimensionality Reduction in R.” _The R Journal_, *10*(1), 342-358.
 #'
-#' @examples
-#' # TODO
 #'
 #' @import ggplot2
 #' @import mgcv
-#' @import dimRed
 #' @importFrom igraph components subgraph V
 #' @importFrom RSpectra eigs_sym
 #' @importFrom gratia derivatives
 #' @importFrom gtools permutations
+#' @importFrom RANN nn2
 CurveFinder <- function(xy,
                        knn=5,
                        prune.outlier=NULL,
@@ -53,13 +51,17 @@ CurveFinder <- function(xy,
                                 k = knn,
                                 eps = 0)
 
+  if (!is.logical(loop) && loop != "auto") {
+    stop("'loop' must be one of TRUE, FALSE, or \"auto\"")
+  } else if (loop == "auto") {
+    loop <- is_loop(xy, knng)
+    message(ifelse(loop, "Detected loop.", "Detected path."))
+  }
+
   comp <- igraph::components(knng)
 
-  if(comp$no > 5) {
+  if(comp$no > 5 || (loop && comp$no > 1)) {
     stop("Graph has too many disconnected components. Increase knn")
-  }
-  if(loop & comp$no > 1) {
-    stop("Graph has too many disconnected components. Increase knn.")
   }
 
   endpoints <- matrix(0, nrow=2*comp$no, ncol=2)
@@ -236,4 +238,39 @@ segment_TSP <- function(endpoints) {
 
   return(paths)
 }
+
+
+### Taken from package dimRed due to it being delisted from CRAN
+#   Kraemer G, Reichstein M, Mahecha MD (2018). “dimRed and
+#coRanking-Unifying Dimensionality Reduction in R.” _The R
+#Journal_, *10*(1), 342-358. coRanking version 0.2.6,
+#<https://journal.r-project.org/archive/2018/RJ-2018-039/index.html>.
+dimRed_makeKNNgraph <- function (x, k, eps = 0, diag = FALSE)
+{
+  INF_VAL <- 1.340781e+15
+  NA_IDX <- 0
+  BDKD_LIM <- 1e+06
+  M <- nrow(x)
+  treetype <- "kd"
+  searchtype <- if (eps == 0)
+    "standard"
+  else "priority"
+  nn2res <- RANN::nn2(data = x, query = x, k = k + 1, treetype = treetype,
+                      searchtype = searchtype, eps = eps)
+  g <- igraph::make_empty_graph(M, directed = TRUE)
+  g[from = if (diag)
+    rep(seq_len(M), times = k + 1)
+    else rep(seq_len(M), times = k), to = if (diag)
+      as.vector(nn2res$nn.idx)
+    else as.vector(nn2res$nn.idx[, -1]), attr = "weight"] <- if (diag)
+      as.vector(nn2res$nn.dists)
+  else as.vector(nn2res$nn.dists[, -1])
+  return(igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first"))
+}
+
+
+
+
+
+
 
