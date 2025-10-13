@@ -22,7 +22,8 @@ Imports:
     mgcv,
     princurve,
     RSpectra,
-    shiny
+    shiny,
+    RANN
 Suggests: 
     knitr,
     rmarkdown
