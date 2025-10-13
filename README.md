@@ -17,6 +17,8 @@ should take less than a minute on a standard machine.
 
 ## Demo
 
+This demonstration should complete in a few minutes on a standard computer. 
+
 ### Step 1: Estimate morphologically relevant coordinates
 
 The first step in running `MorphoGAM` is to define a curve from which
