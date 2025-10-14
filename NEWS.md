@@ -9,6 +9,7 @@ This update adds new functionality as well as improving the existing code.
 **New functionality:**
 
 -   Added functional PCA (based on SVD) to the `MorphoGAM()` function. These can be visualized using `plotFPCloading()` .
+-   Added code in `CurveFinder()` to detect whether tissue structure is open or closed curve.
 
 **Changes to existing functionality:**
 
