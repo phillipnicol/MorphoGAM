@@ -1,0 +1,9 @@
+pandoc: 3.6.3
+pkgdown: 2.1.1
+pkgdown_sha: ~
+articles:
+  articles/ca3: ca3.html
+last_built: 2025-10-14T18:45Z
+urls:
+  reference: https://phillipnicol.github.io/MorphoGAM/reference
+  article: https://phillipnicol.github.io/MorphoGAM/articles
