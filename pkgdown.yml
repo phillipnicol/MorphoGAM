@@ -1,9 +1,9 @@
-pandoc: 3.1.11
-pkgdown: 2.1.3
+pandoc: 3.6.3
+pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
-  getting-started: getting-started.html
-last_built: 2025-10-13T20:53Z
+  articles/ca3: ca3.html
+last_built: 2025-10-14T18:45Z
 urls:
   reference: https://phillipnicol.github.io/MorphoGAM/reference
   article: https://phillipnicol.github.io/MorphoGAM/articles
