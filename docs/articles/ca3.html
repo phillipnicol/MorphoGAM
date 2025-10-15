@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>ca3 • MorphoGAM</title>
+<title>Slide-seq Mouse Hippocampus • MorphoGAM</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="ca3">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Slide-seq Mouse Hippocampus">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -33,7 +33,7 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/ca3.html">ca3</a></li>
+<li><a class="dropdown-item" href="../articles/ca3.html">Slide-seq Mouse Hippocampus</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -55,7 +55,7 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
-      <h1>ca3</h1>
+      <h1>Slide-seq Mouse Hippocampus</h1>
             
       
 
@@ -64,8 +64,114 @@
 
     
     
+<p>In this analysis, we will use <code>MorphoGAM</code> to analyze CA3
+cells in the mouse hippocampus.</p>
+<p>First, we load the necessary packages.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://phillipnicol.github.io/MorphoGAM/">MorphoGAM</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://phillipnicol.github.io/MorphoGAM/">MorphoGAM</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/lmweber/STexampleData" class="external-link">STexampleData</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r.igraph.org/" class="external-link">igraph</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span></code></pre></div>
+<p>Next, we load the data and remove outlier points:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spe</span> <span class="op">&lt;-</span> <span class="fu">STexampleData</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/STexampleData/man/STexampleData.html" class="external-link">SlideSeqV2_mouseHPC</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; see ?STexampleData and browseVignettes('STexampleData') for documentation</span></span>
+<span><span class="co">#&gt; loading from cache</span></span>
+<span></span>
+<span><span class="va">ixs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">spe</span><span class="op">$</span><span class="va">celltype</span> <span class="op">==</span> <span class="st">"CA3"</span><span class="op">)</span> <span class="co">#subset to CA3</span></span>
+<span></span>
+<span><span class="va">xy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/SpatialExperiment/man/SpatialExperiment-methods.html" class="external-link">spatialCoords</a></span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">[</span><span class="va">ixs</span>,<span class="op">]</span></span>
+<span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu">counts</span><span class="op">(</span><span class="va">spe</span><span class="op">)</span><span class="op">[</span>,<span class="va">ixs</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">xy.dist</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/dist.html" class="external-link">dist</a></span><span class="op">(</span><span class="va">xy</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">knn</span> <span class="op">&lt;-</span> <span class="fl">20</span></span>
+<span><span class="va">prune.outlier</span> <span class="op">&lt;-</span> <span class="fl">3</span></span>
+<span><span class="va">nnk</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">xy.dist</span>, <span class="fl">1</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">[</span><span class="va">knn</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">outlier</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/which.html" class="external-link">which</a></span><span class="op">(</span><span class="va">nnk</span> <span class="op">&gt;</span> <span class="op">(</span><span class="va">prune.outlier</span><span class="op">)</span><span class="op">*</span><span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">nnk</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">xy</span> <span class="op">&lt;-</span> <span class="va">xy</span><span class="op">[</span><span class="op">-</span><span class="va">outlier</span>,<span class="op">]</span>; <span class="va">Y</span> <span class="op">&lt;-</span> <span class="va">Y</span><span class="op">[</span>,<span class="op">-</span><span class="va">outlier</span><span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">xy</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>, y<span class="op">=</span><span class="va">xy</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>,y<span class="op">=</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ca3_files/figure-html/unnamed-chunk-2-1.png" width="700"></p>
+<p>Now, we can fit a 1D curve passing through and observe the resulting
+coordinates:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/CurveFinder.html">CurveFinder</a></span><span class="op">(</span><span class="va">xy</span><span class="op">)</span></span>
+<span><span class="va">fit</span><span class="op">$</span><span class="va">curve.plot</span></span></code></pre></div>
+<p><img src="ca3_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">coordinate.plot</span></span></code></pre></div>
+<p><img src="ca3_files/figure-html/unnamed-chunk-3-2.png" width="700"></p>
+<p><code>fit$xyt</code> also includes the values. Now to find variable
+genes along this path, we can use the <code><a href="../reference/MorphoGAM.html">MorphoGAM()</a></code> function.
+For speed, let’s first subset to 2000 variable genes</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Find 2000 variable genes based </span></span>
+<span></span>
+<span><span class="va">logCPM</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log2</a></span><span class="op">(</span><span class="fl">1e6</span><span class="op">*</span><span class="op">(</span><span class="va">Y</span><span class="op">/</span><span class="fu">Matrix</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Matrix/man/colSums.html" class="external-link">colSums</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">var.genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="va">logCPM</span>, <span class="fl">1</span>, <span class="va">var</span><span class="op">)</span>, decreasing<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">2000</span><span class="op">]</span></span>
+<span></span>
+<span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">Y</span><span class="op">[</span><span class="va">var.genes</span>,<span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<p>Now we fit the model. In the <code>design</code> argument, we specify
+that we want a model that fits a smooth function to both the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+(first coordinate) and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>
+(second coordinate).</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mgam</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/MorphoGAM.html">MorphoGAM</a></span><span class="op">(</span><span class="va">Y</span>, curve.fit<span class="op">=</span><span class="va">fit</span>,</span>
+<span>                  design <span class="op">=</span> <span class="va">y</span> <span class="op">~</span> <span class="fu">s</span><span class="op">(</span><span class="va">t</span><span class="op">)</span> <span class="op">+</span> <span class="fu">s</span><span class="op">(</span><span class="va">r</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ================================================================================</span></span></code></pre></div>
+<p>The first thing we can do is look at genes with a large peak in the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+direction. Here, the peak statistic is defined as the maximum log fold
+change from the baseline.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.t</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt;          peak.t   range.t pv.t     peak.r     range.r          pv.r intercept</span></span>
+<span><span class="co">#&gt; Rgs14  2.688307 0.5387266    0 0.06277392 0.002950812  4.016183e-02 -9.614966</span></span>
+<span><span class="co">#&gt; Crym   1.827735 0.8088010    0 0.32335465 0.104397880  5.124054e-04 -7.573050</span></span>
+<span><span class="co">#&gt; Fxyd7  1.659239 0.1689494    0 0.00000000 0.000000000  8.469104e-01 -8.702739</span></span>
+<span><span class="co">#&gt; Necab2 1.413801 0.3406113    0 0.05697628 0.010565701  4.310323e-02 -8.679102</span></span>
+<span><span class="co">#&gt; Nptx1  1.391123 0.4382267    0 0.12000145 0.053388796  3.192286e-02 -7.406455</span></span>
+<span><span class="co">#&gt; Bok    1.355025 0.3707605    0 0.23728096 0.157378967 -1.169573e-06 -7.389233</span></span>
+<span></span>
+<span><span class="va">top6</span> <span class="op">&lt;-</span> <span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.t</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Note that any list of genes can always be plotted with
+<code><a href="../reference/plotGAMestimates.html">plotGAMestimates()</a></code>.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotGAMestimates.html">plotGAMestimates</a></span><span class="op">(</span><span class="va">Y</span>, genes<span class="op">=</span><span class="va">top6</span>, curve_fit<span class="op">=</span><span class="va">fit</span>, mgam_object<span class="op">=</span><span class="va">mgam</span>, nrow<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ca3_files/figure-html/unnamed-chunk-7-1.png" width="700">
+Repeating the same for the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>
+direction:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">top6</span> <span class="op">&lt;-</span> <span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.r</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/plotGAMestimates.html">plotGAMestimates</a></span><span class="op">(</span><span class="va">Y</span>, genes<span class="op">=</span><span class="va">top6</span>, curve_fit<span class="op">=</span><span class="va">fit</span>, mgam_object<span class="op">=</span><span class="va">mgam</span>, nrow<span class="op">=</span><span class="fl">2</span>, type<span class="op">=</span><span class="st">"r"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ca3_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<p>Note that these statistics are defined for convenience, but the
+entire function is available in the output of <code><a href="../reference/MorphoGAM.html">MorphoGAM()</a></code>.
+Example, with Rgs14 gene:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">gene</span> <span class="op">&lt;-</span> <span class="st">"Rgs14"</span></span>
+<span></span>
+<span><span class="va">fitted_function</span> <span class="op">&lt;-</span> <span class="va">mgam</span><span class="op">$</span><span class="va">fxs.t</span><span class="op">[</span><span class="va">gene</span>,<span class="op">]</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">fit</span><span class="op">$</span><span class="va">xyt</span><span class="op">$</span><span class="va">t</span>, y<span class="op">=</span><span class="va">fitted_function</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>,y<span class="op">=</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>color<span class="op">=</span><span class="st">"blue"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, linetype<span class="op">=</span><span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"LogFC from baseline"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ca3_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<p>Finally, we can look at the FPC loadings. Here, we plot the second
+FPC loading in the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+direction.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotFPCloading.html">plotFPCloading</a></span><span class="op">(</span>mgam_object <span class="op">=</span> <span class="va">mgam</span>,</span>
+<span>               curve.fit <span class="op">=</span> <span class="va">fit</span>,</span>
+<span>               L<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ca3_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
   </main>
 </div>
 

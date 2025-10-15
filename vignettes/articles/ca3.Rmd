@@ -1,5 +1,5 @@
 ---
-title: "ca3"
+title: "Slide-seq Mouse Hippocampus"
 ---
 
 ```{r, include = FALSE}
@@ -9,6 +9,105 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+In this analysis, we will use `MorphoGAM` to analyze CA3 cells in the mouse hippocampus. 
+
+First, we load the necessary packages.
+
+```{r setup, message=FALSE, warning=FALSE}
 library(MorphoGAM)
+library(dplyr)
+library(STexampleData)
+library(igraph)
+library(tidyverse)
 ```
+
+
+Next, we load the data and remove outlier points:
+
+```{r}
+spe <- STexampleData::SlideSeqV2_mouseHPC()
+
+ixs <- which(spe$celltype == "CA3") #subset to CA3
+
+xy <- spatialCoords(spe)[ixs,]
+Y <- counts(spe)[,ixs]
+
+xy.dist <- as.matrix(dist(xy))
+knn <- 20
+prune.outlier <- 3
+nnk <- apply(xy.dist, 1, function(x) sort(x)[knn+1])
+outlier <- which(nnk > (prune.outlier)*median(nnk))
+
+xy <- xy[-outlier,]; Y <- Y[,-outlier]
+
+data.frame(x=xy[,1], y=xy[,2]) |> ggplot(aes(x=x,y=y)) + 
+  geom_point(size=0.5) + theme_bw()
+```
+
+Now, we can fit a 1D curve passing through and observe the resulting coordinates: 
+
+```{r}
+fit <- CurveFinder(xy)
+fit$curve.plot
+fit$coordinate.plot
+```
+
+`fit$xyt` also includes the values. Now to find variable genes along this path, we can use the `MorphoGAM()` function. For speed, let's first subset to 2000 variable genes 
+
+```{r}
+# Find 2000 variable genes based 
+
+logCPM <- log2(1e6*(Y/Matrix::colSums(Y)) + 1)
+var.genes <- names(sort(apply(logCPM, 1, var), decreasing=TRUE))[1:2000]
+
+Y <- as.matrix(Y[var.genes,])
+```
+ 
+Now we fit the model. In the `design` argument, we specify that we want a model that fits a smooth function to both the $t$ (first coordinate) and $r$ (second coordinate).
+
+```{r}
+mgam <- MorphoGAM(Y, curve.fit=fit,
+                  design = y ~ s(t) + s(r))
+```
+
+The first thing we can do is look at genes with a large peak in the $t$ direction. Here, the peak statistic is defined as the maximum log fold change from the baseline. 
+
+```{r}
+mgam$results |> arrange(desc(peak.t)) |> head()
+
+top6 <- mgam$results |> arrange(desc(peak.t)) |> head() |> rownames()
+```
+
+Note that any list of genes can always be plotted with `plotGAMestimates()`.
+
+```{r}
+plotGAMestimates(Y, genes=top6, curve_fit=fit, mgam_object=mgam, nrow=2)
+```
+Repeating the same for the $r$ direction:
+
+```{r}
+top6 <- mgam$results |> arrange(desc(peak.r)) |> head() |> rownames()
+
+plotGAMestimates(Y, genes=top6, curve_fit=fit, mgam_object=mgam, nrow=2, type="r")
+```
+
+Note that these statistics are defined for convenience, but the entire function is available in the output of `MorphoGAM()`. Example, with Rgs14 gene: 
+
+```{r}
+gene <- "Rgs14"
+
+fitted_function <- mgam$fxs.t[gene,]
+
+data.frame(x=fit$xyt$t, y=fitted_function) |> ggplot(aes(x=x,y=y)) + 
+  geom_line(color="blue") + theme_bw() + geom_hline(yintercept = 0, linetype="dashed") + xlab("t") + ylab("LogFC from baseline")
+```
+
+
+Finally, we can look at the FPC loadings. Here, we plot the second FPC loading in the $t$ direction.
+
+```{r}
+plotFPCloading(mgam_object = mgam,
+               curve.fit = fit,
+               L=2)
+```
+
