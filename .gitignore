@@ -9,6 +9,8 @@
 *.Rda
 *.RDS
 *.png
+!docs/*.png
+!docs/**/*.png
 *.mtx
 *.tsv
 *.xlsx
