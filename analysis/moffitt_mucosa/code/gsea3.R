@@ -4,12 +4,12 @@ library(tidyverse)
 
 library(piano)
 
-#gene_sets <- loadGSC(file="../data/m5.go.bp.v2025.1.Mm.symbols.gmt",
-#                     type="gmt")
-
-
-gene_sets <- loadGSC(file="../data/mh.all.v2025.1.Mm.symbols.gmt",
+gene_sets <- loadGSC(file="../data/m5.go.bp.v2025.1.Mm.symbols.gmt",
                      type="gmt")
+
+
+#gene_sets <- loadGSC(file="../data/mh.all.v2025.1.Mm.symbols.gmt",
+#                     type="gmt")
 
 # View the top enriched Hallmark pathways
 #print(head(summary_table_sorted, 10))
@@ -87,7 +87,6 @@ gsea.spark <- summary_table[order(summary_table$`Stat (non-dir.)`,decreasing = T
 df.spark <- data.frame(y=gsea.spark$Name,
                        x=gsea.spark$`Stat (non-dir.)` |> scale(),
                        Method="Spark-X")
-
 
 
 load("../data/mucosa_mgam.RData")

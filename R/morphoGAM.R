@@ -70,9 +70,10 @@ MorphoGAM <- function(Y,
   H <- diag(ncol(fit.setup$X)); H[1,1] <- 0 #Don't penalize intercept
 
   #Setup results data frame
-  results <- matrix(0, nrow=p, ncol=7)
+  results <- matrix(0, nrow=p, ncol=9)
   colnames(results) <- c("peak.t", "range.t", "pv.t",
-                         "peak.r", "range.r", "pv.r", "intercept")
+                         "peak.r", "range.r", "pv.r", "intercept",
+                         "peak.t.pm", "peak.t.sd")
 
   if(return.fx) {
     fxs.t <- matrix(0,nrow=p,ncol=n)
@@ -83,7 +84,7 @@ MorphoGAM <- function(Y,
   for(i in 1:nrow(Y)) {
     setTxtProgressBar(bar,i)
     if(rowSums(Y)[i] < min.count.per.gene) {
-      results[i,] <- c(0,0,1,0,0,1,0)
+      results[i,] <- c(0,0,1,0,0,1,0,0,0)
       next
     }
 
@@ -122,12 +123,34 @@ MorphoGAM <- function(Y,
 
     basis.functions <- mgcv::predict.gam(fit, type="lpmatrix")[,-1]
 
-
-
     t.cols <- grep("s\\(t\\)", colnames(basis.functions))
 
     pred <- predict(fit, newdata = data.frame(t=data$t,r=data$r),
                     type="terms", se.fit=TRUE)
+
+
+    ### Simon Wood advanced GAM
+    Xp <- basis.functions[,t.cols]
+    beta <- coef(fit); beta <- beta[-1]; beta <- beta[t.cols]
+    Vb <- vcov(fit)[-1,-1]; Vb <- Vb[t.cols,t.cols]
+
+    print("START")
+    br <- MASS::mvrnorm(10^3,beta,Vb)
+
+    fitted.mat <- Xp %*% t(br)
+
+    peak.t <- apply(fitted.mat,2,function(x) max(abs(x)))
+    peak.t.pm <- mean(peak.t)
+    peak.t.sd <- sd(peak.t)
+
+    print("END")
+
+    results[i,c("peak.t.pm","peak.t.sd")] <- c(peak.t.pm, peak.t.sd)
+
+    cat(peak.t.pm, peak.t.sd, "\n")
+
+
+
     if(length(t.cols) > 0) {
       fx.t <- basis.functions[,t.cols] %*% beta.shrink[t.cols]
 

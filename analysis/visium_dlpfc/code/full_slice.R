@@ -51,6 +51,10 @@ p <- data.frame(x=xy[ixs,1],y=xy[ixs,2],color=spe$ground_truth[ixs]) |>
 
 p.layers <- p
 
+p.dlpfc <- p.layers + theme_bw() + labs(color="Layer")
+
+ggsave(p.dlpfc, filename="../plots/layer_specific.png")
+
 library(MorphoGAM)
 
 xy <- xy[ixs,]
