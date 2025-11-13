@@ -98,6 +98,8 @@ for(i in 1:length(t.full)) {
   Rf1 <- c(-f2y$.derivative[t.anchor], f2x$.derivative[t.anchor])
   sign <- ifelse(sum(e*Rf1) > 0, 1, -1)
   t2[i] <- sign*sqrt(sum(e^2))
+
+  t2[i] <- sum(e[1]*Rf1[1] + e[2]*Rf1[2])
 }
 
 t2 <- (t2 - min(t2))/(max(t2) - min(t2))
