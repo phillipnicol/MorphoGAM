@@ -3,7 +3,7 @@ pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
   articles/ca3: ca3.html
-last_built: 2025-10-15T00:52Z
+last_built: 2025-11-20T21:35Z
 urls:
   reference: https://phillipnicol.github.io/MorphoGAM/reference
   article: https://phillipnicol.github.io/MorphoGAM/articles
