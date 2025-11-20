@@ -25,8 +25,7 @@ If you use `MorphoGAM` in your work, please cite:
 
 Nicol, P.B., Ma, R., Xu, R.J., Moffitt, J.R., and Irizarry, R.A. (2025).
 Identifying spatially variable genes by projecting to morphologically
-relevant curves. bioRxiv.
-(<https://doi.org/10.1101/2024.11.21.624653>)\[<https://doi.org/10.1101/2024.11.21.624653>\]
+relevant curves. bioRxiv. <https://doi.org/10.1101/2024.11.21.624653>
 
 ## System Requirements
 
