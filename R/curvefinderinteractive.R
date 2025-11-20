@@ -1,3 +1,5 @@
+#' @export
+#'
 #' @import shiny
 #' @import princurve
 #' @import ggplot2
@@ -81,7 +83,7 @@ CurveFinderInteractive <- function(xy, loop = FALSE) {
         shiny::showNotification("Please click at least 3 points before smoothing.", type = "warning")
         return(NULL)
       }
-      res <- interactiveCurve(clicks = vals$clicks, loop = loop, data = xy)
+      res <- interactiveCurve(clicks = vals$clicks, loop = loop, xy = xy)
       shiny::stopApp(res)
     })
   }
@@ -97,7 +99,7 @@ CurveFinderInteractive <- function(xy, loop = FALSE) {
 }
 
 
-interactiveCurve <- function(clicks, loop, data) {
+interactiveCurve <- function(clicks, loop, xy) {
   print("Running smoother. Do not press stop.")
   #my.clicks <- interactiveCurve(xy)
   #clicks <- interactiveCurve(xy)

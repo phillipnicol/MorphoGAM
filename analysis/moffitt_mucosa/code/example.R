@@ -331,7 +331,7 @@ p.demo <- ggarrange(ggarrange(fit$curve.plot + ggtitle("Fitted curve") + guides(
                               fit$residuals.plot + guides(color="none") + ggtitle("Second coordinate (r)"), nrow=1,ncol=3,
                               labels=c("a","b","c")),
                     ggarrange(p.gene1, p.gene2,
-                              p.gene1r, p.gene2t,
+                              p.gene2t, p.gene1r,
                               nrow=2,ncol=2,
                               labels=c("d","e", "f","g")),nrow=2,
                     heights=c(1,2))
