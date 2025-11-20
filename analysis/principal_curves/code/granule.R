@@ -1,4 +1,6 @@
 
+setwd(here::here("analysis/principal_curves/code"))
+
 ## Granule
 
 xy <- readRDS("../../data/granule_slideseq.RDS")
@@ -115,7 +117,7 @@ fit_granule <- CurveFinder(as.matrix(xy),knn=6,
 p.3.1 <- data.frame(x=res[,1], y=res[,2]) |>
   ggplot(aes(x=x,y=y)) +
   geom_point() + geom_line() +
-  theme_bw() + xlab("knn") + ylab(expression(r^2 ~ "with truth"))+
+  theme_bw() + xlab("k") + ylab(expression(r^2 ~ "with truth"))+
   ylim(0.5,1)
 
 p.3.2 <- data.frame(x=res2[,1], y=res2[,2]) |>

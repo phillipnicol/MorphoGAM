@@ -1,7 +1,32 @@
 MorphoGAM: Detect spatially variable genes by projecting to
 morphologically relevant curves
 ================
-R package version 1.1.0
+R package version 1.1.1
+
+## Overview
+
+`MorphoGAM` is an R package that provides statistical tools for modeling
+spatial gene expression data along one-dimensional paths. The package
+implements a two-step approach: first, it estimates a parametric curve
+passing through the spatial coordinates of the data. From this curve a
+*morphologically relevant* coordinate system. Second, it fits
+generalized additive models (GAMs) to identify genes with spatially
+variable expression along the curve or in the orthogonal direction.
+
+Several parts of the model can be customized depending on the specific
+data/scientific question. Below we provide a brief demo of the core
+functionality on simulated data. We also have the more detailed
+vignettes on real spatial transcriptomic data:
+
+- [Slide-seq mouse hippocampus CA3
+  cells](https://phillipnicol.github.io/MorphoGAM/articles/ca3.html)
+
+If you use `MorphoGAM` in your work, please cite:
+
+Nicol, P.B., Ma, R., Xu, R.J., Moffitt, J.R., and Irizarry, R.A. (2025).
+Identifying spatially variable genes by projecting to morphologically
+relevant curves. bioRxiv.
+(<https://doi.org/10.1101/2024.11.21.624653>)\[<https://doi.org/10.1101/2024.11.21.624653>\]
 
 ## System Requirements
 
@@ -15,9 +40,7 @@ From the R console,
 `devtools::install_github("phillipnicol/MorphoGAM")`. Installation
 should take less than a minute on a standard machine.
 
-## Demo
-
-This demonstration should complete in a few minutes on a standard computer. 
+## Simulated demo
 
 ### Step 1: Estimate morphologically relevant coordinates
 
@@ -82,8 +105,9 @@ In some cases the user may wish to draw the curve by hand. For this we
 provide an interactive shiny app that can be run locally using the
 function `CurveFinderInteractive()`. Once the app is running you can
 click the sequence of points defining the curve, then press the “Smooth”
-button to fit the curve. Once the smoothing is done the app can be
-closed and `fit` will be returned.
+button to fit the curve. Once the smoothing is done the app will close
+and `fit` will be returned. Note: this function may not work outside of
+RStudio.
 
 ``` r
   #Running this opens a shiny app
@@ -158,7 +182,3 @@ morphologically relevant coordinate, add the term `s(r, ...)` to the
 mgam_with_r <- MorphoGAM(Y, curve.fit=fit,
                           design = y ~ s(t, bs="cr") + s(r, bs="cr"))
 ```
-
-## Reference
-
-If you use `MorphoGAM` in your work, please cite:

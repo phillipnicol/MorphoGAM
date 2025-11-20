@@ -160,7 +160,7 @@ fit_granule <- CurveFinder(as.matrix(xy),knn=6,
 p.3.1 <- data.frame(x=res[,1], y=res[,2]) |>
   ggplot(aes(x=x,y=y)) +
   geom_point() + geom_line() +
-  theme_bw() + xlab("knn") + ylab("r^2 (spearman) with coordinate")
+  theme_bw() + xlab("k") + ylab("r^2 (spearman) with coordinate")
 
 p.3.2 <- data.frame(x=res2[,1], y=res2[,2]) |>
   ggplot(aes(x=x,y=y)) +

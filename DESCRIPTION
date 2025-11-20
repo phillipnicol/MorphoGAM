@@ -1,7 +1,7 @@
 Package: MorphoGAM
 Type: Package
 Title: Identify spatially variable genes by projecting to morphologically relevant curves.
-Version: 1.1.0
+Version: 1.1.1
 Author: Phillip B. Nicol <philnicol740@gmail.com>
 Maintainer: Phillip B. Nicol <philnicol740@gmail.com>
 Description: Includes methods (interactive and automatic) for estimating a "morphologically relevant" 
