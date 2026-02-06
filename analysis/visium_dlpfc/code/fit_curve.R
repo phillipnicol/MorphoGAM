@@ -1,6 +1,8 @@
 
 setwd(here::here("analysis", "visium_dlpfc", "code"))
 
+library(SpatialExperiment)
+
 library(STexampleData)
 
 library(MorphoGAM)
