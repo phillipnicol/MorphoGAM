@@ -4,7 +4,13 @@
 \alias{CurveFinder}
 \title{CurveFinder: Automatically estimate curve in two-dimensional ST data}
 \usage{
-CurveFinder(xy, knn = 5, prune.outlier = NULL, loop = FALSE)
+CurveFinder(
+  xy,
+  knn = 5,
+  prune.outlier = NULL,
+  loop = FALSE,
+  scale_morpho_coords = TRUE
+)
 }
 \arguments{
 \item{xy}{A numeric matrix or data frame with two columns representing the x and y coordinates of the data points.}

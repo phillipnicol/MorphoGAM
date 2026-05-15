@@ -1,7 +1,17 @@
-CurveFinderInteractive2 <- function(xy, loop = FALSE, image_path = NULL, flip_y = TRUE) {
+CurveFinderInteractive2 <- function(
+    xy,
+    loop = FALSE,
+    image_path = NULL,
+    flip_y = TRUE,
+    flip_x = FALSE
+) {
   stopifnot(is.matrix(xy) || is.data.frame(xy))
   xy <- as.matrix(xy)
-  if (ncol(xy) != 2) stop("`xy` must have exactly two columns (x, y).")
+
+  if (ncol(xy) != 2) {
+    stop("`xy` must have exactly two columns (x, y).")
+  }
+
   colnames(xy) <- c("x", "y")
 
   ui <- shiny::fluidPage(
@@ -13,54 +23,89 @@ CurveFinderInteractive2 <- function(xy, loop = FALSE, image_path = NULL, flip_y 
   )
 
   server <- function(input, output, session) {
-    vals <- shiny::reactiveValues(clicks = matrix(numeric(0), ncol = 2))
+    vals <- shiny::reactiveValues(
+      clicks = matrix(numeric(0), ncol = 2)
+    )
 
-    # Load image once (if provided)
     img_obj <- NULL
+
     if (!is.null(image_path)) {
       img_obj <- read_histology_image(image_path)
 
-      # If Visium y is "pixel row", flip it so it matches plot coords
+      if (flip_x) {
+        xy[, 1] <- img_obj$width - xy[, 1]
+
+        # flip image horizontally
+        img_obj$img <- img_obj$img[, ncol(img_obj$img):1, , drop = FALSE]
+      }
+
       if (flip_y) {
-        xy[,2] <- img_obj$height - xy[,2]
+        xy[, 2] <- img_obj$height - xy[, 2]
+
+        # flip image vertically
+        img_obj$img <- img_obj$img[nrow(img_obj$img):1, , , drop = FALSE]
       }
     }
 
     output$plot <- shiny::renderPlot({
       if (!is.null(img_obj)) {
-        # Set limits to image pixel coordinates
-        plot(NA,
-             xlim = c(0, img_obj$width),
-             ylim = c(0, img_obj$height),
-             xlab = "x (px)", ylab = "y (px)",
-             asp = 1)
+        plot(
+          NA,
+          xlim = c(0, img_obj$width),
+          ylim = c(0, img_obj$height),
+          xlab = "x (px)",
+          ylab = "y (px)",
+          asp = 1
+        )
 
-        # Draw the image
-        rasterImage(img_obj$img,
-                    xleft = 0, ybottom = 0,
-                    xright = img_obj$width, ytop = img_obj$height)
+        rasterImage(
+          img_obj$img,
+          xleft = 0,
+          ybottom = 0,
+          xright = img_obj$width,
+          ytop = img_obj$height
+        )
 
-        # Overlay spots
-        points(xy[,1], xy[,2], col = "grey60", pch = 16, cex = 0.6)
+        points(
+          xy[, 1],
+          xy[, 2],
+          col = "grey60",
+          pch = 16,
+          cex = 0.6
+        )
 
       } else {
-        # No image: your original behavior
-        plot(xy, xlab = "x", ylab = "y", col = "grey60", asp = 1)
+        plot(
+          xy,
+          xlab = "x",
+          ylab = "y",
+          col = "grey60",
+          asp = 1
+        )
       }
 
-      # Overlay clicks/lines
       if (nrow(vals$clicks) > 0) {
         points(vals$clicks, pch = 19, col = "red")
+
         if (nrow(vals$clicks) > 1) {
-          lines(vals$clicks[,1], vals$clicks[,2], col = "dodgerblue3", lwd = 2)
+          lines(
+            vals$clicks[, 1],
+            vals$clicks[, 2],
+            col = "dodgerblue3",
+            lwd = 2
+          )
         }
       }
     })
 
     shiny::observeEvent(input$plot_click, {
       coords <- c(input$plot_click$x, input$plot_click$y)
+
       if (all(is.finite(coords))) {
-        vals$clicks <- rbind(vals$clicks, matrix(coords, nrow = 1))
+        vals$clicks <- rbind(
+          vals$clicks,
+          matrix(coords, nrow = 1)
+        )
       }
     }, ignoreInit = TRUE)
 
@@ -70,19 +115,33 @@ CurveFinderInteractive2 <- function(xy, loop = FALSE, image_path = NULL, flip_y 
 
     shiny::observeEvent(input$smooth, {
       if (nrow(vals$clicks) < 3) {
-        shiny::showNotification("Please click at least 3 points before smoothing.", type = "warning")
+        shiny::showNotification(
+          "Please click at least 3 points before smoothing.",
+          type = "warning"
+        )
         return(NULL)
       }
 
       print(vals$clicks)
 
-      res <- interactiveCurve2(clicks = vals$clicks, loop = loop, xy = xy, img=img_obj)
+      res <- interactiveCurve2(
+        clicks = vals$clicks,
+        loop = loop,
+        xy = xy,
+        img = img_obj
+      )
 
-      # If you flipped y for plotting, res is in that same coordinate system.
-      # If you want to return to original Visium pixel-row coordinates, unflip here:
-      if (!is.null(img_obj) && flip_y) {
-        res$xyt$y <- img_obj$height - res$xyt$y
-        res$xyt$f2 <- img_obj$height - res$xyt$f2
+      # Return results back to original, unflipped coordinate system
+      if (!is.null(img_obj)) {
+        if (flip_x) {
+          res$xyt$x <- img_obj$width - res$xyt$x
+          res$xyt$f1 <- img_obj$width - res$xyt$f1
+        }
+
+        if (flip_y) {
+          res$xyt$y <- img_obj$height - res$xyt$y
+          res$xyt$f2 <- img_obj$height - res$xyt$f2
+        }
       }
 
       shiny::stopApp(res)
@@ -90,13 +149,17 @@ CurveFinderInteractive2 <- function(xy, loop = FALSE, image_path = NULL, flip_y 
   }
 
   app <- shiny::shinyApp(ui = ui, server = server)
+
   if ("runGadget" %in% getNamespaceExports("shiny")) {
     fit <- shiny::runGadget(app, stopOnCancel = FALSE)
   } else {
     fit <- shiny::runApp(app)
   }
+
   return(fit)
 }
+
+
 
 read_histology_image <- function(path) {
   ext <- tolower(tools::file_ext(path))

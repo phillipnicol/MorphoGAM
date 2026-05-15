@@ -33,9 +33,10 @@
 #' @importFrom gtools permutations
 #' @importFrom RANN nn2
 CurveFinder <- function(xy,
-                       knn=5,
-                       prune.outlier=NULL,
-                       loop=FALSE) {
+                        knn=5,
+                        prune.outlier=NULL,
+                        loop=FALSE,
+                        scale_morpho_coords = TRUE) {
   xy.dist <- as.matrix(dist(xy))
 
   if(!is.null(prune.outlier)) {
@@ -132,7 +133,7 @@ CurveFinder <- function(xy,
     fity <- mgcv::gam(xy[,2]~s(t,bs="cr",k=knots))
   }
 
-  r <- orthogonal_path(fitx,fity,t)
+  r <- orthogonal_path(fitx,fity,t,scale_morpho_coords)
 
   my.t <- seq(0,1,by=10^{-4})
   predx <- predict(fitx,newdata=list(t=my.t))
@@ -174,15 +175,19 @@ CurveFinder <- function(xy,
     ggtitle("Second Coordinate") +
     labs(color="r")
 
+  ## Model selection
+  model.score <- as.vector(-2*(logLik(fitx) + logLik(fity)) + 2*(pen.edf(fitx) + pen.edf(fity) + nrow(xy)/knn))
+
   out <- list()
   out$xyt <- xyt
   out$curve.plot <- p
   out$coordinate.plot <- p2
   out$residuals.plot <- p3
+  out$model.score <- model.score
   return(out)
 }
 
-orthogonal_path <- function(fitx,fity, t) {
+orthogonal_path <- function(fitx,fity, t, scale_morpho_coords) {
   f2x <- gratia::derivatives(fitx,order=1,data=data.frame(t=t))
   f2y <- gratia::derivatives(fity,order=1,data=data.frame(t=t))
   t2 <- t
@@ -194,7 +199,9 @@ orthogonal_path <- function(fitx,fity, t) {
     t2[i] <- sign*sqrt(sum(e^2))
   }
 
-  t2 <- (t2 - min(t2))/(max(t2) - min(t2))
+  if(scale_morpho_coords) {
+    t2 <- (t2 - min(t2))/(max(t2) - min(t2))
+  }
   return(t2)
 }
 

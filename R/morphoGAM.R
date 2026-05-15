@@ -79,6 +79,7 @@ MorphoGAM <- function(Y,
     fxs.r <- matrix(0,nrow=p,ncol=n)
   }
 
+
   bar <- txtProgressBar(min=0,max=nrow(Y)-1,initial = 0)
   for(i in 1:nrow(Y)) {
     setTxtProgressBar(bar,i)
