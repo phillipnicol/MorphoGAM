@@ -38,14 +38,14 @@ plotGAMestimates <- function(Y,
                              type="t",
                              nrow=1,
                              include.gam=TRUE) {
-  Y.sub <- Y[genes,] |> as.matrix()
+  Y.sub <- Y[genes,,drop=FALSE] |> as.matrix()
   offset <- Matrix::colSums(Y)
   nmed <- median(offset)
   Y.sub <- sweep(Y.sub, MARGIN = 2, FUN = "/", STATS = Matrix::colSums(Y)/nmed)
   if(type == "t") {
     colnames(Y.sub) <- curve_fit$xyt$t
-    beta_g0 <- mgam_object$results[genes,]$intercept
-    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.t[genes,])
+    beta_g0 <- mgam_object$results[genes,,drop=FALSE]$intercept
+    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.t[genes,,drop=FALSE])
     colnames(fxs.sub) <- colnames(Y.sub)
 
     df.gg <- reshape2::melt(t(Y.sub))
@@ -64,8 +64,8 @@ plotGAMestimates <- function(Y,
       xlab("t")
   } else if(type == "r") {
     colnames(Y.sub) <- curve_fit$xyt$r
-    beta_g0 <- mgam_object$results[genes,]$intercept
-    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.r[genes,])
+    beta_g0 <- mgam_object$results[genes,,drop=FALSE]$intercept
+    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.r[genes,,drop=FALSE])
     colnames(fxs.sub) <- colnames(Y.sub)
 
     df.gg <- reshape2::melt(t(Y.sub))

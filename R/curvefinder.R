@@ -37,6 +37,74 @@ CurveFinder <- function(xy,
                         prune.outlier=NULL,
                         loop=FALSE,
                         scale_morpho_coords = TRUE) {
+  
+  if(is.character(knn) && knn == "auto") {
+
+    best.score <- Inf
+    best.fit <- NULL
+    best.knn <- NA_integer_
+
+    for(k in 3:20) {
+
+      fit.k <- tryCatch(
+
+        CurveFinder(
+          xy = xy,
+          knn = k,
+          prune.outlier = prune.outlier,
+          loop = loop,
+          scale_morpho_coords = scale_morpho_coords
+        ),
+
+        error = function(e) {
+
+          if(grepl("Graph has too many disconnected components",
+                  e$message)) {
+
+            message(sprintf(
+              "Trying knn = %d, model score = -Inf",
+              k
+            ))
+
+            return(NULL)
+          }
+
+          stop(e)
+        }
+      )
+
+      if(is.null(fit.k)) {
+        next
+      }
+
+      current.score <- fit.k$model.score
+
+      message(sprintf(
+        "Trying knn = %d, model score = %.4f",
+        k,
+        -current.score
+      ))
+
+      if(current.score < best.score) {
+        best.score <- current.score
+        best.fit <- fit.k
+        best.knn <- k
+      }
+    }
+
+    if(is.null(best.fit)) {
+      stop("No valid knn value found between 3 and 20.")
+    }
+
+    best.fit$knn <- best.knn
+    best.fit$knn.scores <- data.frame(
+      knn = best.knn,
+      model.score = best.score
+    )
+
+    return(best.fit)
+  }
+
   xy.dist <- as.matrix(dist(xy))
 
   if(!is.null(prune.outlier)) {

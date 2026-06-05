@@ -1,4 +1,7 @@
-setwd(here::here("analysis", "hunter_tumor", "code"))
+setwd(here::here("analysis", "hunter_tumor", "code")) 
+
+source("../../../R/curve_finder_i_try.R")
+source("../../../R/helpers.R")
 
 library(ggplot2)
 
@@ -24,8 +27,8 @@ expected_w <- full_w * s
 pad_x <- (small_w - expected_w) / 2
 
 # manual correction: dots looked too far right
-x_shift <- 0
-y_shift <- 10
+x_shift <- -10
+y_shift <- 7
 
 xy_small <- cbind(
   x = x_full * s + pad_x + x_shift,

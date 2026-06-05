@@ -17,6 +17,10 @@ outlier <- which(nnk > (prune.outlier)*median(nnk))
 
 xy <- xy[-outlier,]; Y <- Y[,-outlier]
 
+write.csv(as.data.frame(xy), "../data/ca3_xy.csv", row.names = FALSE)
+Matrix::writeMM(Y, "../data/ca3_counts.mtx")
+writeLines(rownames(Y), "../data/ca3_genes.txt")
+
 fit <- CurveFinder(xy)
 
 l.o <- log(colSums(Y))
