@@ -10,6 +10,8 @@
 #' @param knn An integer specifying the number of nearest neighbors used to construct the KNN graph. Default is 5.
 #' @param prune.outlier A numeric threshold for pruning outliers based on the distance to the k+1 nearest neighbor. Outliers are removed if their distance exceeds `prune.outlier * median(nnk)`. Defaults to NULL (no pruning).
 #' @param loop A logical value indicating whether the curve should be treated as a loop (closed curve). Default is FALSE.
+#' @param scaleMorphoCoords A logical value indicating whether to scale the morphologically relevant coordinates `t` and `r` to the range [0, 1]. Default is TRUE.
+#' @param max.comp.no An integer specifying the maximum number of disconnected components allowed in the KNN graph. Default is 5.
 #'
 #' @return A list containing:
 #' \item{xyt}{A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` abd `f2`).}
@@ -36,7 +38,9 @@ CurveFinder <- function(xy,
                         knn=5,
                         prune.outlier=NULL,
                         loop=FALSE,
-                        scale_morpho_coords = TRUE) {
+                        knot.fx = 100,
+                        scale_morpho_coords = TRUE,
+                        max.comp.no = 5) {
   
   if(is.character(knn) && knn == "auto") {
 
@@ -129,7 +133,7 @@ CurveFinder <- function(xy,
 
   comp <- igraph::components(knng)
 
-  if(comp$no > 5 || (loop && comp$no > 1)) {
+  if(comp$no > max.comp.no || (loop && comp$no > 1)) {
     stop("Graph has too many disconnected components. Increase knn")
   }
 
@@ -157,15 +161,23 @@ CurveFinder <- function(xy,
     if(loop) {
       e <- RSpectra::eigs_sym(dG, 2, which = "LA",
                               opts = list(retvec = TRUE))
-      t <- (pi+atan2(e$vectors[,1], e$vectors[,2]))/(2*pi)
+      if(scale_morpho_coords) {
+        t <- (pi+atan2(e$vectors[,1], e$vectors[,2]))/(2*pi)
+      } else{
+        t <- e$values[1]*atan2(e$vectors[,1], e$vectors[,2])
+      }
     } else{
       e <- RSpectra::eigs_sym(dG, 1, which = "LA",
                               opts = list(retvec = TRUE))
+      
+      if(scale_morpho_coords) {
+        t.list[[c]] <- as.vector(e$vectors)
 
-      t.list[[c]] <- as.vector(e$vectors)
-
-      t.list[[c]] <- (t.list[[c]] - min(t.list[[c]]))/(max(t.list[[c]]) - min(t.list[[c]]))
-      t.list[[c]] <- t.list[[c]]*(sum(comp$membership == c)/length(comp$membership))
+        t.list[[c]] <- (t.list[[c]] - min(t.list[[c]]))/(max(t.list[[c]]) - min(t.list[[c]]))
+        t.list[[c]] <- t.list[[c]]*(sum(comp$membership == c)/length(comp$membership))
+      } else{
+        t.list[[c]] <- as.vector(e$vectors)
+      }
 
       endpoints[2*c-1,] <- xy.sub[which.min(t.list[[c]]),]
       endpoints[2*c,] <- xy.sub[which.max(t.list[[c]]),]
@@ -192,7 +204,7 @@ CurveFinder <- function(xy,
     t <- as.vector(t.list[[1]])
   }
 
-  knots <- round(min(100, 0.1*nrow(xy)))
+  knots <- round(min(knot.fx, 0.1*nrow(xy)))
   if(loop) {
     fitx <- mgcv::gam(xy[,1]~s(t,bs="cc",k=knots))
     fity <- mgcv::gam(xy[,2]~s(t,bs="cc",k=knots))
@@ -203,7 +215,16 @@ CurveFinder <- function(xy,
 
   r <- orthogonal_path(fitx,fity,t,scale_morpho_coords)
 
-  my.t <- seq(0,1,by=10^{-4})
+  #Get span of r coord
+  E <- cbind(fitx$residuals, fity$residuals)
+  dists <- apply(E, 1, function(e) sqrt(sum(e^2)))
+  span.r <- 2*quantile(dists, 0.95)
+
+  if(scale_morpho_coords) {
+    my.t <- seq(0, 1, by=10^{-4})
+  } else{
+    my.t <- seq(min(t), max(t), length.out = 10^4)
+  }
   predx <- predict(fitx,newdata=list(t=my.t))
   predy <- predict(fity,newdata=list(t=my.t))
   ft <- data.frame(x=predx,y=predy)
@@ -225,19 +246,28 @@ CurveFinder <- function(xy,
   xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
                     f1 = fitted(fitx),
                     f2=fitted(fity))
+  
+  #Compute arclength
+  xyt.sort <- xyt[order(xyt$t), ]
+  ds <- sqrt(diff(xyt.sort$f1)^2 + diff(xyt.sort$f2)^2)
+  xyt.sort$arclength <- c(0, cumsum(ds))
+  arclength <- max(xyt.sort$arclength)
 
 
+
+  t.scale <- ifelse(scale_morpho_coords, c(0, 0.5, 1), c(min(t), (min(t) + max(t))/2, max(t)))
   p2 <- data.frame(x=xy[,1],y=xy[,2],color=t) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
-    scale_color_gradientn(values=c(0,0.5,1),
+    scale_color_gradientn(values=scales::rescale(c(min(t), (min(t) + max(t))/2, max(t))),
                           colors=c("navyblue","grey90", "firebrick1"))+
     theme_bw() +
     ggtitle("First Coordinate") +
     labs(color="t")
 
+  r.scale <- ifelse(scale_morpho_coords, c(0, 0.5, 1), c(min(r), (min(r) + max(r))/2, max(r)))
   p3 <- data.frame(x=xy[,1],y=xy[,2],color=r) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
-    scale_color_gradientn(values=c(0,0.5,1),
+    scale_color_gradientn(values=scales::rescale(c(min(r), (min(r) + max(r))/2, max(r))),
                           colors=c("navyblue","grey90", "firebrick1"))+
     theme_bw() +
     ggtitle("Second Coordinate") +
@@ -252,6 +282,9 @@ CurveFinder <- function(xy,
   out$coordinate.plot <- p2
   out$residuals.plot <- p3
   out$model.score <- model.score
+  out$arclength <- arclength
+  out$span.r <- as.vector(span.r)
+  out$t_v_r_span <- as.vector(arclength/span.r)
   return(out)
 }
 

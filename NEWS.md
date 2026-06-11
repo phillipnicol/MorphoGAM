@@ -1,3 +1,9 @@
+## Version 1.2.0 TBD
+
+**New functionality:**
+
+**Changes to existing functionality:**
+
 ## Version 1.1.1 November 20, 2025
 
 This update corrects some bugs in `CurveFinderInteractive()`.
