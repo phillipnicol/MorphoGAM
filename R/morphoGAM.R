@@ -14,7 +14,7 @@
 #'
 #' @param Y A numeric matrix where rows represent genes and columns represent samples (e.g., cells).
 #' @param curve.fit An object produced by `CurveFinder`, containing the fitted curve parameters (`t` and `r`) for each sample.
-#' @param design A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`).
+#' @param design A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`). Smooth terms that do not specify `bs` use `bs = "cr"` by default.
 #' @param shrinkage A logical value indicating whether to apply shrinkage to smooth term coefficients using `ashr`. Default is `TRUE`.
 #' @param min.count.per.gene An integer specifying the minimum total count required for a gene to be included in the analysis. Default is 10.
 #' @param return.fx A logical value indicating whether to return the fitted smooth terms for `t` and `r` for each gene. Default is `TRUE`.
@@ -40,6 +40,41 @@
 #'
 #' @importFrom ashr ash get_post_sample
 #' @importFrom irlba irlba
+.add_default_cr_smooth_basis <- function(expr) {
+  if(!is.call(expr)) {
+    return(expr)
+  }
+
+  call.name <- expr[[1]]
+  is.smooth <- identical(call.name, as.name("s")) ||
+    (is.call(call.name) &&
+       identical(call.name[[1]], as.name("::")) &&
+       identical(call.name[[3]], as.name("s")))
+
+  if(is.smooth) {
+    if(!("bs" %in% names(as.list(expr)))) {
+      expr$bs <- "cr"
+    }
+    return(expr)
+  }
+
+  for(i in seq_along(expr)[-1]) {
+    expr[[i]] <- .add_default_cr_smooth_basis(expr[[i]])
+  }
+
+  expr
+}
+
+.default_cr_smooth_basis <- function(design) {
+  design <- stats::as.formula(design)
+
+  for(i in seq_along(design)[-1]) {
+    design[[i]] <- .add_default_cr_smooth_basis(design[[i]])
+  }
+
+  design
+}
+
 MorphoGAM <- function(Y,
                       curve.fit,
                       design,
@@ -49,6 +84,8 @@ MorphoGAM <- function(Y,
                       offset=NULL,
                       knots.t = NULL,
                       knots.r = NULL) {
+
+  design <- .default_cr_smooth_basis(design)
 
   if(is.null(offset)) {
     l.o <- log(colSums(Y))
@@ -188,6 +225,7 @@ MorphoGAM <- function(Y,
     out$fxs.r <- fxs.r
   }
 
+  #Also return design
+  out$design <- design
   return(out)
 }
-

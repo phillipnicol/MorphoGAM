@@ -23,7 +23,7 @@ MorphoGAM(
 
 \item{curve.fit}{An object produced by `CurveFinder`, containing the fitted curve parameters (`t` and `r`) for each sample.}
 
-\item{design}{A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`).}
+\item{design}{A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`). Smooth terms that do not specify `bs` use `bs = "cr"` by default.}
 
 \item{shrinkage}{A logical value indicating whether to apply shrinkage to smooth term coefficients using `ashr`. Default is `TRUE`.}
 
