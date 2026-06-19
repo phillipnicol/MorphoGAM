@@ -86,7 +86,7 @@ condition means in gene expression space.</p>
 
 
 <dt id="arg-design">design<a class="anchor" aria-label="anchor" href="#arg-design"></a></dt>
-<dd><p>A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`).</p></dd>
+<dd><p>A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`). Smooth terms that do not specify `bs` use `bs = "cr"` by default.</p></dd>
 
 
 <dt id="arg-shrinkage">shrinkage<a class="anchor" aria-label="anchor" href="#arg-shrinkage"></a></dt>
@@ -168,7 +168,7 @@ condition means in gene expression space.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

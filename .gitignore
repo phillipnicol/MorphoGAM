@@ -16,6 +16,7 @@
 *.xlsx
 *.npy
 *.csv
+!inst/extdata/**/*.csv
 *.gmt
 *.tif
 *.h5

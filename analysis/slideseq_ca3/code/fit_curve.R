@@ -153,3 +153,9 @@ pcpne9 <- data.frame(x=fit$xyt$t, y=Y[i,]/exp(l.o)) |>
 p.cable <- ggarrange(pgsr14, pcpne9,nrow=1)
 ggsave(p.cable, filename="../plots/cable_genes.png",
        width=7.4, height=5.33, units="in")
+
+
+
+
+library(STexampleData)
+spe <- STexampleData::SlideSeqV2_mouseHPC()
