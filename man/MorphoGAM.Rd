@@ -4,7 +4,7 @@
 \name{MorphoGAM}
 \alias{MorphoGAM-package}
 \alias{MorphoGAM}
-\title{MorphoGAM: Apply a GAM to the morphologically relevant coordinates}
+\title{MorphoGAM: Apply a GAM to morphologically relevant coordinates}
 \usage{
 MorphoGAM(
   Y,
@@ -19,48 +19,51 @@ MorphoGAM(
 )
 }
 \arguments{
-\item{Y}{A numeric matrix where rows represent genes and columns represent samples (e.g., cells).}
+\item{Y}{A numeric count matrix with genes in rows and samples or cells in
+columns.}
 
-\item{curve.fit}{An object produced by `CurveFinder`, containing the fitted curve parameters (`t` and `r`) for each sample.}
+\item{curve.fit}{An object produced by `CurveFinder()` or
+`CurveFinderInteractive()`, containing fitted `t` and `r` coordinates for
+each sample.}
 
-\item{design}{A formula specifying the GAM design, typically including smooth terms for `t` and `r` (e.g., `y ~ s(t) + s(r)`). Smooth terms that do not specify `bs` use `bs = "cr"` by default.}
+\item{design}{A formula specifying the GAM design, typically including smooth
+terms for `t` and `r` such as `y ~ s(t) + s(r)`. Smooth terms that do not
+specify `bs` use `bs = "cr"` by default.}
 
-\item{shrinkage}{A logical value indicating whether to apply shrinkage to smooth term coefficients using `ashr`. Default is `TRUE`.}
+\item{shrinkage}{Logical; if `TRUE`, shrink smooth term coefficients using
+`ashr`. Default is `FALSE`.}
 
-\item{min.count.per.gene}{An integer specifying the minimum total count required for a gene to be included in the analysis. Default is 10.}
+\item{min.count.per.gene}{Minimum total count required for a gene to be fit.
+Genes below this threshold are returned with null/default statistics.}
 
-\item{return.fx}{A logical value indicating whether to return the fitted smooth terms for `t` and `r` for each gene. Default is `TRUE`.}
+\item{return.fx}{Logical; if `TRUE`, return fitted smooth terms and FPCA
+summaries for the `t` and `r` effects.}
 
-\item{offset}{A numeric vector providing offset values for the GAM model. If `NULL` (default), offsets are computed as the logarithm of the column sums of `Y`.}
+\item{offset}{Optional numeric vector of model offsets. If `NULL`, offsets
+are computed as the logarithm of column sums of `Y`.}
 
-\item{knots.t}{Optional numeric vector specifying knot locations for the smooth term in `t`.}
+\item{knots.t}{Optional numeric vector specifying knot locations for the
+smooth term in `t`.}
 
-\item{knots.r}{Optional numeric vector specifying knot locations for the smooth term in `r`.}
+\item{knots.r}{Optional numeric vector specifying knot locations for the
+smooth term in `r`.}
 }
 \value{
 A list containing:
-\item{results}{A data frame with rows corresponding to genes and the following columns:
-\describe{
-  \item{peak.t}{Maximum absolute smooth term for `t`.}
-  \item{range.t}{Range of predicted expression values along `t`.}
-  \item{pv.t}{p-value for the smooth term `t`.}
-  \item{peak.r}{Maximum absolute smooth term for `r`.}
-  \item{range.r}{Range of predicted expression values along `r`.}
-  \item{pv.r}{p-value for the smooth term `r`.}
-  \item{intercept}{Intercept of the fitted model.}
-}}
+\item{results}{A data frame with one row per gene and columns `peak.t`,
+`range.t`, `pv.t`, `peak.r`, `range.r`, `pv.r`, and `intercept`.}
+\item{design}{The model formula used after adding default cubic regression
+spline bases to unspecified smooth terms.}
 If `return.fx = TRUE`, the list also includes:
-\item{fxs.t}{A matrix of fitted smooth terms for `t` (genes x samples).}
-\item{fxs.r}{A matrix of fitted smooth terms for `r` (genes x samples).}
+\item{fxs.t}{A matrix of fitted smooth terms for `t` (genes by samples).}
+\item{fxs.r}{A matrix of fitted smooth terms for `r` (genes by samples).}
+\item{fpca.t}{An `irlba` decomposition of `fxs.t`, when available.}
+\item{fpca.r}{An `irlba` decomposition of `fxs.r`, when available.}
 }
 \description{
-The morphologically relevant coordinates can be estimated using
-`CurveFinder()` or `CurveFinderInteractive()`. This function applies a flexible
-count-based model to identify genes with spatially variable expression with
-respect to the morphologically relevant coordinates.
-
-Estimate the distance between
-condition means in gene expression space.
+Fit gene-wise negative-binomial GAMs to identify expression variation with
+respect to morphologically relevant coordinates estimated by `CurveFinder()`
+or `CurveFinderInteractive()`.
 
 DESCRIPTION
 }

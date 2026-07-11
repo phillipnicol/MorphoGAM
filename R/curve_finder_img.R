@@ -1,3 +1,45 @@
+#' @export
+#'
+#' @import shiny
+#' @import princurve
+#' @import ggplot2
+#' @importFrom grDevices as.raster
+#' @importFrom graphics lines plot points rasterImage
+#'
+#' @title Interactively sketch and smooth a curve on an optional image
+#'
+#' @description
+#' Launches a Shiny app for manually sketching a curve through two-dimensional
+#' points, optionally overlaid on a histology or spatial image. The clicked curve
+#' is smoothed and used to assign each point a curve coordinate `t` and an
+#' orthogonal residual-like coordinate `r`.
+#'
+#' @details
+#' If `image_path` is provided, PNG, JPEG, TIFF, and TIF files are supported when
+#' the corresponding optional reader package is installed. `flip_x` and `flip_y`
+#' transform both the displayed image and point coordinates before curve fitting,
+#' and returned coordinates are transformed back to the original coordinate
+#' system.
+#'
+#' @param xy A numeric matrix or data frame with exactly two columns containing
+#'   x and y coordinates.
+#' @param loop Logical; if `TRUE`, smooth the clicked curve with a cyclic basis
+#'   for a closed loop. If `FALSE`, use a non-cyclic cubic regression basis.
+#' @param image_path Optional path to a `.png`, `.jpg`, `.jpeg`, `.tif`, or
+#'   `.tiff` image to show behind the points.
+#' @param flip_y Logical; if `TRUE`, flip the y-axis while displaying the image
+#'   and points. Default is `TRUE`.
+#' @param flip_x Logical; if `TRUE`, flip the x-axis while displaying the image
+#'   and points. Default is `FALSE`.
+#'
+#' @return A list with fitted curve output:
+#' \itemize{
+#'   \item `xyt`: a data frame with `x`, `y`, `t`, `r`, `f1`, and `f2`.
+#'   \item `curve.plot`: a `ggplot2` object showing the smoothed curve.
+#'   \item `coordinate.plot`: a scatter plot colored by `t`.
+#'   \item `residuals.plot`: a scatter plot colored by `r`.
+#' }
+#'
 CurveFinderInteractive_img <- function(
     xy,
     loop = FALSE,
@@ -252,7 +294,7 @@ interactiveCurve2 <- function(clicks, loop, xy, img=img) {
 
   xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
                     f1 = predict(fitx, newdata=list(t=t)),
-                    f2=predict(fitx, newdata=list(t=t)))
+                    f2=predict(fity, newdata=list(t=t)))
 
 
   p2 <- data.frame(x=xy[,1],y=xy[,2],color=t) |>
@@ -277,6 +319,4 @@ interactiveCurve2 <- function(clicks, loop, xy, img=img) {
   print("Done!")
   return(out)
 }
-
-
 

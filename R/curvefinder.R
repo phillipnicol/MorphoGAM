@@ -7,20 +7,28 @@
 #' morphologically relevant coordinates `t` and `r`.
 #'
 #' @param xy A numeric matrix or data frame with two columns representing the x and y coordinates of the data points.
-#' @param knn An integer specifying the number of nearest neighbors used to construct the KNN graph. Default is 5.
+#' @param knn An integer specifying the number of nearest neighbors used to construct the KNN graph, or `"auto"` to choose a value from 3 to 20 by model score. Default is 5.
 #' @param prune.outlier A numeric threshold for pruning outliers based on the distance to the k+1 nearest neighbor. Outliers are removed if their distance exceeds `prune.outlier * median(nnk)`. Defaults to NULL (no pruning).
-#' @param loop A logical value indicating whether the curve should be treated as a loop (closed curve). Default is FALSE.
-#' @param scaleMorphoCoords A logical value indicating whether to scale the morphologically relevant coordinates `t` and `r` to the range [0, 1]. Default is TRUE.
+#' @param loop A logical value indicating whether the curve should be treated as a loop (closed curve), or `"auto"` to detect loops from a Mapper graph. Default is FALSE.
+#' @param knot.fx Maximum number of knots used for the GAM smooths fitted to x(t) and y(t). The effective value is capped at 10 percent of the number of points.
+#' @param scale_morpho_coords A logical value indicating whether to scale the morphologically relevant coordinates `t` and `r` to the range [0, 1]. Default is TRUE.
 #' @param max.comp.no An integer specifying the maximum number of disconnected components allowed in the KNN graph. Default is 5.
 #'
 #' @return A list containing:
-#' \item{xyt}{A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` abd `f2`).}
+#' \item{xyt}{A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` and `f2`).}
 #' \item{curve.plot}{A ggplot object showing the original data with the fitted curve overlaid.}
 #' \item{coordinate.plot}{A ggplot object displaying the data points color-coded by their fitted `t` values.}
 #' \item{residuals.plot}{A ggplot object displaying the data points color-coded by their fitted `r` values.}
+#' \item{model.score}{A numeric model score used internally for `knn = "auto"`.}
+#' \item{arclength}{The approximate arclength of the fitted curve.}
+#' \item{span.r}{The estimated span of the residual coordinate.}
+#' \item{t_v_r_span}{The ratio of fitted curve arclength to residual-coordinate span.}
 #'
 #' @details
-#' To-do
+#' The function builds a k-nearest-neighbor graph on `xy`, derives an initial
+#' one-dimensional ordering from graph distances, fits smooth functions for the
+#' two spatial coordinates, and then computes signed orthogonal residuals from
+#' the fitted curve.
 #'
 #'
 #' @references
@@ -34,6 +42,7 @@
 #' @importFrom gratia derivatives
 #' @importFrom gtools permutations
 #' @importFrom RANN nn2
+#' @importFrom stats approx dist fitted logLik predict quantile
 CurveFinder <- function(xy,
                         knn=5,
                         prune.outlier=NULL,
@@ -120,9 +129,9 @@ CurveFinder <- function(xy,
     }
   }
 
-  knng <- dimRed:::makeKNNgraph(x = xy,
-                                k = knn,
-                                eps = 0)
+  knng <- dimRed_makeKNNgraph(x = xy,
+                              k = knn,
+                              eps = 0)
 
   if (!is.logical(loop) && loop != "auto") {
     stop("'loop' must be one of TRUE, FALSE, or \"auto\"")
@@ -155,8 +164,9 @@ CurveFinder <- function(xy,
     dG <- igraph::distances(knng.sub, algorithm = "dijkstra")
 
     dG <- dG ^ 2
-    dG <- .Call(stats:::C_DoubleCentre, dG)
-    dG <- - dG/2
+    dG <- sweep(dG, 1, rowMeans(dG), "-")
+    dG <- sweep(dG, 2, colMeans(dG), "-")
+    dG <- - dG / 2
 
     if(loop) {
       e <- RSpectra::eigs_sym(dG, 2, which = "LA",
@@ -375,10 +385,6 @@ dimRed_makeKNNgraph <- function (x, k, eps = 0, diag = FALSE)
   else as.vector(nn2res$nn.dists[, -1])
   return(igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first"))
 }
-
-
-
-
 
 
 

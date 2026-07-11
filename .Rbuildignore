@@ -6,6 +6,8 @@
 ^docs$
 ^pkgdown$
 ^\.github$
+^\.here$
+^analysis$
 ^vignettes/articles/\.quarto$
 ^vignettes/articles/*_files$
 ^vignettes/articles$

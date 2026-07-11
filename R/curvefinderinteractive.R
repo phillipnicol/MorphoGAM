@@ -144,7 +144,7 @@ interactiveCurve <- function(clicks, loop, xy) {
 
   xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
                     f1 = predict(fitx, newdata=list(t=t)),
-                    f2=predict(fitx, newdata=list(t=t)))
+                    f2=predict(fity, newdata=list(t=t)))
 
 
   p2 <- data.frame(x=xy[,1],y=xy[,2],color=t) |>
@@ -195,5 +195,4 @@ orthogonal_path_interactive <- function(fitx,fity,t,xy) {
   t2 <- rcoord_scale(t2)
   return(t2)
 }
-
 
