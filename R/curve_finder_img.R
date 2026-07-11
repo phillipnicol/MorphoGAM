@@ -1,4 +1,4 @@
-CurveFinderInteractive2 <- function(
+CurveFinderInteractive_img <- function(
     xy,
     loop = FALSE,
     image_path = NULL,

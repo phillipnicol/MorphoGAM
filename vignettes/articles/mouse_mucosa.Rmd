@@ -9,10 +9,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-**TODO:** Data availability. This example assumes that the mucosa coordinates and count matrix have
-already been saved locally. The coordinate file should contain one row per
-cell and two spatial coordinate columns. The count file should contain genes
-as rows and cells as columns.
+This example uses a small mouse mucosa data set included with `MorphoGAM`.
+The coordinate file contains one row per cell and two spatial coordinate
+columns. The count file contains genes as rows and cells as columns.
 
 ```{r setup, message = FALSE, warning = FALSE}
 library(MorphoGAM)
@@ -20,27 +19,27 @@ library(tidyverse)
 ```
 
 ```{r load-data}
-# Replace these with the local paths where the data have been saved.
-resolve_data_path <- function(path) {
-  candidates <- c(
-    path,
-    file.path("..", "..", path)
-  )
-  match <- candidates[file.exists(candidates)][1]
-  if (is.na(match)) {
-    stop("Could not find data file: ", path)
-  }
-  match
-}
+coords_file <- system.file(
+  "extdata",
+  "mouse_mucosa",
+  "mucosa_sub_coords.csv",
+  package = "MorphoGAM",
+  mustWork = TRUE
+)
 
-coords_file <- resolve_data_path("analysis/data/mucosa_sub_coords.csv")
-counts_file <- resolve_data_path("analysis/data/counts_sub_mucosa.csv")
+counts_file <- system.file(
+  "extdata",
+  "mouse_mucosa",
+  "counts_sub_mucosa.rds",
+  package = "MorphoGAM",
+  mustWork = TRUE
+)
 
 xy <- read.csv(coords_file, row.names = 1, check.names = FALSE)
 xy <- as.matrix(xy)
 storage.mode(xy) <- "double"
 
-Y <- read.csv(counts_file, row.names = 1, check.names = FALSE)
+Y <- readRDS(counts_file)
 Y <- as.matrix(Y)
 storage.mode(Y) <- "double"
 ```
@@ -56,7 +55,7 @@ ggplot(xy_df, aes(x = x, y = y)) +
 ```
 
 The mucosa in this example is approximately loop-shaped, so we ask
-`CurveFinder()` to estimate a loop and use a smaller neighborhood size.
+`CurveFinder()` to estimate a closed curve and use a smaller neighborhood size.
 
 ```{r curvefinder}
 curve_fit <- MorphoGAM::CurveFinder(

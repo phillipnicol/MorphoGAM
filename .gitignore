@@ -8,6 +8,8 @@
 *.rda
 *.Rda
 *.RDS
+!inst/extdata/**/*.rds
+!inst/extdata/**/*.RDS
 *.png
 !docs/*.png
 !docs/**/*.png
