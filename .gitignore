@@ -8,6 +8,8 @@
 *.rda
 *.Rda
 *.RDS
+!inst/extdata/**/*.rds
+!inst/extdata/**/*.RDS
 *.png
 !docs/*.png
 !docs/**/*.png
@@ -16,17 +18,16 @@
 *.xlsx
 *.npy
 *.csv
+!inst/extdata/**/*.csv
 *.gmt
-analysis/data/*
-!analysis/data/.gitkeep
+*.tif
+*.h5
+
+analysis/
 
 #renv
 #Change
 renv/library
 
-analysis/python_models/code/venv/*
-analysis/python_models/code/colorectal_tumor_tutorial_outputs/*
-analysis/python_models/code/colorectal_tumor_tutorial_outputs_shuffle/*
-analysis/python_models/code/xenium_brain_output/*
 inst/doc
 **/.quarto/

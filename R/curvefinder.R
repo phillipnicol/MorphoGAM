@@ -7,18 +7,28 @@
 #' morphologically relevant coordinates `t` and `r`.
 #'
 #' @param xy A numeric matrix or data frame with two columns representing the x and y coordinates of the data points.
-#' @param knn An integer specifying the number of nearest neighbors used to construct the KNN graph. Default is 5.
+#' @param knn An integer specifying the number of nearest neighbors used to construct the KNN graph, or `"auto"` to choose a value from 3 to 20 by model score. Default is 5.
 #' @param prune.outlier A numeric threshold for pruning outliers based on the distance to the k+1 nearest neighbor. Outliers are removed if their distance exceeds `prune.outlier * median(nnk)`. Defaults to NULL (no pruning).
-#' @param loop A logical value indicating whether the curve should be treated as a loop (closed curve). Default is FALSE.
+#' @param loop A logical value indicating whether the curve should be treated as a loop (closed curve), or `"auto"` to detect loops from a Mapper graph. Default is FALSE.
+#' @param knot.fx Maximum number of knots used for the GAM smooths fitted to x(t) and y(t). The effective value is capped at 10 percent of the number of points.
+#' @param scale_morpho_coords A logical value indicating whether to scale the morphologically relevant coordinates `t` and `r` to the range [0, 1]. Default is TRUE.
+#' @param max.comp.no An integer specifying the maximum number of disconnected components allowed in the KNN graph. Default is 5.
 #'
 #' @return A list containing:
-#' \item{xyt}{A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` abd `f2`).}
+#' \item{xyt}{A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` and `f2`).}
 #' \item{curve.plot}{A ggplot object showing the original data with the fitted curve overlaid.}
 #' \item{coordinate.plot}{A ggplot object displaying the data points color-coded by their fitted `t` values.}
 #' \item{residuals.plot}{A ggplot object displaying the data points color-coded by their fitted `r` values.}
+#' \item{model.score}{A numeric model score used internally for `knn = "auto"`.}
+#' \item{arclength}{The approximate arclength of the fitted curve.}
+#' \item{span.r}{The estimated span of the residual coordinate.}
+#' \item{t_v_r_span}{The ratio of fitted curve arclength to residual-coordinate span.}
 #'
 #' @details
-#' To-do
+#' The function builds a k-nearest-neighbor graph on `xy`, derives an initial
+#' one-dimensional ordering from graph distances, fits smooth functions for the
+#' two spatial coordinates, and then computes signed orthogonal residuals from
+#' the fitted curve.
 #'
 #'
 #' @references
@@ -32,10 +42,82 @@
 #' @importFrom gratia derivatives
 #' @importFrom gtools permutations
 #' @importFrom RANN nn2
+#' @importFrom stats approx dist fitted logLik predict quantile
 CurveFinder <- function(xy,
-                       knn=5,
-                       prune.outlier=NULL,
-                       loop=FALSE) {
+                        knn=5,
+                        prune.outlier=NULL,
+                        loop=FALSE,
+                        knot.fx = 100,
+                        scale_morpho_coords = TRUE,
+                        max.comp.no = 5) {
+  
+  if(is.character(knn) && knn == "auto") {
+
+    best.score <- Inf
+    best.fit <- NULL
+    best.knn <- NA_integer_
+
+    for(k in 3:20) {
+
+      fit.k <- tryCatch(
+
+        CurveFinder(
+          xy = xy,
+          knn = k,
+          prune.outlier = prune.outlier,
+          loop = loop,
+          scale_morpho_coords = scale_morpho_coords
+        ),
+
+        error = function(e) {
+
+          if(grepl("Graph has too many disconnected components",
+                  e$message)) {
+
+            message(sprintf(
+              "Trying knn = %d, model score = -Inf",
+              k
+            ))
+
+            return(NULL)
+          }
+
+          stop(e)
+        }
+      )
+
+      if(is.null(fit.k)) {
+        next
+      }
+
+      current.score <- fit.k$model.score
+
+      message(sprintf(
+        "Trying knn = %d, model score = %.4f",
+        k,
+        -current.score
+      ))
+
+      if(current.score < best.score) {
+        best.score <- current.score
+        best.fit <- fit.k
+        best.knn <- k
+      }
+    }
+
+    if(is.null(best.fit)) {
+      stop("No valid knn value found between 3 and 20.")
+    }
+
+    best.fit$knn <- best.knn
+    best.fit$knn.scores <- data.frame(
+      knn = best.knn,
+      model.score = best.score
+    )
+
+    return(best.fit)
+  }
+
   xy.dist <- as.matrix(dist(xy))
 
   if(!is.null(prune.outlier)) {
@@ -47,9 +129,9 @@ CurveFinder <- function(xy,
     }
   }
 
-  knng <- dimRed:::makeKNNgraph(x = xy,
-                                k = knn,
-                                eps = 0)
+  knng <- dimRed_makeKNNgraph(x = xy,
+                              k = knn,
+                              eps = 0)
 
   if (!is.logical(loop) && loop != "auto") {
     stop("'loop' must be one of TRUE, FALSE, or \"auto\"")
@@ -60,7 +142,7 @@ CurveFinder <- function(xy,
 
   comp <- igraph::components(knng)
 
-  if(comp$no > 5 || (loop && comp$no > 1)) {
+  if(comp$no > max.comp.no || (loop && comp$no > 1)) {
     stop("Graph has too many disconnected components. Increase knn")
   }
 
@@ -82,21 +164,30 @@ CurveFinder <- function(xy,
     dG <- igraph::distances(knng.sub, algorithm = "dijkstra")
 
     dG <- dG ^ 2
-    dG <- .Call(stats:::C_DoubleCentre, dG)
-    dG <- - dG/2
+    dG <- sweep(dG, 1, rowMeans(dG), "-")
+    dG <- sweep(dG, 2, colMeans(dG), "-")
+    dG <- - dG / 2
 
     if(loop) {
       e <- RSpectra::eigs_sym(dG, 2, which = "LA",
                               opts = list(retvec = TRUE))
-      t <- (pi+atan2(e$vectors[,1], e$vectors[,2]))/(2*pi)
+      if(scale_morpho_coords) {
+        t <- (pi+atan2(e$vectors[,1], e$vectors[,2]))/(2*pi)
+      } else{
+        t <- e$values[1]*atan2(e$vectors[,1], e$vectors[,2])
+      }
     } else{
       e <- RSpectra::eigs_sym(dG, 1, which = "LA",
                               opts = list(retvec = TRUE))
+      
+      if(scale_morpho_coords) {
+        t.list[[c]] <- as.vector(e$vectors)
 
-      t.list[[c]] <- as.vector(e$vectors)
-
-      t.list[[c]] <- (t.list[[c]] - min(t.list[[c]]))/(max(t.list[[c]]) - min(t.list[[c]]))
-      t.list[[c]] <- t.list[[c]]*(sum(comp$membership == c)/length(comp$membership))
+        t.list[[c]] <- (t.list[[c]] - min(t.list[[c]]))/(max(t.list[[c]]) - min(t.list[[c]]))
+        t.list[[c]] <- t.list[[c]]*(sum(comp$membership == c)/length(comp$membership))
+      } else{
+        t.list[[c]] <- as.vector(e$vectors)
+      }
 
       endpoints[2*c-1,] <- xy.sub[which.min(t.list[[c]]),]
       endpoints[2*c,] <- xy.sub[which.max(t.list[[c]]),]
@@ -123,7 +214,7 @@ CurveFinder <- function(xy,
     t <- as.vector(t.list[[1]])
   }
 
-  knots <- round(min(100, 0.1*nrow(xy)))
+  knots <- round(min(knot.fx, 0.1*nrow(xy)))
   if(loop) {
     fitx <- mgcv::gam(xy[,1]~s(t,bs="cc",k=knots))
     fity <- mgcv::gam(xy[,2]~s(t,bs="cc",k=knots))
@@ -132,9 +223,18 @@ CurveFinder <- function(xy,
     fity <- mgcv::gam(xy[,2]~s(t,bs="cr",k=knots))
   }
 
-  r <- orthogonal_path(fitx,fity,t)
+  r <- orthogonal_path(fitx,fity,t,scale_morpho_coords)
 
-  my.t <- seq(0,1,by=10^{-4})
+  #Get span of r coord
+  E <- cbind(fitx$residuals, fity$residuals)
+  dists <- apply(E, 1, function(e) sqrt(sum(e^2)))
+  span.r <- 2*quantile(dists, 0.95)
+
+  if(scale_morpho_coords) {
+    my.t <- seq(0, 1, by=10^{-4})
+  } else{
+    my.t <- seq(min(t), max(t), length.out = 10^4)
+  }
   predx <- predict(fitx,newdata=list(t=my.t))
   predy <- predict(fity,newdata=list(t=my.t))
   ft <- data.frame(x=predx,y=predy)
@@ -156,33 +256,49 @@ CurveFinder <- function(xy,
   xyt <- data.frame(x=xy[,1],y=xy[,2],t=t, r=r,
                     f1 = fitted(fitx),
                     f2=fitted(fity))
+  
+  #Compute arclength
+  xyt.sort <- xyt[order(xyt$t), ]
+  ds <- sqrt(diff(xyt.sort$f1)^2 + diff(xyt.sort$f2)^2)
+  xyt.sort$arclength <- c(0, cumsum(ds))
+  arclength <- max(xyt.sort$arclength)
 
 
+
+  t.scale <- ifelse(scale_morpho_coords, c(0, 0.5, 1), c(min(t), (min(t) + max(t))/2, max(t)))
   p2 <- data.frame(x=xy[,1],y=xy[,2],color=t) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
-    scale_color_gradientn(values=c(0,0.5,1),
+    scale_color_gradientn(values=scales::rescale(c(min(t), (min(t) + max(t))/2, max(t))),
                           colors=c("navyblue","grey90", "firebrick1"))+
     theme_bw() +
     ggtitle("First Coordinate") +
     labs(color="t")
 
+  r.scale <- ifelse(scale_morpho_coords, c(0, 0.5, 1), c(min(r), (min(r) + max(r))/2, max(r)))
   p3 <- data.frame(x=xy[,1],y=xy[,2],color=r) |>
     ggplot(aes(x=x,y=y,color=color)) + geom_point() +
-    scale_color_gradientn(values=c(0,0.5,1),
+    scale_color_gradientn(values=scales::rescale(c(min(r), (min(r) + max(r))/2, max(r))),
                           colors=c("navyblue","grey90", "firebrick1"))+
     theme_bw() +
     ggtitle("Second Coordinate") +
     labs(color="r")
+
+  ## Model selection
+  model.score <- as.vector(-2*(logLik(fitx) + logLik(fity)) + 2*(pen.edf(fitx) + pen.edf(fity) + nrow(xy)/knn))
 
   out <- list()
   out$xyt <- xyt
   out$curve.plot <- p
   out$coordinate.plot <- p2
   out$residuals.plot <- p3
+  out$model.score <- model.score
+  out$arclength <- arclength
+  out$span.r <- as.vector(span.r)
+  out$t_v_r_span <- as.vector(arclength/span.r)
   return(out)
 }
 
-orthogonal_path <- function(fitx,fity, t) {
+orthogonal_path <- function(fitx,fity, t, scale_morpho_coords) {
   f2x <- gratia::derivatives(fitx,order=1,data=data.frame(t=t))
   f2y <- gratia::derivatives(fity,order=1,data=data.frame(t=t))
   t2 <- t
@@ -194,7 +310,9 @@ orthogonal_path <- function(fitx,fity, t) {
     t2[i] <- sign*sqrt(sum(e^2))
   }
 
-  t2 <- (t2 - min(t2))/(max(t2) - min(t2))
+  if(scale_morpho_coords) {
+    t2 <- (t2 - min(t2))/(max(t2) - min(t2))
+  }
   return(t2)
 }
 
@@ -267,10 +385,6 @@ dimRed_makeKNNgraph <- function (x, k, eps = 0, diag = FALSE)
   else as.vector(nn2res$nn.dists[, -1])
   return(igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first"))
 }
-
-
-
-
 
 
 

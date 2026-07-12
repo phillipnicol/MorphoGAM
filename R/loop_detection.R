@@ -47,9 +47,11 @@ get_mapper_edges <- function(vertices, level1, level2) {
 #'
 #' @examples
 #' my_data <- makeSwissRoll()
-#' my_graph <- dimRed:::makeKNNgraph(x = my_data, k = 5, eps = 0)
+#' my_graph <- dimRed_makeKNNgraph(x = my_data, k = 5, eps = 0)
 #' mapper_graph <- get_mapper_graph(my_graph, my_data[, 1])
 #' get_mapper_plot(my_data, mapper_graph)
+#'
+#' @noRd
 get_mapper_graph <- function(
     graph,
     filter_values,
@@ -103,8 +105,9 @@ get_largest_cycle_length <- function(graph) {
   paths_to_neighbors <- lapply(igraph::V(graph), function(v) {
     curr_level <- igraph::V(graph)[v]$level
     # Performance optimization: Only consider neighbors from the previous level.
-    prev_neighbors <- igraph::neighbors(graph, v)[level == curr_level - 1]
-    if (!any(prev_neighbors)) { return(NULL) }
+    neighbors <- igraph::neighbors(graph, v)
+    prev_neighbors <- neighbors[neighbors$level == curr_level - 1]
+    if (length(prev_neighbors) == 0) { return(NULL) }
     igraph::all_simple_paths(graph, v, prev_neighbors)
   })
   paths_to_neighbors <- unlist(paths_to_neighbors, recursive = FALSE)
@@ -126,8 +129,10 @@ get_largest_cycle_length <- function(graph) {
 #'
 #' @examples
 #' my_data <- makeSwissRoll()
-#' my_graph <- dimRed:::makeKNNgraph(x = my_data, k = 5, eps = 0)
-#' testthat::expect_false(is_loop(my_data, my_graph))
+#' my_graph <- dimRed_makeKNNgraph(x = my_data, k = 5, eps = 0)
+#' is_loop(my_data, my_graph)
+#'
+#' @noRd
 is_loop <- function(xy, knn_graph) {
   principal_components <- stats::prcomp(xy, center = TRUE, scale = TRUE)
   num_intervals <- 10

@@ -38,14 +38,14 @@ plotGAMestimates <- function(Y,
                              type="t",
                              nrow=1,
                              include.gam=TRUE) {
-  Y.sub <- Y[genes,] |> as.matrix()
+  Y.sub <- Y[genes,,drop=FALSE] |> as.matrix()
   offset <- Matrix::colSums(Y)
   nmed <- median(offset)
   Y.sub <- sweep(Y.sub, MARGIN = 2, FUN = "/", STATS = Matrix::colSums(Y)/nmed)
   if(type == "t") {
     colnames(Y.sub) <- curve_fit$xyt$t
-    beta_g0 <- mgam_object$results[genes,]$intercept
-    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.t[genes,])
+    beta_g0 <- mgam_object$results[genes,,drop=FALSE]$intercept
+    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.t[genes,,drop=FALSE])
     colnames(fxs.sub) <- colnames(Y.sub)
 
     df.gg <- reshape2::melt(t(Y.sub))
@@ -64,8 +64,8 @@ plotGAMestimates <- function(Y,
       xlab("t")
   } else if(type == "r") {
     colnames(Y.sub) <- curve_fit$xyt$r
-    beta_g0 <- mgam_object$results[genes,]$intercept
-    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.r[genes,])
+    beta_g0 <- mgam_object$results[genes,,drop=FALSE]$intercept
+    fxs.sub <- nmed*exp(beta_g0 + mgam_object$fxs.r[genes,,drop=FALSE])
     colnames(fxs.sub) <- colnames(Y.sub)
 
     df.gg <- reshape2::melt(t(Y.sub))
@@ -107,7 +107,8 @@ plotGAMestimates <- function(Y,
 #'
 #' @details
 #' The function identifies the \code{num_genes} genes with the largest absolute
-#' scores in \code{mgam_object$fpca.t}. It may flip sign to improve visualization.
+#' scores in the FPCA decomposition for the requested coordinate. It may flip
+#' sign to improve visualization.
 #'
 #' @param mgam_object The output of \code{MorphoGAM}
 #' @param curve.fit The output of \code{CurveFinder}
@@ -127,21 +128,20 @@ plotFPCloading <- function(mgam_object,
                            type="t") {
 
   if(type == "t") {
-    top5 <- order(abs(mgam$fpca.t$u[,L]), decreasing = TRUE)[1:num_genes]
+    top5 <- order(abs(mgam_object$fpca.t$u[,L]), decreasing = TRUE)[1:num_genes]
 
-    if(sum(mgam$fxs.t[top5,]%*%mgam$fpca.t$v[,L]) < 0) {
-      mgam$fpca.t$v[,L] <- -1*mgam$fpca.t$v[,L]
+    if(sum(mgam_object$fxs.t[top5,]%*%mgam_object$fpca.t$v[,L]) < 0) {
+      mgam_object$fpca.t$v[,L] <- -1*mgam_object$fpca.t$v[,L]
     }
 
-    mat <- matrix(0, nrow=ncol(mgam$fxs.t), ncol=num_genes + 1)
-    mat[,1] <- mgam$fpca.t$d[L]*mgam$fpca.t$v[,L]
+    mat <- matrix(0, nrow=ncol(mgam_object$fxs.t), ncol=num_genes + 1)
+    mat[,1] <- mgam_object$fpca.t$d[L]*mgam_object$fpca.t$v[,L]
     colnames(mat) <- rep("Eigenfn", num_genes+1)
     for(i in 1:num_genes) {
-      mat[,i+1] <- mgam$fxs.t[top5[i],]
-      colnames(mat)[i+1] <- rownames(mgam$fxs.t)[top5[i]]
+      mat[,i+1] <- mgam_object$fxs.t[top5[i],]
+      colnames(mat)[i+1] <- rownames(mgam_object$fxs.t)[top5[i]]
     }
 
-    mat <- mat[,-1]
     df <- as.data.frame(mat)
     df$t <- curve.fit$xyt$t
     df <- df |> pivot_longer(cols=-t)
@@ -160,13 +160,11 @@ plotFPCloading <- function(mgam_object,
       custom_colors <- colorRampPalette(base_colors)(num_genes)
     }
 
-    # Ensure "Eigenfn" is black
-    #names(custom_colors) <- colnames(mat)[-1]
-    #custom_colors["Eigenfn"] <- "black"
-    names(custom_colors) <- colnames(mat)
+    custom_colors <- c(Eigenfn = "black", custom_colors)
+    names(custom_colors)[-1] <- colnames(mat)[-1]
 
-    label_data <- df %>%
-      group_by(name) %>%
+    label_data <- df |>
+      group_by(name) |>
       slice_max(value, with_ties=FALSE,n=1)
 
     #print(label_data)
@@ -188,26 +186,25 @@ plotFPCloading <- function(mgam_object,
                       show.legend = FALSE,
                       max.overlaps = Inf) +
       ylab("Log FC from baseline") +
-      geom_abline(slope=0,intercept=0,color="grey",linetype="dashed")
-    xlab("t")
+      geom_abline(slope=0,intercept=0,color="grey",linetype="dashed") +
+      xlab("t")
 
     return(p)
   } else{
-    top5 <- order(abs(mgam$fpca.r$u[,L]), decreasing = TRUE)[1:num_genes]
+    top5 <- order(abs(mgam_object$fpca.r$u[,L]), decreasing = TRUE)[1:num_genes]
 
-    if(sum(mgam$fxs.r[top5,]%*%mgam$fpca.r$v[,L]) < 0) {
-      mgam$fpca.r$v[,L] <- -1*mgam$fpca.r$v[,L]
+    if(sum(mgam_object$fxs.r[top5,]%*%mgam_object$fpca.r$v[,L]) < 0) {
+      mgam_object$fpca.r$v[,L] <- -1*mgam_object$fpca.r$v[,L]
     }
 
-    mat <- matrix(0, nrow=ncol(mgam$fxs.r), ncol=num_genes + 1)
-    mat[,1] <- mgam$fpca.r$d[L]*mgam$fpca.r$v[,L]
+    mat <- matrix(0, nrow=ncol(mgam_object$fxs.r), ncol=num_genes + 1)
+    mat[,1] <- mgam_object$fpca.r$d[L]*mgam_object$fpca.r$v[,L]
     colnames(mat) <- rep("Eigenfn", num_genes+1)
     for(i in 1:num_genes) {
-      mat[,i+1] <- mgam$fxs.r[top5[i],]
-      colnames(mat)[i+1] <- rownames(mgam$fxs.r)[top5[i]]
+      mat[,i+1] <- mgam_object$fxs.r[top5[i],]
+      colnames(mat)[i+1] <- rownames(mgam_object$fxs.r)[top5[i]]
     }
 
-    mat <- mat[,-1]
     df <- as.data.frame(mat)
     df$r <- curve.fit$xyt$r
     df <- df |> pivot_longer(cols=-r)
@@ -226,13 +223,11 @@ plotFPCloading <- function(mgam_object,
       custom_colors <- colorRampPalette(base_colors)(num_genes)
     }
 
-    # Ensure "Eigenfn" is black
-    #names(custom_colors) <- colnames(mat)[-1]
-    #custom_colors["Eigenfn"] <- "black"
-    names(custom_colors) <- colnames(mat)
+    custom_colors <- c(Eigenfn = "black", custom_colors)
+    names(custom_colors)[-1] <- colnames(mat)[-1]
 
-    label_data <- df %>%
-      group_by(name) %>%
+    label_data <- df |>
+      group_by(name) |>
       slice_max(value, with_ties=FALSE,n=1)
 
 
@@ -258,5 +253,3 @@ plotFPCloading <- function(mgam_object,
     return(p)
   }
 }
-
-

@@ -1,3 +1,13 @@
+## Version 1.2.0 TBD
+
+**New functionality:**
+
+- Add automatic selection of `k` in `CurveFinder()` using `knn = "auto"`.
+
+**Changes to existing functionality:**
+
+- In `MorphoGAM()` the default basis is now cubic regression splines `bs = "cr"`.
+
 ## Version 1.1.1 November 20, 2025
 
 This update corrects some bugs in `CurveFinderInteractive()`.
@@ -19,5 +29,4 @@ This update adds new functionality as well as improving the existing code.
 ## Version 1.0.0 December 19, 2024
 
 Initial release.
-
 

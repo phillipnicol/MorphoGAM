@@ -30,5 +30,6 @@ over either the \code{t} or \code{r} coordinate.
 }
 \details{
 The function identifies the \code{num_genes} genes with the largest absolute
-scores in \code{mgam_object$fpca.t}. It may flip sign to improve visualization.
+scores in the FPCA decomposition for the requested coordinate. It may flip
+sign to improve visualization.
 }

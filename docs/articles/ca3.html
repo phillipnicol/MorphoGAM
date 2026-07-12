@@ -34,6 +34,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/ca3.html">Slide-seq Mouse Hippocampus</a></li>
+    <li><a class="dropdown-item" href="../articles/mouse_mucosa.html">MERFISH Mouse Mucosa</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -94,16 +95,16 @@ cells in the mouse hippocampus.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">xy</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>, y<span class="op">=</span><span class="va">xy</span><span class="op">[</span>,<span class="fl">2</span><span class="op">]</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>,y<span class="op">=</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size<span class="op">=</span><span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ca3_files/figure-html/unnamed-chunk-2-1.png" width="700"></p>
+<p><img src="ca3_files/figure-html/unnamed-chunk-2-1.png" class="r-plt" alt="" width="700"></p>
 <p>Now, we can fit a 1D curve passing through and observe the resulting
 coordinates:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/CurveFinder.html">CurveFinder</a></span><span class="op">(</span><span class="va">xy</span><span class="op">)</span></span>
 <span><span class="va">fit</span><span class="op">$</span><span class="va">curve.plot</span></span></code></pre></div>
-<p><img src="ca3_files/figure-html/unnamed-chunk-3-1.png" width="700"></p>
+<p><img src="ca3_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span><span class="op">$</span><span class="va">coordinate.plot</span></span></code></pre></div>
-<p><img src="ca3_files/figure-html/unnamed-chunk-3-2.png" width="700"></p>
+<p><img src="ca3_files/figure-html/unnamed-chunk-3-2.png" class="r-plt" alt="" width="700"></p>
 <p><code>fit$xyt</code> also includes the values. Now to find variable
 genes along this path, we can use the <code><a href="../reference/MorphoGAM.html">MorphoGAM()</a></code> function.
 For speed, let’s first subset to 2000 variable genes</p>
@@ -130,20 +131,27 @@ direction. Here, the peak statistic is defined as the maximum log fold
 change from the baseline.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.t</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          peak.t   range.t pv.t     peak.r     range.r          pv.r intercept</span></span>
-<span><span class="co">#&gt; Rgs14  2.688307 0.5387266    0 0.06277392 0.002950812  4.016183e-02 -9.614966</span></span>
-<span><span class="co">#&gt; Crym   1.827735 0.8088010    0 0.32335465 0.104397880  5.124054e-04 -7.573050</span></span>
-<span><span class="co">#&gt; Fxyd7  1.659239 0.1689494    0 0.00000000 0.000000000  8.469104e-01 -8.702739</span></span>
-<span><span class="co">#&gt; Necab2 1.413801 0.3406113    0 0.05697628 0.010565701  4.310323e-02 -8.679102</span></span>
-<span><span class="co">#&gt; Nptx1  1.391123 0.4382267    0 0.12000145 0.053388796  3.192286e-02 -7.406455</span></span>
-<span><span class="co">#&gt; Bok    1.355025 0.3707605    0 0.23728096 0.157378967 -1.169573e-06 -7.389233</span></span>
+<span><span class="co">#&gt;                 peak.t   range.t pv.t     peak.r     range.r        pv.r</span></span>
+<span><span class="co">#&gt; Rgs14         2.550284 0.5372700    0 0.04681645 0.002330054 0.052910229</span></span>
+<span><span class="co">#&gt; Crym          1.780810 0.8262077    0 0.24049310 0.086002741 0.001035907</span></span>
+<span><span class="co">#&gt; Nptx1         1.242108 0.3985731    0 0.10212920 0.048583655 0.033328692</span></span>
+<span><span class="co">#&gt; Fxyd7         1.241497 0.1649041    0 0.00000000 0.000000000 0.841852436</span></span>
+<span><span class="co">#&gt; Rgs4          1.240406 0.4118241    0 0.00000000 0.000000000 0.482172509</span></span>
+<span><span class="co">#&gt; 2010300C02Rik 1.224445 0.4064860    0 0.00000000 0.000000000 0.449048558</span></span>
+<span><span class="co">#&gt;               intercept</span></span>
+<span><span class="co">#&gt; Rgs14         -9.460481</span></span>
+<span><span class="co">#&gt; Crym          -7.529614</span></span>
+<span><span class="co">#&gt; Nptx1         -7.398298</span></span>
+<span><span class="co">#&gt; Fxyd7         -8.632202</span></span>
+<span><span class="co">#&gt; Rgs4          -8.251157</span></span>
+<span><span class="co">#&gt; 2010300C02Rik -8.256013</span></span>
 <span></span>
 <span><span class="va">top6</span> <span class="op">&lt;-</span> <span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.t</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Note that any list of genes can always be plotted with
 <code><a href="../reference/plotGAMestimates.html">plotGAMestimates()</a></code>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotGAMestimates.html">plotGAMestimates</a></span><span class="op">(</span><span class="va">Y</span>, genes<span class="op">=</span><span class="va">top6</span>, curve_fit<span class="op">=</span><span class="va">fit</span>, mgam_object<span class="op">=</span><span class="va">mgam</span>, nrow<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ca3_files/figure-html/unnamed-chunk-7-1.png" width="700">
+<p><img src="ca3_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700">
 Repeating the same for the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>r</mi><annotation encoding="application/x-tex">r</annotation></semantics></math>
 direction:</p>
@@ -151,7 +159,7 @@ direction:</p>
 <code class="sourceCode R"><span><span class="va">top6</span> <span class="op">&lt;-</span> <span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.r</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/plotGAMestimates.html">plotGAMestimates</a></span><span class="op">(</span><span class="va">Y</span>, genes<span class="op">=</span><span class="va">top6</span>, curve_fit<span class="op">=</span><span class="va">fit</span>, mgam_object<span class="op">=</span><span class="va">mgam</span>, nrow<span class="op">=</span><span class="fl">2</span>, type<span class="op">=</span><span class="st">"r"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ca3_files/figure-html/unnamed-chunk-8-1.png" width="700"></p>
+<p><img src="ca3_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="" width="700"></p>
 <p>Note that these statistics are defined for convenience, but the
 entire function is available in the output of <code><a href="../reference/MorphoGAM.html">MorphoGAM()</a></code>.
 Example, with Rgs14 gene:</p>
@@ -162,7 +170,7 @@ Example, with Rgs14 gene:</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">fit</span><span class="op">$</span><span class="va">xyt</span><span class="op">$</span><span class="va">t</span>, y<span class="op">=</span><span class="va">fitted_function</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">x</span>,y<span class="op">=</span><span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>color<span class="op">=</span><span class="st">"blue"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, linetype<span class="op">=</span><span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"t"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"LogFC from baseline"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ca3_files/figure-html/unnamed-chunk-9-1.png" width="700"></p>
+<p><img src="ca3_files/figure-html/unnamed-chunk-9-1.png" class="r-plt" alt="" width="700"></p>
 <p>Finally, we can look at the FPC loadings. Here, we plot the second
 FPC loading in the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
@@ -171,7 +179,7 @@ direction.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plotFPCloading.html">plotFPCloading</a></span><span class="op">(</span>mgam_object <span class="op">=</span> <span class="va">mgam</span>,</span>
 <span>               curve.fit <span class="op">=</span> <span class="va">fit</span>,</span>
 <span>               L<span class="op">=</span><span class="fl">2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ca3_files/figure-html/unnamed-chunk-10-1.png" width="700"></p>
+<p><img src="ca3_files/figure-html/unnamed-chunk-10-1.png" class="r-plt" alt="" width="700"></p>
   </main>
 </div>
 
@@ -182,7 +190,7 @@ direction.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
