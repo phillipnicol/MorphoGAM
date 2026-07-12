@@ -101,14 +101,14 @@ plotGAMestimates <- function(Y,
 #' @title Plot top gene loadings from SVD Analysis
 #'
 #' @description
-#' Visualize the \eqn{L}-th FPCA eigenfunction together with the top
-#' \code{num_genes} genes most strongly associated with that component,
-#' over either the \code{t} or \code{r} coordinate.
+#' Visualize the top \code{num_genes} genes most strongly associated with the
+#' \eqn{L}-th FPCA component over either the \code{t} or \code{r} coordinate.
 #'
 #' @details
 #' The function identifies the \code{num_genes} genes with the largest absolute
-#' scores in the FPCA decomposition for the requested coordinate. It may flip
-#' sign to improve visualization.
+#' scores in the FPCA decomposition for the requested coordinate. The
+#' eigenfunction is used to rank and orient the selected gene smooths, but it is
+#' not plotted alongside them.
 #'
 #' @param mgam_object The output of \code{MorphoGAM}
 #' @param curve.fit The output of \code{CurveFinder}
@@ -117,9 +117,9 @@ plotGAMestimates <- function(Y,
 #' @param type Character string; one of \code{"t"} or \code{"r"} specifying
 #'   which coordinate to plot against.
 #'
-#' @return A \code{ggplot2} object showing lines for the eigenfunction and the
-#'   selected gene smooths. A bright qualitative palette (excluding yellow) is
-#'   used for gene curves; labels are placed near each curve's maximum.
+#' @return A \code{ggplot2} object showing lines for the selected gene smooths.
+#'   A bright qualitative palette (excluding yellow) is used for gene curves;
+#'   labels are placed near each curve's maximum.
 #'
 plotFPCloading <- function(mgam_object,
                            curve.fit,
@@ -142,6 +142,7 @@ plotFPCloading <- function(mgam_object,
       colnames(mat)[i+1] <- rownames(mgam_object$fxs.t)[top5[i]]
     }
 
+    mat <- mat[,-1]
     df <- as.data.frame(mat)
     df$t <- curve.fit$xyt$t
     df <- df |> pivot_longer(cols=-t)
@@ -160,8 +161,7 @@ plotFPCloading <- function(mgam_object,
       custom_colors <- colorRampPalette(base_colors)(num_genes)
     }
 
-    custom_colors <- c(Eigenfn = "black", custom_colors)
-    names(custom_colors)[-1] <- colnames(mat)[-1]
+    names(custom_colors) <- colnames(mat)
 
     label_data <- df |>
       group_by(name) |>
@@ -173,10 +173,8 @@ plotFPCloading <- function(mgam_object,
     p <- ggplot(data = df, aes(x = t, y = value,
                                group = name,
                                color = name)) +
-      geom_line(aes(size = ifelse(name == "Eigenfn", 2, 0.75)),
-                show.legend = FALSE) +  # Conditional size
+      geom_line(show.legend = FALSE) +
       scale_color_manual(values = custom_colors) +  # Custom color palette
-      scale_size_identity() +  # Use size as is, without scaling
       theme_bw() +
       geom_text_repel(data = label_data,
                       aes(label = name),
@@ -205,6 +203,7 @@ plotFPCloading <- function(mgam_object,
       colnames(mat)[i+1] <- rownames(mgam_object$fxs.r)[top5[i]]
     }
 
+    mat <- mat[,-1]
     df <- as.data.frame(mat)
     df$r <- curve.fit$xyt$r
     df <- df |> pivot_longer(cols=-r)
@@ -223,8 +222,7 @@ plotFPCloading <- function(mgam_object,
       custom_colors <- colorRampPalette(base_colors)(num_genes)
     }
 
-    custom_colors <- c(Eigenfn = "black", custom_colors)
-    names(custom_colors)[-1] <- colnames(mat)[-1]
+    names(custom_colors) <- colnames(mat)
 
     label_data <- df |>
       group_by(name) |>
@@ -235,10 +233,8 @@ plotFPCloading <- function(mgam_object,
     p <- ggplot(data = df, aes(x = r, y = value,
                                group = name,
                                color = name)) +
-      geom_line(aes(size = ifelse(name == "Eigenfn", 2, 0.75)),
-                show.legend = FALSE) +  # Conditional size
+      geom_line(show.legend = FALSE) +
       scale_color_manual(values = custom_colors) +  # Custom color palette
-      scale_size_identity() +  # Use size as is, without scaling
       theme_bw() +
       geom_text_repel(data = label_data,
                       aes(label = name),

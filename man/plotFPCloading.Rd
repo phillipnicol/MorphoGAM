@@ -19,17 +19,17 @@ plotFPCloading(mgam_object, curve.fit, L = 1, num_genes = 5, type = "t")
 which coordinate to plot against.}
 }
 \value{
-A \code{ggplot2} object showing lines for the eigenfunction and the
-  selected gene smooths. A bright qualitative palette (excluding yellow) is
-  used for gene curves; labels are placed near each curve's maximum.
+A \code{ggplot2} object showing lines for the selected gene smooths.
+  A bright qualitative palette (excluding yellow) is used for gene curves;
+  labels are placed near each curve's maximum.
 }
 \description{
-Visualize the \eqn{L}-th FPCA eigenfunction together with the top
-\code{num_genes} genes most strongly associated with that component,
-over either the \code{t} or \code{r} coordinate.
+Visualize the top \code{num_genes} genes most strongly associated with the
+\eqn{L}-th FPCA component over either the \code{t} or \code{r} coordinate.
 }
 \details{
 The function identifies the \code{num_genes} genes with the largest absolute
-scores in the FPCA decomposition for the requested coordinate. It may flip
-sign to improve visualization.
+scores in the FPCA decomposition for the requested coordinate. The
+eigenfunction is used to rank and orient the selected gene smooths, but it is
+not plotted alongside them.
 }
