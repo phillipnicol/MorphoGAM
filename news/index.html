@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MorphoGAM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -19,6 +19,7 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/ca3.html">Slide-seq Mouse Hippocampus</a></li>
+    <li><a class="dropdown-item" href="../articles/mouse_mucosa.html">MERFISH Mouse Mucosa</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -35,6 +36,15 @@
 
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.2.0" id="version-120-july-11-2026">Version 1.2.0 July 11, 2026<a class="anchor" aria-label="anchor" href="#version-120-july-11-2026"></a></h2>
+<p>This update adds new functionality as well as improving the existing code.</p>
+<p><strong>New functionality:</strong></p>
+<ul><li><p>Add automatic selection of <code>k</code> in <code><a href="../reference/CurveFinder.html">CurveFinder()</a></code> using <code>knn = "auto"</code>.</p></li>
+<li><p>A new function <code><a href="../reference/CurveFinderInteractive_img.html">CurveFinderInteractive_img()</a></code> that allows a curve to be drawn on an image (such as a histology image).</p></li>
+</ul><p><strong>Changes to existing functionality:</strong></p>
+<ul><li>In <code><a href="../reference/MorphoGAM.html">MorphoGAM()</a></code> the default basis is now cubic regression splines <code>bs = "cr"</code>.</li>
+</ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.1.1" id="version-111-november-20-2025">Version 1.1.1 November 20, 2025<a class="anchor" aria-label="anchor" href="#version-111-november-20-2025"></a></h2>
 <p>This update corrects some bugs in <code><a href="../reference/CurveFinderInteractive.html">CurveFinderInteractive()</a></code>.</p>
@@ -63,7 +73,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
