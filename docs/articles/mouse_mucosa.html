@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MorphoGAM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,36 +65,35 @@
 
     
     
-<p><strong>TODO:</strong> Data availability. This example assumes that
-the mucosa coordinates and count matrix have already been saved locally.
-The coordinate file should contain one row per cell and two spatial
-coordinate columns. The count file should contain genes as rows and
-cells as columns.</p>
+<p>This example uses a small mouse mucosa data set included with
+<code>MorphoGAM</code>. The coordinate file contains one row per cell
+and two spatial coordinate columns. The count file contains genes as
+rows and cells as columns.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://phillipnicol.github.io/MorphoGAM/">MorphoGAM</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyverse.tidyverse.org" class="external-link">tidyverse</a></span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Replace these with the local paths where the data have been saved.</span></span>
-<span><span class="va">resolve_data_path</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">path</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">candidates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
-<span>    <span class="va">path</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">".."</span>, <span class="st">".."</span>, <span class="va">path</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span>  <span class="va">match</span> <span class="op">&lt;-</span> <span class="va">candidates</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">candidates</span><span class="op">)</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">match</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"Could not find data file: "</span>, <span class="va">path</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span>  <span class="va">match</span></span>
-<span><span class="op">}</span></span>
+<code class="sourceCode R"><span><span class="va">coords_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata"</span>,</span>
+<span>  <span class="st">"mouse_mucosa"</span>,</span>
+<span>  <span class="st">"mucosa_sub_coords.csv"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"MorphoGAM"</span>,</span>
+<span>  mustWork <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">coords_file</span> <span class="op">&lt;-</span> <span class="fu">resolve_data_path</span><span class="op">(</span><span class="st">"analysis/data/mucosa_sub_coords.csv"</span><span class="op">)</span></span>
-<span><span class="va">counts_file</span> <span class="op">&lt;-</span> <span class="fu">resolve_data_path</span><span class="op">(</span><span class="st">"analysis/data/counts_sub_mucosa.csv"</span><span class="op">)</span></span>
+<span><span class="va">counts_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span></span>
+<span>  <span class="st">"extdata"</span>,</span>
+<span>  <span class="st">"mouse_mucosa"</span>,</span>
+<span>  <span class="st">"counts_sub_mucosa.rds"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"MorphoGAM"</span>,</span>
+<span>  mustWork <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">xy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">coords_file</span>, row.names <span class="op">=</span> <span class="fl">1</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">xy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">xy</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mode.html" class="external-link">storage.mode</a></span><span class="op">(</span><span class="va">xy</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"double"</span></span>
 <span></span>
-<span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">counts_file</span>, row.names <span class="op">=</span> <span class="fl">1</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">counts_file</span><span class="op">)</span></span>
 <span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/mode.html" class="external-link">storage.mode</a></span><span class="op">(</span><span class="va">Y</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"double"</span></span></code></pre></div>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -105,9 +104,9 @@ cells as columns.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_fixed.html" class="external-link">coord_fixed</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_bw</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/plot-coordinates-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/plot-coordinates-1.png" class="r-plt" width="700"></p>
 <p>The mucosa in this example is approximately loop-shaped, so we ask
-<code><a href="../reference/CurveFinder.html">CurveFinder()</a></code> to estimate a loop and use a smaller
+<code><a href="../reference/CurveFinder.html">CurveFinder()</a></code> to estimate a closed curve and use a smaller
 neighborhood size.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">curve_fit</span> <span class="op">&lt;-</span> <span class="fu">MorphoGAM</span><span class="fu">::</span><span class="fu"><a href="../reference/CurveFinder.html">CurveFinder</a></span><span class="op">(</span></span>
@@ -118,13 +117,13 @@ neighborhood size.</p>
 <span></span>
 <span><span class="co">#Plot the fit and two coordaintes</span></span>
 <span><span class="va">curve_fit</span><span class="op">$</span><span class="va">curve.plot</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/curvefinder-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/curvefinder-1.png" class="r-plt" width="700"></p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">curve_fit</span><span class="op">$</span><span class="va">coordinate.plot</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/curvefinder-2.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/curvefinder-2.png" class="r-plt" width="700"></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">curve_fit</span><span class="op">$</span><span class="va">residuals.plot</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/curvefinder-3.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/curvefinder-3.png" class="r-plt" width="700"></p>
 <p>Next, we fit a smooth cyclic effect along the loop coordinate
 <code>t</code> and a radial smooth effect for distance from the
 curve.</p>
@@ -149,7 +148,7 @@ change along the loop coordinate.</p>
 <span>  mgam_object <span class="op">=</span> <span class="va">mgam</span>,</span>
 <span>  nrow <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/plot-top-t-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/plot-top-t-1.png" class="r-plt" width="700"></p>
 <p>We can similarly inspect genes with large radial variation.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">top_r_genes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">mgam</span><span class="op">$</span><span class="va">results</span><span class="op">)</span><span class="op">[</span></span>
@@ -164,7 +163,7 @@ change along the loop coordinate.</p>
 <span>  type <span class="op">=</span> <span class="st">"r"</span>,</span>
 <span>  nrow <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/plot-top-r-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/plot-top-r-1.png" class="r-plt" width="700"></p>
 <p>Now we can make the functional PCA plot to see the dominant modes of
 spatial variation:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
@@ -174,7 +173,7 @@ spatial variation:</p>
 <span>  type <span class="op">=</span> <span class="st">"t"</span>,</span>
 <span>  L<span class="op">=</span><span class="fl">1</span> <span class="co">#First component</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/functional-pca-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/functional-pca-1.png" class="r-plt" width="700"></p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="fu">MorphoGAM</span><span class="fu">::</span><span class="fu"><a href="../reference/plotFPCloading.html">plotFPCloading</a></span><span class="op">(</span></span>
@@ -183,7 +182,7 @@ spatial variation:</p>
 <span>  type <span class="op">=</span> <span class="st">"t"</span>,</span>
 <span>  L<span class="op">=</span><span class="fl">2</span> <span class="co">#Second component</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="mouse_mucosa_files/figure-html/functional-pca-2.png" class="r-plt" alt="" width="700"></p>
+<p><img src="mouse_mucosa_files/figure-html/functional-pca-2.png" class="r-plt" width="700"></p>
   </main>
 </div>
 

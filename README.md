@@ -1,7 +1,7 @@
 MorphoGAM: Detect spatially variable genes by projecting to
 morphologically relevant curves
 ================
-R package version 1.1.1
+R package version 1.2.0
 
 ## Overview
 

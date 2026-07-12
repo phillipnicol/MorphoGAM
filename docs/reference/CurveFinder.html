@@ -11,7 +11,7 @@ morphologically relevant coordinates `t` and `r`."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">MorphoGAM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,7 +54,9 @@ morphologically relevant coordinates `t` and `r`.</p>
 <span>  knn <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  prune.outlier <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  loop <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  scale_morpho_coords <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  knot.fx <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  scale_morpho_coords <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  max.comp.no <span class="op">=</span> <span class="fl">5</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -67,7 +69,7 @@ morphologically relevant coordinates `t` and `r`.</p>
 
 
 <dt id="arg-knn">knn<a class="anchor" aria-label="anchor" href="#arg-knn"></a></dt>
-<dd><p>An integer specifying the number of nearest neighbors used to construct the KNN graph. Default is 5.</p></dd>
+<dd><p>An integer specifying the number of nearest neighbors used to construct the KNN graph, or `"auto"` to choose a value from 3 to 20 by model score. Default is 5.</p></dd>
 
 
 <dt id="arg-prune-outlier">prune.outlier<a class="anchor" aria-label="anchor" href="#arg-prune-outlier"></a></dt>
@@ -75,14 +77,26 @@ morphologically relevant coordinates `t` and `r`.</p>
 
 
 <dt id="arg-loop">loop<a class="anchor" aria-label="anchor" href="#arg-loop"></a></dt>
-<dd><p>A logical value indicating whether the curve should be treated as a loop (closed curve). Default is FALSE.</p></dd>
+<dd><p>A logical value indicating whether the curve should be treated as a loop (closed curve), or `"auto"` to detect loops from a Mapper graph. Default is FALSE.</p></dd>
+
+
+<dt id="arg-knot-fx">knot.fx<a class="anchor" aria-label="anchor" href="#arg-knot-fx"></a></dt>
+<dd><p>Maximum number of knots used for the GAM smooths fitted to x(t) and y(t). The effective value is capped at 10 percent of the number of points.</p></dd>
+
+
+<dt id="arg-scale-morpho-coords">scale_morpho_coords<a class="anchor" aria-label="anchor" href="#arg-scale-morpho-coords"></a></dt>
+<dd><p>A logical value indicating whether to scale the morphologically relevant coordinates `t` and `r` to the range [0, 1]. Default is TRUE.</p></dd>
+
+
+<dt id="arg-max-comp-no">max.comp.no<a class="anchor" aria-label="anchor" href="#arg-max-comp-no"></a></dt>
+<dd><p>An integer specifying the maximum number of disconnected components allowed in the KNN graph. Default is 5.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list containing:</p>
 <dl><dt>xyt</dt>
-<dd><p>A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` abd `f2`).</p></dd>
+<dd><p>A data frame with x and y coordinates, fitted curve parameters (`t` and `r`), and fitted values for x and y (`f1` and `f2`).</p></dd>
 
 <dt>curve.plot</dt>
 <dd><p>A ggplot object showing the original data with the fitted curve overlaid.</p></dd>
@@ -93,10 +107,25 @@ morphologically relevant coordinates `t` and `r`.</p>
 <dt>residuals.plot</dt>
 <dd><p>A ggplot object displaying the data points color-coded by their fitted `r` values.</p></dd>
 
+<dt>model.score</dt>
+<dd><p>A numeric model score used internally for `knn = "auto"`.</p></dd>
+
+<dt>arclength</dt>
+<dd><p>The approximate arclength of the fitted curve.</p></dd>
+
+<dt>span.r</dt>
+<dd><p>The estimated span of the residual coordinate.</p></dd>
+
+<dt>t_v_r_span</dt>
+<dd><p>The ratio of fitted curve arclength to residual-coordinate span.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>To-do</p>
+    <p>The function builds a k-nearest-neighbor graph on `xy`, derives an initial
+one-dimensional ordering from graph distances, fits smooth functions for the
+two spatial coordinates, and then computes signed orthogonal residuals from
+the fitted curve.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

@@ -1,8 +1,12 @@
-## Version 1.2.0 TBD
+## Version 1.2.0 July 11, 2026
+
+This update adds new functionality as well as improving the existing code.
 
 **New functionality:**
 
 - Add automatic selection of `k` in `CurveFinder()` using `knn = "auto"`.
+
+- A new function `CurveFinderInteractive_img()` that allows a curve to be drawn on an image (such as a histology image). 
 
 **Changes to existing functionality:**
 
