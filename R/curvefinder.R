@@ -216,11 +216,11 @@ CurveFinder <- function(xy,
 
   knots <- round(min(knot.fx, 0.1*nrow(xy)))
   if(loop) {
-    fitx <- mgcv::gam(xy[,1]~s(t,bs="cc",k=knots))
-    fity <- mgcv::gam(xy[,2]~s(t,bs="cc",k=knots))
+    fitx <- mgcv::gam(xy[,1]~s(t,bs="cc",k=knots), method = "REML")
+    fity <- mgcv::gam(xy[,2]~s(t,bs="cc",k=knots), method = "REML")
   } else{
-    fitx <- mgcv::gam(xy[,1]~s(t,bs="cr",k=knots))
-    fity <- mgcv::gam(xy[,2]~s(t,bs="cr",k=knots))
+    fitx <- mgcv::gam(xy[,1]~s(t,bs="cr",k=knots), method = "REML")
+    fity <- mgcv::gam(xy[,2]~s(t,bs="cr",k=knots), method = "REML")
   }
 
   r <- orthogonal_path(fitx,fity,t,scale_morpho_coords)
@@ -311,7 +311,7 @@ orthogonal_path <- function(fitx,fity, t, scale_morpho_coords) {
   }
 
   if(scale_morpho_coords) {
-    t2 <- (t2 - min(t2))/(max(t2) - min(t2))
+    t2 <- rcoord_scale(t2)
   }
   return(t2)
 }
@@ -385,6 +385,5 @@ dimRed_makeKNNgraph <- function (x, k, eps = 0, diag = FALSE)
   else as.vector(nn2res$nn.dists[, -1])
   return(igraph::as.undirected(g, mode = "collapse", edge.attr.comb = "first"))
 }
-
 
 

@@ -81,6 +81,14 @@ A list containing:
   \`range.t\`, \`pv.t\`, \`peak.r\`, \`range.r\`, \`pv.r\`, and
   \`intercept\`.
 
+- dispersion:
+
+  A numeric vector of negative-binomial size estimates (theta) in the
+  row order of \`Y\`, named by its row names when present. Skipped genes
+  have \`NA\`. For fitted mean \`mu\`, \`mgcv::nb()\` uses variance
+  \`mu + mu^2 / theta\`. The quadratic overdispersion coefficient is \`1
+  / theta\`.
+
 - design:
 
   The model formula used after adding default cubic regression spline

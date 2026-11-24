@@ -13,7 +13,7 @@ DESCRIPTION"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">MorphoGAM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -122,6 +122,12 @@ smooth term in `r`.</p></dd>
 <dl><dt>results</dt>
 <dd><p>A data frame with one row per gene and columns `peak.t`,
 `range.t`, `pv.t`, `peak.r`, `range.r`, `pv.r`, and `intercept`.</p></dd>
+
+<dt>dispersion</dt>
+<dd><p>A numeric vector of negative-binomial size estimates
+(theta) in the row order of `Y`, named by its row names when present.
+Skipped genes have `NA`. For fitted mean `mu`, `mgcv::nb()` uses variance
+`mu + mu^2 / theta`. The quadratic overdispersion coefficient is `1 / theta`.</p></dd>
 
 <dt>design</dt>
 <dd><p>The model formula used after adding default cubic regression
