@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 1.2.1 November 24, 2026
+
+This update adds the estimated negative binomial dispersion for each
+gene in
+[`MorphoGAM()`](https://phillipnicol.github.io/MorphoGAM/reference/MorphoGAM.md).
+
 ## Version 1.2.0 July 11, 2026
 
 This update adds new functionality as well as improving the existing
