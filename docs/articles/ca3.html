@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">MorphoGAM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -131,20 +131,13 @@ direction. Here, the peak statistic is defined as the maximum log fold
 change from the baseline.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.t</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                 peak.t   range.t pv.t     peak.r     range.r        pv.r</span></span>
-<span><span class="co">#&gt; Rgs14         2.550284 0.5372700    0 0.04681645 0.002330054 0.052910229</span></span>
-<span><span class="co">#&gt; Crym          1.780810 0.8262077    0 0.24049310 0.086002741 0.001035907</span></span>
-<span><span class="co">#&gt; Nptx1         1.242108 0.3985731    0 0.10212920 0.048583655 0.033328692</span></span>
-<span><span class="co">#&gt; Fxyd7         1.241497 0.1649041    0 0.00000000 0.000000000 0.841852436</span></span>
-<span><span class="co">#&gt; Rgs4          1.240406 0.4118241    0 0.00000000 0.000000000 0.482172509</span></span>
-<span><span class="co">#&gt; 2010300C02Rik 1.224445 0.4064860    0 0.00000000 0.000000000 0.449048558</span></span>
-<span><span class="co">#&gt;               intercept</span></span>
-<span><span class="co">#&gt; Rgs14         -9.460481</span></span>
-<span><span class="co">#&gt; Crym          -7.529614</span></span>
-<span><span class="co">#&gt; Nptx1         -7.398298</span></span>
-<span><span class="co">#&gt; Fxyd7         -8.632202</span></span>
-<span><span class="co">#&gt; Rgs4          -8.251157</span></span>
-<span><span class="co">#&gt; 2010300C02Rik -8.256013</span></span>
+<span><span class="co">#&gt;          peak.t   range.t pv.t     peak.r     range.r       pv.r intercept</span></span>
+<span><span class="co">#&gt; Rgs14  2.550060 0.5374655    0 0.05248287 0.002859962 0.03854573 -9.459869</span></span>
+<span><span class="co">#&gt; Crym   1.780784 0.8255001    0 0.24022523 0.086168928 0.00100854 -7.528823</span></span>
+<span><span class="co">#&gt; Nptx1  1.244092 0.3992211    0 0.10126286 0.048368344 0.03661297 -7.397241</span></span>
+<span><span class="co">#&gt; Fxyd7  1.240382 0.1649413    0 0.00000000 0.000000000 0.90312735 -8.630605</span></span>
+<span><span class="co">#&gt; Rgs4   1.239490 0.4110441    0 0.00000000 0.000000000 0.47693825 -8.252032</span></span>
+<span><span class="co">#&gt; Necab2 1.226090 0.2755512    0 0.06966475 0.007140190 0.03629739 -8.651584</span></span>
 <span></span>
 <span><span class="va">top6</span> <span class="op">&lt;-</span> <span class="va">mgam</span><span class="op">$</span><span class="va">results</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html" class="external-link">arrange</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/desc.html" class="external-link">desc</a></span><span class="op">(</span><span class="va">peak.t</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Note that any list of genes can always be plotted with

@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">MorphoGAM</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -52,7 +52,158 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><p><code>MorphoGAM</code> is an R package designed for identifying spatially variable genes in spatial transcriptomics data by projecting the data onto morphologically relevant curves. This approach allows for the detection of genes that exhibit spatial patterns aligned with the underlying tissue morphology.</p>
+  <main id="main" class="col-md-9"><p><code>MorphoGAM</code> is an R package that provides statistical tools for modeling spatial gene expression along one-dimensional paths. The workflow has two main steps:</p>
+<ol style="list-style-type: decimal">
+<li>
+<code><a href="reference/CurveFinder.html">CurveFinder()</a></code> estimates a parametric curve that passes through the tissue coordinates and uses this to define a morphologically relevant coordinate system.</li>
+<li>
+<code><a href="reference/MorphoGAM.html">MorphoGAM()</a></code> fits generalized additive models (GAM) to find genes that vary along the morphologically relevant curves.</li>
+</ol>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<p>From the R console:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>devtools<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"phillipnicol/MorphoGAM"</span>)</span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="quick-example">Quick example<a class="anchor" aria-label="anchor" href="#quick-example"></a>
+</h2>
+<p>The following simulated example illustrates the use of the two main functions. First, create two-dimensional spatial coordinates:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">library</span>(MorphoGAM)</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>theta <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">2</span> <span class="sc">*</span> pi, <span class="at">length.out =</span> <span class="dv">500</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>r <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">+</span> <span class="fl">0.12</span> <span class="sc">*</span> <span class="fu">cos</span>(<span class="dv">10</span> <span class="sc">*</span> theta)</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>xy <span class="ot">&lt;-</span> <span class="fu">cbind</span>(</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">x =</span> r <span class="sc">*</span> <span class="fu">cos</span>(theta) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="at">n =</span> <span class="dv">500</span>, <span class="at">sd =</span> <span class="fl">0.05</span>),</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">y =</span> r <span class="sc">*</span> <span class="fu">sin</span>(theta) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="at">n =</span> <span class="dv">500</span>, <span class="at">sd =</span> <span class="fl">0.05</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>)</span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="fu">data.frame</span>(<span class="at">x=</span>xy[,<span class="dv">1</span>], <span class="at">y=</span>xy[,<span class="dv">2</span>]) <span class="sc">|&gt;</span> <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>x,<span class="at">y=</span>y)) <span class="sc">+</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size=</span><span class="fl">0.5</span>) <span class="sc">+</span> <span class="fu">theme_bw</span>()</span></code></pre></div>
+<p><img src="reference/figures/swiss-roll-1.png"></p>
+<p>Because the tissue structure is implicitly one-dimensional, MorphoGAM can be applied to extract <em>t</em> and <em>r</em> coordinates.</p>
+<div class="section level3">
+<h3 id="step-1-estimate-morphologically-relevant-coordinates">Step 1: estimate morphologically relevant coordinates<a class="anchor" aria-label="anchor" href="#step-1-estimate-morphologically-relevant-coordinates"></a>
+</h3>
+<p><code><a href="reference/CurveFinder.html">CurveFinder()</a></code> takes an <em>n</em> × 2 matrix or data frame of spatial coordinates and returns the fitted curve together with the <code>t</code> and <code>r</code> coordinates.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>curve_fit <span class="ot">&lt;-</span> <span class="fu">CurveFinder</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  xy,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">knn =</span> <span class="st">"auto"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">loop =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">prune.outlier =</span> <span class="cn">NULL</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>Because the tissue structure is better modeled with a closed curve, we set <code>loop=TRUE</code> (setting <code>loop=FALSE</code> fits an open curve). <code>knn="auto"</code> uses a model selection procedure to choose the best value of <em>k</em>. Alternatively, the user can try several values of <em>k</em> and choose the one that works the best.</p>
+<p>The <code>curve_fit</code> model contains several results and plots:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>curve_fit<span class="sc">$</span>curve.plot   <span class="co"># fitted curve plotted over coordinates</span></span></code></pre></div>
+<p><img src="reference/figures/inspect-curve-1.png"></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>curve_fit<span class="sc">$</span>coordinate.plot  <span class="co"># position along the curve (t)</span></span></code></pre></div>
+<p><img src="reference/figures/inspect-curve-2.png"></p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>curve_fit<span class="sc">$</span>residuals.plot   <span class="co"># position orthogonal to the curve (r)</span></span></code></pre></div>
+<p><img src="reference/figures/inspect-curve-3.png"></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">head</span>(curve_fit<span class="sc">$</span>xyt) <span class="co"># Data frame containing t and r values</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="do">##          x             y         t         r       f1           f2</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="do">## 1 1.088677  0.0038651561 0.1592801 0.3899089 1.119955 -0.002127164</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="do">## 2 1.128143 -0.0007532266 0.1598151 0.5150007 1.120189 -0.005964799</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="do">## 3 1.074080 -0.0310553225 0.1648627 0.3557088 1.116111 -0.040833073</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="do">## 4 1.190511  0.0425426878 0.1547459 0.7225128 1.113303  0.030669298</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="do">## 5 1.120173  0.1052161516 0.1471814 0.6108764 1.085859  0.082398755</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="do">## 6 1.053796  0.1487169978 0.1370237 0.5826982 1.025142  0.134717329</span></span></code></pre></div>
+<p>Note that <code><a href="reference/CurveFinderInteractive.html">CurveFinderInteractive()</a></code> opens a shiny app that allows the user to hand-draw the curve.</p>
+</div>
+<div class="section level3">
+<h3 id="step-2-model-gene-expression-along-the-curve">Step 2: model gene expression along the curve<a class="anchor" aria-label="anchor" href="#step-2-model-gene-expression-along-the-curve"></a>
+</h3>
+<p><code><a href="reference/MorphoGAM.html">MorphoGAM()</a></code> takes as input a <em>n</em> × <em>p</em> counts matrix <code>Y</code>. Here, we will generate a synthetic counts matrix <code>Y</code> with one gene with variation in the <em>t</em> direction and 99 with variation in the <em>r</em> direction:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>n_locations <span class="ot">&lt;-</span> <span class="fu">nrow</span>(xy)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>n_genes <span class="ot">&lt;-</span> <span class="dv">100</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>Y <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span><span class="dt">L</span>, <span class="at">nrow =</span> n_genes, <span class="at">ncol =</span> n_locations)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co"># Gene 1 varies along t</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>eta_t <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="dv">2</span>) <span class="sc">-</span> <span class="dv">3</span> <span class="sc">*</span> (curve_fit<span class="sc">$</span>xyt<span class="sc">$</span>t <span class="sc">-</span> <span class="fl">0.5</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>Y[<span class="dv">1</span>, ] <span class="ot">&lt;-</span> <span class="fu">rpois</span>(n_locations, <span class="at">lambda =</span> <span class="fu">exp</span>(eta_t))</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co"># Genes 2–100 vary along r, with different directions and effect sizes</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>r_effect <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>), <span class="at">length.out =</span> n_genes <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">*</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="at">length.out =</span> n_genes <span class="sc">-</span> <span class="dv">1</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>eta_r <span class="ot">&lt;-</span> <span class="fu">log</span>(<span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="fu">outer</span>(r_effect, curve_fit<span class="sc">$</span>xyt<span class="sc">$</span>r <span class="sc">-</span> <span class="fl">0.5</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>Y[<span class="dv">2</span><span class="sc">:</span>n_genes, ] <span class="ot">&lt;-</span> <span class="fu">matrix</span>(</span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a>  <span class="fu">rpois</span>(<span class="fu">length</span>(eta_r), <span class="at">lambda =</span> <span class="fu">exp</span>(eta_r)),</span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a>  <span class="at">nrow =</span> n_genes <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a>)</span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="fu">rownames</span>(Y) <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"Gene"</span>, <span class="fu">seq_len</span>(n_genes))</span></code></pre></div>
+<p>Now we can apply <code><a href="reference/MorphoGAM.html">MorphoGAM()</a></code> to fit a generalized additive model to each gene:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>mgam <span class="ot">&lt;-</span> <span class="fu">MorphoGAM</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  Y,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">curve.fit =</span> curve_fit,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">design =</span> y <span class="sc">~</span> <span class="fu">s</span>(t, <span class="at">bs =</span> <span class="st">"cc"</span>) <span class="sc">+</span> <span class="fu">s</span>(r, <span class="at">bs=</span><span class="st">"cr"</span>),</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">min.count.per.gene =</span> <span class="dv">10</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">return.fx =</span> <span class="cn">TRUE</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>)</span></code></pre></div>
+<p>Note that <code>design = y ~ s(t, bs = "cc") + s(r, bs="cr")</code> fits a model including a smooth term for both the <em>t</em> and <em>r</em> coordinate. We use <code>bs=cc</code> to fit a periodic function in the <em>t</em> direction. Common other choices include:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Variation only along the fitted curve</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>design <span class="ot">&lt;-</span> y <span class="sc">~</span> <span class="fu">s</span>(t, <span class="at">bs =</span> <span class="st">"cr"</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co"># Variation only orthogonal to the fitted curve</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>design <span class="ot">&lt;-</span> y <span class="sc">~</span> <span class="fu">s</span>(r, <span class="at">bs =</span> <span class="st">"cr"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co"># Both directions</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>design <span class="ot">&lt;-</span> y <span class="sc">~</span> <span class="fu">s</span>(t, <span class="at">bs =</span> <span class="st">"cr"</span>) <span class="sc">+</span> <span class="fu">s</span>(r, <span class="at">bs =</span> <span class="st">"cr"</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co"># A non-periodic smooth for a closed curve, with orthogonal variation</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>design <span class="ot">&lt;-</span> y <span class="sc">~</span> <span class="fu">s</span>(t, <span class="at">bs =</span> <span class="st">"cr"</span>) <span class="sc">+</span> <span class="fu">s</span>(r, <span class="at">bs=</span><span class="st">"cr"</span>)</span></code></pre></div>
+<p>MorphoGAM provides a results data frame that contains each gene as well as some summaries of the estimated function.</p>
+<ul>
+<li>
+<code>peak.t</code> is the maximum height of the fitted function for <em>t</em> on the log scale.</li>
+<li>
+<code>range.t</code> is the range of the fitted function for <em>t</em> on the scale of the counts.</li>
+<li>
+<code>peak.r</code> and <code>range.r</code> are the equivalent for the fitted function in the <em>r</em> direction.</li>
+<li>
+<code>pv.t</code> and <code>pv.r</code> are the corresponding <em>p</em>-values for the null hypothesis that the function is 0.</li>
+</ul>
+<p>For example, if we wanted to find a gene that varied the most in the <em>t</em> direction, we could sort by genes with the largest <code>peak.t</code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>mgam<span class="sc">$</span>results <span class="sc">|&gt;</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(peak.t)) <span class="sc">|&gt;</span> <span class="fu">head</span>()</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="do">##             peak.t    range.t        pv.t     peak.r    range.r       pv.r intercept</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="do">## Gene 1  1.49356467 5.20632298 0.000000000 0.01774403 0.04714376 0.07312087 -4.681794</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="do">## Gene 38 0.06456097 0.16319422 0.001556038 0.58659871 1.62485505 0.00000000 -4.618577</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="do">## Gene 24 0.03933418 0.08120660 0.018316422 0.55740478 1.28201140 0.00000000 -4.641936</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="do">## Gene 80 0.03422020 0.12947207 0.003950135 0.80710312 2.68462271 0.00000000 -4.600510</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="do">## Gene 97 0.02798697 0.06438621 0.009632596 1.24001522 4.81096313 0.00000000 -4.728496</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="do">## Gene 91 0.02058071 0.05162055 0.015191861 1.27260655 6.30931200 0.00000000 -4.690288</span></span></code></pre></div>
+<p>As expected, we identify gene 1, which was the one simulated to have significant variation in the <em>t</em> direction.</p>
+<p>We can visualize using MorphoGAM’s plotting function:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>MorphoGAM<span class="sc">::</span><span class="fu">plotGAMestimates</span>(Y, </span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="at">mgam_object=</span>mgam,</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="at">genes=</span><span class="fu">c</span>(<span class="st">"Gene 1"</span>), <span class="at">curve_fit=</span>curve_fit)</span></code></pre></div>
+<p><img src="reference/figures/plot-t-1.png"></p>
+<p>We can then repeat this for the top genes in the <em>r</em> direction,</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>r_sort <span class="ot">&lt;-</span> mgam<span class="sc">$</span>results <span class="sc">|&gt;</span> <span class="fu">arrange</span>(<span class="fu">desc</span>(peak.r)) <span class="sc">|&gt;</span> <span class="fu">rownames</span>()</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>MorphoGAM<span class="sc">::</span><span class="fu">plotGAMestimates</span>(Y, </span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="at">mgam_object=</span>mgam,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="at">type=</span><span class="st">"r"</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="at">genes=</span>r_sort[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>], <span class="at">curve_fit=</span>curve_fit)</span></code></pre></div>
+<p><img src="reference/figures/plot-r-1.png"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="additional-examples">Additional examples<a class="anchor" aria-label="anchor" href="#additional-examples"></a>
+</h2>
+<p>This website contains two additional examples of how MorphoGAM can be used on real datasets, including how to find correlated groups of genes.</p>
+</div>
+
   </main><aside class="col-md-3"><div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">

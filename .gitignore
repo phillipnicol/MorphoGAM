@@ -13,6 +13,8 @@
 *.png
 !docs/*.png
 !docs/**/*.png
+!man/figures/*.png
+!man/figures/**/*.png
 *.mtx
 *.tsv
 *.xlsx
